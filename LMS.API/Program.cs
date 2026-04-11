@@ -1,4 +1,6 @@
+using System.Reflection;
 using LMS.infra;
+using LMS.App;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +17,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
-
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(); 
 app.UseAuthorization();
 
 app.MapControllers();
