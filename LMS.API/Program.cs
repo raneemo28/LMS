@@ -17,6 +17,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseHttpsRedirection();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(); 
 app.UseAuthorization();
