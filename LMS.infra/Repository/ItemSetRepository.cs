@@ -21,7 +21,6 @@ namespace LMS.infra.Repository
 
         public async Task<object?> GetSetWithMembersAsync(int setId)
         {
-            // 1. جلب المجموعة أولاً
             var itemSet = await _context.ItemSets
                 .Include(s => s.Values)
                     .ThenInclude(v => v.Property)

@@ -62,7 +62,7 @@ namespace LMS.infra.Repository
                 throw new Exception("Property validation failed: Label, URI, or LocalName already exists in system vocabularies.");
             }
 
-            var newProp = new LMS.Domain.Entities.Property
+            var newProp = new Property
             {
                 VocabularyId = vocabularyId,
                 LocalName = localName,
