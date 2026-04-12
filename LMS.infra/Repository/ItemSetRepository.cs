@@ -2,6 +2,7 @@ using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using LMS.infra.Database;
 using Microsoft.EntityFrameworkCore;
+using LMS.Domain.Constants;
 
 namespace LMS.infra.Repository
 {
@@ -19,34 +20,31 @@ namespace LMS.infra.Repository
                 .ToListAsync();
         }
 
-        public async Task<object?> GetSetWithMembersAsync(int setId)
+public async Task<object?> GetSetWithMembersAsync(int setId)
+    {
+        var itemSet = await _context.ItemSets
+            .Include(s => s.Values)
+                .ThenInclude(v => v.Property)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == setId);
+
+        if (itemSet == null) return null;
+
+        var members = await _context.Items
+            .Where(i => i.Values.Any(v =>
+                v.Property.TermUri == SystemConstants.IsMemberOf &&
+                v.ValueText == setId.ToString()))
+            .Include(i => i.Template)
+            .Include(i => i.Values)
+                .ThenInclude(v => v.Property)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return new
         {
-            var itemSet = await _context.ItemSets
-                .Include(s => s.Values)
-                    .ThenInclude(v => v.Property)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == setId);
-
-            if (itemSet == null) return null;
-
-            var allItems = await _context.Items
-                .Include(i => i.Template)
-                .Include(i => i.Values)
-                    .ThenInclude(v => v.Property)
-                .AsNoTracking()
-                .ToListAsync();
-            var members = allItems.Where(i =>
-            {
-                var entry = _context.Entry(i);
-                return entry.Property("ItemSetId").CurrentValue != null &&
-                    (int)entry.Property("ItemSetId").CurrentValue == setId;
-            }).ToList();
-
-            return new
-            {
-                Set = itemSet,
-                Members = members
-            };
-        }
+            SetInfo = itemSet,
+            Members = members
+        };
     }
+}
 }
