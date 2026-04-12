@@ -1,10 +1,10 @@
-using LMS.Domain.Entities;
-using LMS.Domain.Interfaces;
 using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
 
 namespace LMS.Application.Features.ItemSets.Commands.CreateItemSets;
 
-public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, bool>
+public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -13,20 +13,24 @@ public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, bool>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<bool> Handle(CreateItemSetCommand request, CancellationToken cancellationToken)
+    public async Task<int> Handle(CreateItemSetCommand request, CancellationToken cancellationToken)
     {
-
-        var newItemSet = new ItemSet
+        var itemSet = new ItemSet
         {
             Title = request.Title,
             Description = request.Description,
-            IsPublic = request.IsPublic
+            IsPublic = request.IsPublic,
+
+            Type = "ItemSet", 
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = request.CreatedBy,
+            OwnerId = request.OwnerId
         };
 
-        await _unitOfWork.ItemSets.AddAsync(newItemSet);
+        await _unitOfWork.ItemSets.AddAsync(itemSet);
 
-        var result = await _unitOfWork.CommitAsync();
+        await _unitOfWork.CommitAsync();
 
-        return result > 0;
+        return itemSet.Id;
     }
 }
