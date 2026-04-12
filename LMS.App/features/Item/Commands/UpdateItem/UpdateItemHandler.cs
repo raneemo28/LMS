@@ -1,5 +1,6 @@
-using LMS.Domain.Interfaces;
 using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
 
 namespace LMS.Application.Features.Item.Commands.UpdateItem;
 
@@ -14,25 +15,21 @@ public class UpdateItemHandler : IRequestHandler<UpdateItemCommand, bool>
 
     public async Task<bool> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
     {
-        var item = await _unitOfWork.Items.GetByIdAsync(request.Id) as LMS.Domain.Entities.Item;
+        var resource = await _unitOfWork.Items.GetByIdAsync(request.Id);
+        var item = resource as Domain.Entities.Item;
 
         if (item == null) return false;
 
-        bool isOwner = await _unitOfWork.Items.IsOwnerAsync(request.Id, request.UserId);
-
-        if (!isOwner)
+        if (item.OwnerId != request.UserId)
         {
-            throw new UnauthorizedAccessException("Unauthorized access.");
+            throw new UnauthorizedAccessException("You are not authorized to update this item.");
         }
 
         item.TemplateId = request.TemplateId;
 
-
-        if (item.Template != null)
-        {
-            item.Template.Label = request.Title; 
-            item.Template.Description = request.Description;
-        }
+        
+        item.ModifiedAt = DateTime.UtcNow;
+        item.ModifiedBy = request.UserId;
 
         _unitOfWork.Items.Update(item);
         var result = await _unitOfWork.CommitAsync();

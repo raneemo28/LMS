@@ -4,7 +4,7 @@ using MediatR;
 
 namespace LMS.Application.Features.Item.Commands.CreateItem;
 
-public class CreateItemHandler : IRequestHandler<CreateItemCommand, bool>
+public class CreateItemHandler : IRequestHandler<CreateItemCommand, int> 
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -13,16 +13,22 @@ public class CreateItemHandler : IRequestHandler<CreateItemCommand, bool>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<bool> Handle(CreateItemCommand request, CancellationToken cancellationToken)
+    public async Task<int> Handle(CreateItemCommand request, CancellationToken cancellationToken)
     {
-        var newItem = new LMS.Domain.Entities.Item
+        var item = new Domain.Entities.Item
         {
-            TemplateId = request.TemplateId
+            TemplateId = request.TemplateId,
+
+            Type = "Item",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = request.CurrentUserId,
+            OwnerId = request.CurrentUserId
         };
 
-        await _unitOfWork.Items.AddAsync(newItem);
-        var result = await _unitOfWork.CommitAsync();
+        await _unitOfWork.Items.AddAsync(item);
+        
+        await _unitOfWork.CommitAsync();
 
-        return result > 0;
+        return item.Id;
     }
 }
