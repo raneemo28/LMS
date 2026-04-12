@@ -1,3 +1,4 @@
+using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
 using System.Threading;
@@ -15,18 +16,22 @@ public class DeleteVocabularyHandler : IRequestHandler<DeleteVocabularyCommand, 
     }
 
     public async Task<bool> Handle(DeleteVocabularyCommand request, CancellationToken cancellationToken)
+{
+    var result = await _unitOfWork.Vocabularies.GetWithPropertiesAsync(request.Id);
+    
+    var vocab = result as Vocabulary;
+
+    if (vocab == null) return false;
+
+    foreach (var property in vocab.Properties) 
     {
-        var vocabulary = await _unitOfWork.Vocabularies.GetByIdAsync(request.Id);
-
-        if (vocabulary == null)
+        if (await _unitOfWork.Vocabularies.HasLinkedValuesAsync(property.Id))
         {
-            throw new Exception("The vocabulary with the specified ID does not exist.");
+            throw new InvalidOperationException($"property with id {property.Id} has linked values. Please remove the linked values before deleting the vocabulary.");
         }
-
-        _unitOfWork.Vocabularies.Delete(vocabulary);
-
-        var result = await _unitOfWork.CommitAsync();
-
-        return result > 0;
     }
+
+    _unitOfWork.Vocabularies.Delete(vocab);
+    return await _unitOfWork.CommitAsync() > 0;
+}
 }

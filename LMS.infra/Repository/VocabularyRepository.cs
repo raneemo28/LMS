@@ -52,7 +52,7 @@ namespace LMS.infra.Repository
 
         public async Task<LMS.Domain.Entities.Property> AddPropertyAync(int vocabularyId, string localName, string label, string termUri)
         {
-            
+
             bool isDuplicate = await IsPropertyExistsInVocabularyAsync(vocabularyId, localName);
             bool isLabelConflict = !await IsLabelUniqueAsync(label);
             bool isUriConflict = !await IsNamespaceUriUniqueAsync(termUri);
@@ -71,7 +71,7 @@ namespace LMS.infra.Repository
             };
 
             var entry = await _context.Properties.AddAsync(newProp);
-            return entry.Entity; 
+            return entry.Entity;
         }
 
         public async Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName)
@@ -80,5 +80,42 @@ namespace LMS.infra.Repository
                 .AsNoTracking()
                 .AnyAsync(p => p.VocabularyId == vocabularyId && p.LocalName == localName);
         }
+        public async Task<bool> HasLinkedValuesAsync(int propertyId)
+        {
+            return await _context.Values.AnyAsync(v => v.PropertyId == propertyId);
+        }
+        public async Task<Property> DeletePropertyAync(int propertyId)
+        {
+            var property = await _context.Properties
+                .FirstOrDefaultAsync(p => p.Id == propertyId);
+
+            if (property == null)
+            {
+                return null;
+            }
+            _context.Properties.Remove(property);
+
+            return property;
+        }
+
+        
+public async Task<Property> UpdatePropertyAync(int propertyId, string localName, string label, string TermUri)
+{
+    var property = await _context.Properties
+        .FirstOrDefaultAsync(p => p.Id == propertyId);
+
+    if (property == null)
+    {
+        return null; 
+    }
+
+    property.LocalName = localName;
+    property.Label = label;
+    property.TermUri = TermUri;
+
+    _context.Properties.Update(property);
+
+    return property;
+}
     }
 }
