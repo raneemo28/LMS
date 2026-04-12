@@ -9,4 +9,6 @@ public class Property
     public string TermUri { get; set; } = string.Empty;
 
     public virtual Vocabulary Vocabulary { get; set; } = null!;
+    public virtual ICollection<Value> Values { get; set; } = new List<Value>();
+    public virtual ICollection<TemplateProperty> TemplateProperties { get; set; } = new List<TemplateProperty>();
 }

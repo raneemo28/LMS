@@ -1,0 +1,20 @@
+using AutoMapper;
+using LMS.App.DTOs.Vocabulary;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class VocabularyMappingProfile : Profile
+{
+    public VocabularyMappingProfile()
+    {
+        CreateMap<Vocabulary, VocabularyDto>();
+
+        CreateMap<CreateVocabularyDto, Vocabulary>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.Properties, opt => opt.Ignore());
+
+        CreateMap<UpdateVocabularyDto, Vocabulary>()
+            .ForMember(d => d.Properties, opt => opt.Ignore());
+    }
+}

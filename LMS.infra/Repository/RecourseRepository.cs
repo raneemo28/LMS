@@ -2,9 +2,7 @@ using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using LMS.infra.Database;
-{
-    
-}
+
 namespace LMS.infra.Repository
 {
     public class ResourceRepository : GenericRepository<Resource>, IResourceRepository
