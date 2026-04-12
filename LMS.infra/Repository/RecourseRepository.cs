@@ -44,7 +44,7 @@ namespace LMS.infra.Repository
         }
         public async Task<bool> IsOwnerAsync(int setId, string userId)
         {
-            return await _context.ItemSets
+            return await _context.Resources
                 .AsNoTracking()
                 .AnyAsync(s => s.Id == setId && s.CreatedBy == userId);
         }
