@@ -52,5 +52,67 @@ namespace LMS.infra.Repository
                 .AsNoTracking()
                 .AllAsync(t => t.Label != label);
         }
+
+        public async Task<ResourceTemplate> AddPropertyToTemplateAsync(int templateId, string localName, string label, string termUri)
+        {
+            var template = await _context.ResourceTemplates.FindAsync(templateId);
+            if (template == null) return null!;
+
+            var newProperty = new Property
+            {
+                LocalName = localName,
+                Label = label,
+                TermUri = termUri
+            };
+            await _context.Properties.AddAsync(newProperty);
+
+
+            var link = new TemplateProperty
+            {
+                TemplateId = templateId,
+                Property = newProperty,
+                IsRequired = false,
+                DisplayOrder = 0
+            };
+
+            await _context.Set<TemplateProperty>().AddAsync(link);
+
+            return template;
+        }
+        public async Task<ResourceTemplate> RemovePropertyFromTemplateAsync(int templateId, int propertyId)
+        {
+            var template = await _context.ResourceTemplates.FindAsync(templateId);
+
+            var link = await _context.Set<TemplateProperty>()
+                .FirstOrDefaultAsync(tp => tp.TemplateId == templateId && tp.PropertyId == propertyId);
+
+            if (link != null)
+            {
+                _context.Set<TemplateProperty>().Remove(link);
+
+                var property = await _context.Properties.FindAsync(propertyId);
+                if (property != null) _context.Properties.Remove(property);
+
+                return template!;
+            }
+
+            return null!;
+        }
+        public async Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId, string localName, string label, string termUri)
+        {
+            var template = await _context.ResourceTemplates.FindAsync(templateId);
+            var property = await _context.Properties
+                .FirstOrDefaultAsync(p => p.Id == propertyId);
+
+            if (template == null || property == null) return null!;
+
+            property.LocalName = localName;
+            property.Label = label;
+            property.TermUri = termUri;
+
+            _context.Properties.Update(property);
+
+            return template;
+        }
     }
 }

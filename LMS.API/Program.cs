@@ -11,6 +11,9 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot/uploads");
+if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
 var app = builder.Build();
 await app.InitializeDatabaseAsync();
 // Configure the HTTP request pipeline.

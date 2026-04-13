@@ -9,7 +9,6 @@ namespace LMS.infra.Repository
     {
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
-            
         }
         public async Task<IEnumerable<T>> GetResourcesByTypeAsync<T>() where T : Resource
         {
@@ -46,5 +45,6 @@ namespace LMS.infra.Repository
                 .AsNoTracking()
                 .AnyAsync(s => s.Id == setId && s.CreatedBy == userId);
         }
+        
     }
 }
