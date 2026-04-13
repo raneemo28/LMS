@@ -11,15 +11,6 @@ namespace LMS.infra.Repository
         public ItemSetRepository(LibraryDbContext context) : base(context)
         {
         }
-
-        public async Task<IEnumerable<ItemSet>> GetPublicSetsAsync()
-        {
-            return await _context.ItemSets
-                .Where(s => s.IsPublic)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
         public async Task<object?> GetSetWithMembersAsync(int setId)
         {
             var itemSet = await _context.ItemSets
