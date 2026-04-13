@@ -28,8 +28,8 @@ namespace LMS.infra.Repository
         public async Task<Resource> GetResourceTypeAsync(int resourceId)
         {
             return await _context.Resources
-            .AsNoTracking()
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Resource not found");
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == resourceId) ?? throw new KeyNotFoundException("Resource not found");
         }
 
         public async Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId)
@@ -47,7 +47,7 @@ namespace LMS.infra.Repository
                 .AnyAsync(s => s.Id == setId && s.CreatedBy == userId);
         }
 
-        public async Task<Value> AddValueAync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
+        public async Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
         {
             // Perform validation similar to AddPropertyAync
             bool isResourceValid = await ResourceExistsAsync(resourceId);
