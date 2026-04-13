@@ -3,4 +3,4 @@ using MediatR;
 
 namespace LMS.Application.Features.ItemSets.Queries.GetAllItemSets;
 
-public record GetAllItemSetsQuery(string? UserId, List<string>? UserRoles) : IRequest<IEnumerable<ItemSet>>;
+public record GetAllItemSetsQuery() : IRequest<IEnumerable<ItemSet>>;

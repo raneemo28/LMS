@@ -1,6 +1,6 @@
 using MediatR;
 using LMS.Domain.Entities;
 
-namespace LMS.Application.Features.Resources.Queries.GetResourcesByType;
+namespace LMS.Application.Features.Resources.Queries.GetResourcesByTypeName;
 
-public record GetResourcesByTypeQuery<T>() : IRequest<IEnumerable<T>> where T : Resource;
+public record GetResourcesByTypeQuery(string TypeName) : IRequest<IEnumerable<Resource>>;
