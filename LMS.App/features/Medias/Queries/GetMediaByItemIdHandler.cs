@@ -16,6 +16,6 @@ public class GetMediaByItemIdHandler : IRequestHandler<GetMediaByItemIdQuery, IE
     {
         var mediaList = await _unitOfWork.Media.GetMediaByItemIdAsync(request.ItemId);
 
-        return mediaList ?? Enumerable.Empty<LMS.Domain.Entities.Media>();
+        return mediaList ?? Enumerable.Empty<Domain.Entities.Media>();
     }
 }
