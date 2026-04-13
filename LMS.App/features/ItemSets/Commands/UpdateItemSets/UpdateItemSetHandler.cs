@@ -20,9 +20,8 @@ public class UpdateItemSetHandler : IRequestHandler<UpdateItemSetCommand, bool>
         if (itemSet == null) return false;
 
         bool isOwner = itemSet.OwnerId == request.UserId;
-        bool isAdmin = request.UserRoles.Contains("Admin");
 
-        if (!isOwner && !isAdmin)
+        if (!isOwner)
         {
             throw new UnauthorizedAccessException("You are not authorized to update this item set.");
         }

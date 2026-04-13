@@ -19,9 +19,8 @@ public class DeleteItemSetHandler : IRequestHandler<DeleteItemSetCommand, bool>
         if (itemSet == null) return false;
 
         bool isOwner = await _unitOfWork.ItemSets.IsOwnerAsync(request.Id, request.UserId);
-        bool isAdmin = request.UserRoles?.Contains("Admin") ?? false;
 
-        if (!isOwner && !isAdmin)
+        if (!isOwner)
         {
             throw new UnauthorizedAccessException("Do not have permission to delete this item set.");
         }
