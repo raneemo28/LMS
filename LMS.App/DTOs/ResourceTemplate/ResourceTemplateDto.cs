@@ -6,5 +6,5 @@ public record ResourceTemplateDto(
     int Id,
     string Label,
     string? Description,
-    List<ResourceTemplatePropertyDto> Properties
+    List<PropertyDto> Properties
 );

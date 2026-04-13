@@ -4,4 +4,5 @@ public record CreateVocabularyDto(
     string Prefix,
     string NamespaceUri,
     string Label
+    List<PropertyDto> Properties
 );

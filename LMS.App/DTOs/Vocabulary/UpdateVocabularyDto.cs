@@ -2,7 +2,7 @@ namespace LMS.App.DTOs.Vocabulary;
 
 public record UpdateVocabularyDto(
     int Id,
-    string Prefix,
     string NamespaceUri,
-    string Label
+    string Label,
+    List<PropertyDto> Properties
 );

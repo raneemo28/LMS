@@ -6,5 +6,5 @@ namespace LMS.Application.Features.Item.Commands.CreateItem;
 public record CreateItemCommand(
     int TemplateId, 
     string OwnerId,
-    List<CreateResourceValueDto> Values
+    List<ResourceValueDto> Values
 ) : IRequest<int>;

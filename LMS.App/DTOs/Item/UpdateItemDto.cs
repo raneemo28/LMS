@@ -4,8 +4,9 @@ namespace LMS.App.DTOs.Item;
 
 public record UpdateItemDto(
     int Id,
-    string Type,
-    string? OwnerId,
-    int? TemplateId,
-    List<UpdateResourceValueDto> Values
+    int TemplateId,
+    List<ResourceValueDto> Values
 );
+
+//dto identical with the command
+

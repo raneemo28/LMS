@@ -10,7 +10,14 @@ namespace LMS.infra.Repository
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<Resource>> GetResourcesByTypeAsync(string typeName)
+        public async Task<IEnumerable<T>> GetResourcesByTypeAsync<T>() where T : Resource
+        {
+            return await _context.Set<T>()
+            .AsNoTracking()
+            .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Resource>> GetResourcesByTypeNameAsync(string typeName)
         {
             return await _context.Resources
                 .Where(r => r.Type == typeName)
@@ -22,7 +29,7 @@ namespace LMS.infra.Repository
         {
             return await _context.Resources
             .AsNoTracking()
-            .FirstOrDefaultAsync(r=>r.Id==resourceId) ?? throw new KeyNotFoundException("Resource not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Resource not found");
         }
 
         public async Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId)
@@ -40,41 +47,70 @@ namespace LMS.infra.Repository
                 .AnyAsync(s => s.Id == setId && s.CreatedBy == userId);
         }
 
-        public async Task<bool> AddResourceWithValue(Resource resource, Value value)
+        public async Task<Value> AddValueAync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
         {
-            await _context.Resources.AddAsync(resource);
+            // Perform validation similar to AddPropertyAync
+            bool isResourceValid = await ResourceExistsAsync(resourceId);
+            bool isPropertyValid = await PropertyExistsAsync(propertyId);
+            bool isDuplicate = await IsValueDuplicateAsync(resourceId, propertyId, valueText, valueUri, valueResourceId, language);
 
-            value.Resource = resource;
-            await _context.Values.AddAsync(value);
+            if (!isResourceValid)
+            {
+                throw new Exception("Value validation failed: Target Resource does not exist.");
+            }
 
-            return true;
+            if (!isPropertyValid)
+            {
+                throw new Exception("Value validation failed: Referenced Property does not exist.");
+            }
+
+            if (isDuplicate)
+            {
+                throw new Exception("Value validation failed: This specific value already exists for this property on the target resource.");
+            }
+
+            var newValue = new Value
+            {
+                ResourceId = resourceId,
+                PropertyId = propertyId,
+                ValueText = valueText,
+                ValueUri = valueUri,
+                ValueResourceId = valueResourceId,
+                Type = type,
+                Language = language
+            };
+
+            var entry = await _context.Values.AddAsync(newValue);
+            return entry.Entity;
         }
 
-        public async Task<bool> UpdateResourceWithValue(int resourceId, Value value)
+        public async Task<bool> ResourceExistsAsync(int resourceId)
         {
-            var existingValue = await _context.Values
-                .FirstOrDefaultAsync(v => v.ResourceId == resourceId && v.Id == value.Id);
-
-            if (existingValue == null) return false;
-
-            existingValue.ValueText = value.ValueText;
-            existingValue.ValueUri = value.ValueUri;
-            existingValue.ValueResourceId = value.ValueResourceId;
-            existingValue.Language = value.Language;
-            existingValue.Type = value.Type;
-
-            _context.Values.Update(existingValue);
-            return true;
+            return await _context.Resources
+                .AsNoTracking()
+                .AnyAsync(r => r.Id == resourceId);
         }
-        public async Task<bool> RemoveResourceWithValue(int resourceId, int valueId)
+
+        public async Task<bool> PropertyExistsAsync(int propertyId)
         {
-            var value = await _context.Values
-                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
-
-            if (value == null) return false;
-
-            _context.Values.Remove(value);
-            return true;
+            return await _context.Properties
+                .AsNoTracking()
+                .AnyAsync(p => p.Id == propertyId);
         }
+
+        public async Task<bool> IsValueDuplicateAsync(int resourceId, int propertyId, string? text, string? uri, int? resId, string? lang)
+        {
+            return await _context.Values
+                .AsNoTracking()
+                .AnyAsync(v =>
+                    v.ResourceId == resourceId &&
+                    v.PropertyId == propertyId &&
+                    v.ValueText == text &&
+                    v.ValueUri == uri &&
+                    v.ValueResourceId == resId &&
+                    v.Language == lang);
+        }
+
+
     }
 }
