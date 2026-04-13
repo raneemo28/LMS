@@ -11,8 +11,9 @@ public class GetItemWithFullDataAsyncHandler : IRequestHandler<GetItemWithFullDa
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<object?> Handle(GetItemWithFullDataAsyncQuery request, CancellationToken cancellationToken)
+    public async Task<ItemDto?> Handle(GetItemWithFullDataAsyncQuery request, CancellationToken cancellationToken)
     {
-        return await _unitOfWork.Items.GetItemWithFullDataAsync(request.Id);
+        var item = await _unitOfWork.Items.GetItemWithFullDataAsync(request.Id);
+         return _mapper.Map<ItemDto>(item);
     }
 }
