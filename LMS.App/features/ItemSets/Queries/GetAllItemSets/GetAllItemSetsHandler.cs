@@ -17,13 +17,8 @@ public class GetAllItemSetsHandler : IRequestHandler<GetAllItemSetsQuery, IEnume
     var result = await _unitOfWork.ItemSets.GetAllAsync();
     var itemSets = result.Cast<ItemSet>().AsQueryable();
 
-    bool isAdmin = request.UserRoles?.Contains("Admin") ?? false;
-
-    if (!isAdmin)
-    {
-
         itemSets = itemSets.Where(x => x.IsPublic || x.OwnerId == request.UserId);
-    }
+    
 
     return itemSets.ToList();
 }

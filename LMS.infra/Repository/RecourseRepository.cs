@@ -12,9 +12,10 @@ namespace LMS.infra.Repository
         }
         public async Task<IEnumerable<T>> GetResourcesByTypeAsync<T>() where T : Resource
         {
-                return await _context.Set<T>()
-                .AsNoTracking()
-                .ToListAsync();        }
+            return await _context.Set<T>()
+            .AsNoTracking()
+            .ToListAsync();
+        }
 
         public async Task<IEnumerable<Resource>> GetResourcesByTypeNameAsync(string typeName)
         {
@@ -45,6 +46,42 @@ namespace LMS.infra.Repository
                 .AsNoTracking()
                 .AnyAsync(s => s.Id == setId && s.CreatedBy == userId);
         }
-        
+
+        public async Task<bool> AddResourceWithValue(Resource resource, Value value)
+        {
+            await _context.Resources.AddAsync(resource);
+
+            value.Resource = resource;
+            await _context.Values.AddAsync(value);
+
+            return true;
+        }
+
+        public async Task<bool> UpdateResourceWithValue(int resourceId, Value value)
+        {
+            var existingValue = await _context.Values
+                .FirstOrDefaultAsync(v => v.ResourceId == resourceId && v.Id == value.Id);
+
+            if (existingValue == null) return false;
+
+            existingValue.ValueText = value.ValueText;
+            existingValue.ValueUri = value.ValueUri;
+            existingValue.ValueResourceId = value.ValueResourceId;
+            existingValue.Language = value.Language;
+            existingValue.Type = value.Type;
+
+            _context.Values.Update(existingValue);
+            return true;
+        }
+        public async Task<bool> RemoveResourceWithValue(int resourceId, int valueId)
+        {
+            var value = await _context.Values
+                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
+
+            if (value == null) return false;
+
+            _context.Values.Remove(value);
+            return true;
+        }
     }
 }
