@@ -40,8 +40,7 @@ namespace LMS.infra.Repository
 
             return new
             {
-                TemplateId = template.Id,
-                TemplateLabel = template.Label,
+                template =template,
                 Properties = properties
             };
         }

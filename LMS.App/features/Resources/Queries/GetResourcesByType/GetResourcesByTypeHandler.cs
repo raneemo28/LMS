@@ -1,15 +1,15 @@
 using MediatR;
-using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
-namespace LMS.Application.Features.Resources.Queries.GetResourcesByType;
-public class GetResourcesByTypeHandler<T> : IRequestHandler<GetResourcesByTypeQuery<T>, IEnumerable<T>> where T : Resource
+using LMS.Domain.Entities;
+namespace LMS.Application.Features.Resources.Queries.GetResourcesByTypeName;
+public class GetResourcesByTypeHandler : IRequestHandler<GetResourcesByTypeQuery, IEnumerable<Resource>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
     public GetResourcesByTypeHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    public async Task<IEnumerable<T>> Handle(GetResourcesByTypeQuery<T> request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<Resource>> Handle(GetResourcesByTypeQuery request, CancellationToken cancellationToken)
     {
-        return await _unitOfWork.Resources.GetResourcesByTypeAsync<T>();
+        return await _unitOfWork.Resources.GetResourcesByTypeAsync(request.TypeName);
     }
 }

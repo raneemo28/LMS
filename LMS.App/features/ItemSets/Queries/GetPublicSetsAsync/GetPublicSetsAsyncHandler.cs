@@ -1,8 +1,10 @@
+using LMS.Application.Features.ItemSets.Queries.GetAllItemSets;
+using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
 
 namespace LMS.Application.Features.ItemSets.Queries.GetPublicSetsAsync;
-public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery, object?>
+public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery, IEnumerable<ItemSet>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -11,8 +13,13 @@ public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<object?> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<ItemSet>> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
     {
-        return await _unitOfWork.ItemSets.GetSetWithMembersAsync(request.Id);
+        var result = await _unitOfWork.ItemSets.GetAllAsync();
+        var itemSets = result.Cast<ItemSet>().AsQueryable();
+
+        itemSets = itemSets.Where(x => x.IsPublic || x.OwnerId == request.UserId);
+
+        return itemSets.ToList();
     }
 }

@@ -11,15 +11,11 @@ public class GetAllItemSetsHandler : IRequestHandler<GetAllItemSetsQuery, IEnume
     {
         _unitOfWork = unitOfWork;
     }
-
     public async Task<IEnumerable<ItemSet>> Handle(GetAllItemSetsQuery request, CancellationToken cancellationToken)
-{
-    var result = await _unitOfWork.ItemSets.GetAllAsync();
-    var itemSets = result.Cast<ItemSet>().AsQueryable();
-
-        itemSets = itemSets.Where(x => x.IsPublic || x.OwnerId == request.UserId);
-    
-
-    return itemSets.ToList();
-}
+    {
+        var result = await _unitOfWork.ItemSets.GetAllAsync();
+        var itemSets = result.Cast<ItemSet>();
+        if (itemSets == null) return null!;
+        return itemSets;
+    }
 }

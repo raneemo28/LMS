@@ -10,14 +10,7 @@ namespace LMS.infra.Repository
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<T>> GetResourcesByTypeAsync<T>() where T : Resource
-        {
-            return await _context.Set<T>()
-            .AsNoTracking()
-            .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Resource>> GetResourcesByTypeNameAsync(string typeName)
+        public async Task<IEnumerable<Resource>> GetResourcesByTypeAsync(string typeName)
         {
             return await _context.Resources
                 .Where(r => r.Type == typeName)
@@ -29,7 +22,7 @@ namespace LMS.infra.Repository
         {
             return await _context.Resources
             .AsNoTracking()
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Resource not found");
+            .FirstOrDefaultAsync(r=>r.Id==resourceId) ?? throw new KeyNotFoundException("Resource not found");
         }
 
         public async Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId)
