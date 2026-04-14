@@ -14,6 +14,7 @@ namespace LMS.Domain.Interfaces
         Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId);
         Task<Resource> GetResourceTypeAsync(int resourceId);
         Task<IEnumerable<Resource>> GetResourcesByTypeAsync(string typeName);
+        Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language);
         Task<bool> IsOwnerAsync(int setId, string userId);
     }
 }

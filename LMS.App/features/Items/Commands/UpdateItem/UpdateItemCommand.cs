@@ -7,5 +7,5 @@ public record UpdateItemCommand(
     int Id, 
     int TemplateId,     
     string? OwnerId,
-    List<UpdateResourceValueDto> Values
+    List<ResourceValueDto> Values
 ) : IRequest<bool>; // Added the missing semicolon here
