@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace LMS.App.Features.Media.Commands.UpdateMediaCommand;
+namespace LMS.App.Features.Medias.Commands.UpdateMediaCommand;
 
 public record UpdateMediaCommand(
     int Id,

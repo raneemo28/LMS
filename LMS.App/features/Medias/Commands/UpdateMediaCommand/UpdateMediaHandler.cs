@@ -2,7 +2,7 @@ using MediatR;
 using LMS.Domain.Interfaces;
 using LMS.Domain.Entities;
 
-namespace LMS.App.Features.Media.Commands.UpdateMediaCommand;
+namespace LMS.App.Features.Medias.Commands.UpdateMediaCommand;
 
 public class UpdateMediaCommandHandler : IRequestHandler<UpdateMediaCommand, bool>
 {
@@ -37,7 +37,7 @@ public class UpdateMediaCommandHandler : IRequestHandler<UpdateMediaCommand, boo
         media.ModifiedBy = request.CurrentUserId;
 
         _unitOfWork.Media.Update(media);
-        
+        // _unitOfWork.Resource.Update(resource);
         return await _unitOfWork.CommitAsync() > 0;
     }
 }
