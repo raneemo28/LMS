@@ -6,6 +6,6 @@ namespace LMS.Application.Features.Item.Commands.UpdateItem;
 public record UpdateItemCommand(
     int Id, 
     int TemplateId,     
-    string? OwnerId,
+    string OwnerId,
     List<ResourceValueDto> Values
-) : IRequest<bool>; // Added the missing semicolon here
+) : IRequest<bool>; 

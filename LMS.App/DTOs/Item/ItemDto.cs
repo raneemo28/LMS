@@ -6,12 +6,10 @@ namespace LMS.App.DTOs.Item;
 
 public record ItemDto(
     int Id,
-    int? TemplateId,
+    int TemplateId,
     List<ResourceValueDto> Values
 );
 /*
-someHow the dto is identical with the entity
-
 //this is how it should be handled in the controller
 [HttpGet("{id}")]
 public async Task<IActionResult> Get(int id)

@@ -39,9 +39,9 @@ public class CreateItemHandler : IRequestHandler<CreateItemCommand, int>
         };
 
         await _unitOfWork.Items.AddAsync(item);
-        
         // This single CommitAsync saves both the Item and all its associated Values atomically.
         await _unitOfWork.CommitAsync();
+         
 
         return item.Id;
     }
