@@ -33,8 +33,8 @@ public class CreateItemHandler : IRequestHandler<CreateItemCommand, int>
                 ValueText = v.ValueText,
                 ValueUri = v.ValueUri,
                 ValueResourceId = v.ValueResourceId,
-                Type = v.Type,
-                Language = v.Language
+                Type = v.ValueType,
+                Language = v.ValueLanguage
             }).ToList()
         };
 

@@ -2,15 +2,20 @@ using LMS.Application.Features.ItemSets.Queries.GetAllItemSets;
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
+using System.Linq;
+using AutoMapper;
+using LMS.App.DTOs.ItemSet;
 
 namespace LMS.Application.Features.ItemSets.Queries.GetPublicSetsAsync;
-public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery, IEnumerable<ItemSet>>
+public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery, IEnumerable<ItemSetDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public GetPublicSetsAsyncHandler(IUnitOfWork unitOfWork)
+    public GetPublicSetsAsyncHandler(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<ItemSet>> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
@@ -20,6 +25,6 @@ public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery
 
         itemSets = itemSets.Where(x => x.IsPublic || x.OwnerId == request.UserId);
 
-        return itemSets.ToList();
+        return _mapper.Map<IEnumerable<ItemSetDto>>(itemSets);
     }
 }

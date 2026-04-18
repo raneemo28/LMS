@@ -1,7 +1,10 @@
+
+namespace LMS.App.DTOs.Value;
 public record CreateResourceValueDto(
     int PropertyId,
-    string Valuetext?,
-    string ValueUri?,
+    string? ValueText,
+    string? ValueUri,
+    int? ValueResourceId,
     string ValueType,
-    string ValueLanguage?
+    string? ValueLanguage
 );

@@ -8,6 +8,7 @@ public class ItemSetMappingProfile : Profile
 {
     public ItemSetMappingProfile()
     {
+        CreateMap<ItemSet, ItemSetMembersDto>();
         CreateMap<ItemSet, ItemSetDto>()
             .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
 

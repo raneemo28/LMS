@@ -13,6 +13,7 @@ public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
         _unitOfWork = unitOfWork;
     }
 
+
     public async Task<int> Handle(CreateItemSetCommand request, CancellationToken cancellationToken)
     {
         var itemSet = new ItemSet
@@ -24,7 +25,15 @@ public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
             Type = "ItemSet", 
             CreatedAt = DateTime.UtcNow,
             CreatedBy = request.CreatedBy,
-            OwnerId = request.OwnerId
+            OwnerId = request.OwnerId,
+            Values = request.Values.Select(v => new Value
+            {
+                PropertyId = v.PropertyId,
+                ValueText = v.ValueText,
+                ValueUri = v.ValueUri,
+                Type = v.Type,
+                Language = v.Language
+            }).ToList()
         };
 
         await _unitOfWork.ItemSets.AddAsync(itemSet);
