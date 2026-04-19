@@ -9,14 +9,7 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<T>> GetResourcesByTypeAsync<T>() where T : Resource
-        {
-            return await _context.Set<T>()
-            .AsNoTracking()
-            .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Resource>> GetResourcesByTypeNameAsync(string typeName)
+        public async Task<IEnumerable<Resource>> GetResourcesByTypeAsync(string typeName)
         {
             return await _context.Resources
                 .Where(r => r.Type == typeName)
@@ -24,11 +17,12 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                 .ToListAsync();
         }
 
-        public async Task<Resource> GetResourceTypeAsync(int resourceId)
+        public async Task<string> GetResourceTypeAsync(int resourceId)
         {
-            return await _context.Resources
+            var resource = await _context.Resources
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Id == resourceId) ?? throw new KeyNotFoundException("Resource not found");
+            return resource.Type;
         }
 
         public async Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId)
@@ -51,7 +45,14 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
             bool isResourceValid = await ResourceExistsAsync(resourceId);
             bool isPropertyValid = await PropertyExistsAsync(propertyId);
             bool isDuplicate = await IsValueDuplicateAsync(resourceId, propertyId, valueText, valueUri, valueResourceId, language);
-
+            if (await GetResourceTypeAsync(resourceId)=="Item")
+            {
+                bool isPropertyValidForItem = await IsPropertyValidForItem(propertyId, resourceId);
+                if (!isPropertyValidForItem)
+                {
+                    throw new Exception("Value validation failed: Property is not valid for this item.");
+                }
+            }
             if (!isResourceValid)
             {
                 throw new Exception("Value validation failed: Target Resource does not exist.");
@@ -108,6 +109,56 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                     v.ValueResourceId == resId &&
                     v.Language == lang);
         }
+        public async Task<bool> IsPropertyValidForItem(int propertyId, int itemId)
+        {
+            var item = await _context.Items
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == itemId);
+            if (item == null) return false;
+            return await _context.TemplateProperties
+                .AsNoTracking()
+                .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId);
+        }
+        public async Task<bool> IsPropertyRequieredForItem(int propertyId,int ItemId)
+        {
+            var item = await _context.Items
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == ItemId);
+            if (item == null) return false;
+            return await _context.TemplateProperties
+                .AsNoTracking()
+                .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId && tp.IsRequired);
+        }
+        public async Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
+        {
+            var value = await _context.Values
+                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
+            if (value == null) return false;
+            value.ValueText = valueText;
+            value.ValueUri = valueUri;
+            value.ValueResourceId = valueResourceId;
+            value.Type = type;
+            value.Language = language;
+            return true;
+        }
 
+<<<<<<< HEAD
+=======
+        public async Task<bool> RemoveValueAsync(int resourceId, int valueId)
+        {
+            var value = await _context.Values
+                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
+            if (value == null) return false;
+            if(await GetResourceTypeAsync(resourceId)=="Item")
+            {
+                if(await IsPropertyRequieredForItem(value.PropertyId,resourceId))
+                {
+                    throw new Exception("Value validation failed: Property is required for this item.");
+                }
+            }
+            _context.Values.Remove(value);
+            return true;
+        }
+>>>>>>> 34f40cdb997e14126488df9db4484b2a70e9d2d2
     }
 }

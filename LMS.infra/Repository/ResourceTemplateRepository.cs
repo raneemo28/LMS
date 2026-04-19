@@ -11,8 +11,6 @@ namespace LMS.infra.Repository
         public ResourceTemplateRepository(LibraryDbContext context) : base(context)
         {
         }
-
-
         public async Task<object?> GetTemplateWithPropertiesAsync(int id)
         {
             var template = await _context.ResourceTemplates
@@ -52,26 +50,19 @@ namespace LMS.infra.Repository
                 .AllAsync(t => t.Label != label);
         }
 
-        public async Task<ResourceTemplate> AddPropertyToTemplateAsync(int templateId, string localName, string label, string termUri)
+        public async Task<ResourceTemplate> AddPropertyToTemplateAsync(int templateId,int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
             if (template == null) return null!;
-
-            var newProperty = new Property
-            {
-                LocalName = localName,
-                Label = label,
-                TermUri = termUri
-            };
-            await _context.Properties.AddAsync(newProperty);
-
-
+            var property = await _context.Properties.FindAsync(propertyId);
+            if (property == null) return null!;
             var link = new TemplateProperty
             {
                 TemplateId = templateId,
-                Property = newProperty,
-                IsRequired = false,
-                DisplayOrder = 0
+                PropertyId = propertyId,
+                IsRequired = isRequired,
+                DisplayOrder = displayOrder,
+                AlternateLabel = alternateLabel
             };
 
             await _context.Set<TemplateProperty>().AddAsync(link);
@@ -88,28 +79,20 @@ namespace LMS.infra.Repository
             if (link != null)
             {
                 _context.Set<TemplateProperty>().Remove(link);
-
-                var property = await _context.Properties.FindAsync(propertyId);
-                if (property != null) _context.Properties.Remove(property);
-
                 return template!;
             }
-
             return null!;
         }
-        public async Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId, string localName, string label, string termUri)
+        public async Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
-            var property = await _context.Properties
-                .FirstOrDefaultAsync(p => p.Id == propertyId);
-
-            if (template == null || property == null) return null!;
-
-            property.LocalName = localName;
-            property.Label = label;
-            property.TermUri = termUri;
-
-            _context.Properties.Update(property);
+            var propertyLink = await _context.TemplateProperties
+             .FirstOrDefaultAsync(p => p.TemplateId == templateId && p.PropertyId == propertyId);
+            if (template == null || propertyLink == null) return null!;
+            propertyLink.IsRequired=isRequired;
+            propertyLink.DisplayOrder=displayOrder;
+            propertyLink.AlternateLabel=alternateLabel;
+            _context.TemplateProperties.Update(property);
 
             return template;
         }
