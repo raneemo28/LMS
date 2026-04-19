@@ -12,6 +12,7 @@ public interface IVocabularyRepository : IGenericRepository<Vocabulary>
     void UpdateProperty(Property property);
     Task<bool> DeletePropertyAsync(int propertyId);
     
+    
     // Queries
     Task<IEnumerable<Property>> GetPropertiesByVocabularyIdAsync(int vocabularyId);
     
