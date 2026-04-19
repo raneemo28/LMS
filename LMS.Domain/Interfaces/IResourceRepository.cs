@@ -2,7 +2,7 @@ using LMS.Domain.Entities;
 
 namespace LMS.Domain.Interfaces
 {
-    public interface IResourceRepository : IGenericRepository<Resource>
+public interface IResourceRepository<T> : IGenericRepository<T> where T : Resource
     {
 
         Task<bool> AddResourceWithValue(Resource resource, Value value);

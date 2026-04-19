@@ -5,8 +5,7 @@ using LMS.infra.Database;
 
 namespace LMS.infra.Repository
 {
-    public class ResourceRepository : GenericRepository<Resource>, IResourceRepository
-    {
+public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T> where T : Resource    {
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
         }
@@ -49,7 +48,6 @@ namespace LMS.infra.Repository
 
         public async Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
         {
-            // Perform validation similar to AddPropertyAync
             bool isResourceValid = await ResourceExistsAsync(resourceId);
             bool isPropertyValid = await PropertyExistsAsync(propertyId);
             bool isDuplicate = await IsValueDuplicateAsync(resourceId, propertyId, valueText, valueUri, valueResourceId, language);
@@ -110,7 +108,6 @@ namespace LMS.infra.Repository
                     v.ValueResourceId == resId &&
                     v.Language == lang);
         }
-
 
     }
 }

@@ -1,33 +1,42 @@
 using MediatR;
 using LMS.Domain.Interfaces;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
 
-namespace LMS.Application.Features.Media.Commands.UploadMedia;
+namespace LMS.App.Features.Media.Commands.UploadMediaFile;
 
-public class UploadMediaHandler : IRequestHandler<UploadMediaCommand, bool>
+public class UploadMediaFileHandler : IRequestHandler<UploadMediaFileCommand, string>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediaStorageService _storage;
 
-    public UploadMediaHandler(IUnitOfWork unitOfWork)
+    public UploadMediaFileHandler(
+        IUnitOfWork unitOfWork,
+        IMediaStorageService storage)
     {
         _unitOfWork = unitOfWork;
+        _storage = storage;
     }
 
-    public async Task<bool> Handle(UploadMediaCommand request, CancellationToken cancellationToken)
+    public async Task<string> Handle(UploadMediaFileCommand request, CancellationToken cancellationToken)
     {
+        var media = await _unitOfWork.Media.GetByIdAsync(request.MediaId) as Domain.Entities.Media;
 
-        var media = await _unitOfWork.Media.UploadMediaAsync(
-            request.MediaId,
-            request.FileContent,
+        if (media is null)
+            throw new Exception("Media not found");
+
+
+        var storagePath = await _storage.UploadAsync(
+            request.Content,
             request.FileName,
             request.MimeType);
+        media.ModifiedAt = DateTime.UtcNow;
+        media.StoragePath = storagePath;
+        media.MimeType = request.MimeType;
+        media.FileName = request.FileName;
 
-        if (media == null)
-        {
-            return false;
-        }
+        await _unitOfWork.CommitAsync();
 
-        var result = await _unitOfWork.CommitAsync();
-
-        return result > 0;
+        return storagePath;
     }
 }

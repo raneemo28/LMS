@@ -6,7 +6,7 @@ using LMS.Domain.Constants;
 
 namespace LMS.infra.Repository
 {
-    public class ItemSetRepository : ResourceRepository, IItemSetRepository
+    public class ItemSetRepository : ResourceRepository<ItemSet>, IItemSetRepository
     {
         public ItemSetRepository(LibraryDbContext context) : base(context)
         {
