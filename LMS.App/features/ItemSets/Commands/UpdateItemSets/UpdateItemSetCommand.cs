@@ -1,5 +1,5 @@
 using MediatR;
-
+using LMS.App.DTOs.Value;
 namespace LMS.Application.Features.ItemSets.Commands.UpdateItemSets;
 public record UpdateItemSetCommand(
     int Id, 
@@ -7,5 +7,6 @@ public record UpdateItemSetCommand(
     string Description, 
     bool IsPublic,
     string UserId, 
-    List<string> UserRoles
-) : IRequest<bool>;
+    List<string> UserRoles,
+    List<ResourceValueDto>? Values
+) : IRequest<bool>; 

@@ -7,6 +7,5 @@ public record CreateItemSetDto(
     string Title,
     string? Description,
     bool IsPublic,
-    List<ResourceValueDto> Values
+    List<ResourceValueDto>? Values
 );  
-//dto as command

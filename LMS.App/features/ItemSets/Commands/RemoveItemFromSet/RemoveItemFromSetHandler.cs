@@ -15,7 +15,9 @@ public class RemoveItemFromSetHandler : IRequestHandler<RemoveItemFromSetCommand
         if (itemSet.OwnerId != request.UserId)
             throw new UnauthorizedAccessException("Don't have permission to modify this set.");
 
-        await _unitOfWork.ItemSets.RemoveItemFromSetAsync(request.SetId, request.ItemId);
+        var result = await _unitOfWork.ItemSets.RemoveItemFromSetAsync(request.SetId, request.ItemId);
+
+        if (result == null) return false;
 
         itemSet.ModifiedAt = DateTime.UtcNow;
         itemSet.ModifiedBy = request.UserId;

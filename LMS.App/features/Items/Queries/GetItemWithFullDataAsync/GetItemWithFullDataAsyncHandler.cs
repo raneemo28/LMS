@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 using LMS.App.DTOs.Item;
-using AutoMapper;   
+using AutoMapper;    
 namespace LMS.Application.Features.Item.Queries.GetItemWithFullDataAsync;
 public class GetItemWithFullDataAsyncHandler : IRequestHandler<GetItemWithFullDataAsyncQuery, ItemDto?>
 {
@@ -17,6 +17,8 @@ public class GetItemWithFullDataAsyncHandler : IRequestHandler<GetItemWithFullDa
     public async Task<ItemDto?> Handle(GetItemWithFullDataAsyncQuery request, CancellationToken cancellationToken)
     {
         var item = await _unitOfWork.Items.GetItemWithFullDataAsync(request.Id);
-        return item == null ? null : _mapper.Map<ItemDto>(item);
+        if (item == null) return null;
+        var itemDto = _mapper.Map<ItemDto>(item);
+        return itemDto;
     }
 }

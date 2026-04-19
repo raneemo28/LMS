@@ -6,21 +6,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
+using LMS.App.DTOs.Item;
 
 namespace LMS.App.features.Items.Queries.GetItemsWithFullDataWithConditionAsync
 {
-    public class GetItemsWithFullDataWithConditionAsyncHandler : IRequestHandler<GetItemsWithFullDataWithConditionQuery, object?>
+    public class GetItemsWithFullDataWithConditionAsyncHandler : IRequestHandler<GetItemsWithFullDataWithConditionQuery, IEnumerable<ItemDto>?>
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public GetItemsWithFullDataWithConditionAsyncHandler(IUnitOfWork unitOfWork)
+        public GetItemsWithFullDataWithConditionAsyncHandler(IUnitOfWork unitOfWork,IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
     
-        public async Task<object?> Handle(GetItemsWithFullDataWithConditionQuery request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<ItemDto>?> Handle(GetItemsWithFullDataWithConditionQuery request, CancellationToken cancellationToken)
         {
-            return await _unitOfWork.Items.GetItemsWithFullDataWithConditionAsync(request.Filter);
+            var FilteredItems =await _unitOfWork.Items.GetItemsWithFullDataWithConditionAsync(request.Filter);
+            if(FilteredItems == null) return null;
+
+            return _mapper.Map<IEnumerable<ItemDto>>(FilteredItems);
         }
     }
 }
