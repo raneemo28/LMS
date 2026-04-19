@@ -1,30 +1,19 @@
-using MediatR;
 using LMS.Domain.Interfaces;
+using MediatR;
 
-namespace LMS.App.Features.Vocabularies.Commands.DeleteProperty;
+namespace LMS.Application.Features.Vocabularies.Commands.DeleteProperty;
 
 public class DeletePropertyHandler : IRequestHandler<DeletePropertyCommand, bool>
 {
     private readonly IUnitOfWork _unitOfWork;
+    public DeletePropertyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
-    public DeletePropertyHandler(IUnitOfWork unitOfWork)
+    public async Task<bool> Handle(DeletePropertyCommand request, CancellationToken ct)
     {
-        _unitOfWork = unitOfWork;
-    }
+        if (await _unitOfWork.Vocabularies.HasLinkedValuesAsync(request.Id))
+            throw new InvalidOperationException("Cannot delete property because it has linked values.");
 
-    public async Task<bool> Handle(DeletePropertyCommand request, CancellationToken cancellationToken)
-    {
-        var hasValues = await _unitOfWork.Vocabularies.HasLinkedValuesAsync(request.PropertyId);
-
-        if (hasValues)
-        {
-            throw new InvalidOperationException("Cannot delete property because it has linked values. Please remove the linked values first.");
-        }
-
-        var deletedProperty = await _unitOfWork.Vocabularies.DeletePropertyAync(request.PropertyId);
-
-        if (deletedProperty == null) return false;
-
-        return await _unitOfWork.CommitAsync() > 0;
+        var deleted = await _unitOfWork.Vocabularies.DeletePropertyAsync(request.Id);
+        return deleted && await _unitOfWork.CommitAsync() > 0;
     }
 }

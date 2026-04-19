@@ -2,120 +2,55 @@ using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using LMS.infra.Database;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace LMS.infra.Repository
+namespace LMS.infra.Repository;
+
+public class VocabularyRepository : GenericRepository<Vocabulary>, IVocabularyRepository
 {
-    public class VocabularyRepository : GenericRepository<Vocabulary>, IVocabularyRepository
+    public VocabularyRepository(LibraryDbContext context) : base(context) { }
+
+    // --- Property Commands ---
+    public async Task AddPropertyAsync(Property property)
     {
-        public VocabularyRepository(LibraryDbContext context) : base(context) { }
+        bool existsLocal = await IsPropertyExistsInVocabularyAsync(property.VocabularyId, property.LocalName);
+        if (existsLocal)
+            throw new InvalidOperationException($"Property '{property.LocalName}' already exists in this vocabulary.");
 
-        public async Task<Vocabulary?> GetByPrefixAsync(string prefix)
-        {
-            return await _context.Vocabularies
-                .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.Prefix == prefix);
-        }
+        await _context.Properties.AddAsync(property);
+    }
+    public async Task<Property?> GetPropertyByIdAsync(int id) {
+    await _context.Properties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);}
+    public void UpdateProperty(Property property) => _context.Properties.Update(property);
 
-        public async Task<object?> GetWithPropertiesAsync(int id)
-        {
-            var vocabulary = await _context.Vocabularies
-                .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (vocabulary == null) return null;
-
-            var properties = await _context.Properties
-                .Where(p => p.VocabularyId == id)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return new
-            {
-                Vocabulary = vocabulary,
-                Properties = properties
-            };
-        }
-
-        public async Task<bool> IsLabelUniqueAsync(string label)
-        {
-            return await _context.Vocabularies
-                .AsNoTracking()
-                .AllAsync(v => v.Label != label);
-        }
-
-        public async Task<bool> IsNamespaceUriUniqueAsync(string uri)
-        {
-            return await _context.Vocabularies
-                .AsNoTracking()
-                .AllAsync(v => v.NamespaceUri != uri);
-        }
-
-        public async Task<LMS.Domain.Entities.Property> AddPropertyAync(int vocabularyId, string localName, string label, string termUri)
-        {
-
-            bool isDuplicate = await IsPropertyExistsInVocabularyAsync(vocabularyId, localName);
-            bool isLabelConflict = !await IsLabelUniqueAsync(label);
-            bool isUriConflict = !await IsNamespaceUriUniqueAsync(termUri);
-
-            if (isDuplicate || isLabelConflict || isUriConflict)
-            {
-                throw new Exception("Property validation failed: Label, URI, or LocalName already exists in system vocabularies.");
-            }
-
-            var newProp = new Property
-            {
-                VocabularyId = vocabularyId,
-                LocalName = localName,
-                Label = label,
-                TermUri = termUri
-            };
-
-            var entry = await _context.Properties.AddAsync(newProp);
-            return entry.Entity;
-        }
-
-        public async Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName)
-        {
-            return await _context.Properties
-                .AsNoTracking()
-                .AnyAsync(p => p.VocabularyId == vocabularyId && p.LocalName == localName);
-        }
-        public async Task<bool> HasLinkedValuesAsync(int propertyId)
-        {
-            return await _context.Values.AnyAsync(v => v.PropertyId == propertyId);
-        }
-        public async Task<Property> DeletePropertyAync(int propertyId)
-        {
-            var property = await _context.Properties
-                .FirstOrDefaultAsync(p => p.Id == propertyId);
-
-            if (property == null)
-            {
-                return null;
-            }
-            _context.Properties.Remove(property);
-
-            return property;
-        }
-
-        
-public async Task<Property> UpdatePropertyAync(int propertyId, string localName, string label, string TermUri)
-{
-    var property = await _context.Properties
-        .FirstOrDefaultAsync(p => p.Id == propertyId);
-
-    if (property == null)
+    public async Task<bool> DeletePropertyAsync(int propertyId)
     {
-        return null; 
+        var property = await _context.Properties.FindAsync(propertyId);
+        if (property == null) return false;
+        _context.Properties.Remove(property);
+        return true;
     }
 
-    property.LocalName = localName;
-    property.Label = label;
-    property.TermUri = TermUri;
+    // --- Queries ---
+    public async Task<IEnumerable<Property>> GetPropertiesByVocabularyIdAsync(int vocabularyId) =>
+        await _context.Properties
+            .Where(p => p.VocabularyId == vocabularyId)
+            .AsNoTracking()
+            .ToListAsync();
 
-    _context.Properties.Update(property);
+    // --- Validations ---
+    public async Task<bool> HasLinkedValuesAsync(int propertyId) =>
+        await _context.Values.AnyAsync(v => v.PropertyId == propertyId);
 
-    return property;
-}
-    }
+    public async Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName) =>
+        await _context.Properties.AsNoTracking()
+            .AnyAsync(p => p.VocabularyId == vocabularyId && p.LocalName == localName);
+
+    public async Task<bool> IsLabelUniqueAsync(string label) =>
+        await _context.Vocabularies.AsNoTracking().AllAsync(v => v.Label != label);
+
+    public async Task<bool> IsNamespaceUriUniqueAsync(string uri) =>
+        await _context.Vocabularies.AsNoTracking().AllAsync(v => v.NamespaceUri != uri);
 }

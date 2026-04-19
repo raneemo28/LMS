@@ -1,7 +1,6 @@
-namespace LMS.App.DTOs.Vocabulary;
+namespace LMS.App.DTOs.Property;
 
-public record PropertyDto(
-    int Id,
+public record CreatePropertyDto(
     int VocabularyId,
     string LocalName,
     string Label,
