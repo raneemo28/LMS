@@ -8,5 +8,5 @@ public record UpdateItemSetDto(
     string Title,
     string? Description,
     bool IsPublic,
-    List<ResourceValueDto> Values
+    List<ResourceValueDto>? Values
 );

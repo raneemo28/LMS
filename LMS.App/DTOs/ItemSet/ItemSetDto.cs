@@ -9,5 +9,5 @@ public record ItemSetDto(
     string Title,
     string? Description,
     bool IsPublic,
-    List<ResourceValueDto> Values
+    List<ResourceValueDto>? Values
 );

@@ -11,7 +11,7 @@ namespace LMS.infra.Repository
         public ItemSetRepository(LibraryDbContext context) : base(context)
         {
         }
-        public async Task<object?> GetSetWithMembersAsync(int setId)
+        public async Task<ItemSetWithMembers?> GetSetWithMembersAsync(int setId)
         {
             var itemSet = await _context.ItemSets
                 .Include(s => s.Values)
@@ -31,14 +31,11 @@ namespace LMS.infra.Repository
                 .AsNoTracking()
                 .ToListAsync();
 
-            return new
-            {
-                SetInfo = itemSet,
-                Members = members
-            };
+            return new ItemSetWithMembers(itemSet, members);
         }
         public async Task<Item> AddItemToSetAsync(int setId, int itemId)
         {
+            //still need to check the duplication 
             var item = await _context.Items.FindAsync(itemId);
             if (item == null) return null!;
 

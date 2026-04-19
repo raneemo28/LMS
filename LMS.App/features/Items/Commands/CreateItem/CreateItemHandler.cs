@@ -33,15 +33,15 @@ public class CreateItemHandler : IRequestHandler<CreateItemCommand, int>
                 ValueText = v.ValueText,
                 ValueUri = v.ValueUri,
                 ValueResourceId = v.ValueResourceId,
-                Type = v.Type,
-                Language = v.Language
+                Type = v.ValueType,
+                Language = v.ValueLanguage
             }).ToList()
         };
 
         await _unitOfWork.Items.AddAsync(item);
-        
         // This single CommitAsync saves both the Item and all its associated Values atomically.
         await _unitOfWork.CommitAsync();
+         
 
         return item.Id;
     }
