@@ -1,17 +1,23 @@
 using LMS.Domain.Entities;
-namespace LMS.Domain.Interfaces
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace LMS.Domain.Interfaces;
+
+public interface IVocabularyRepository : IGenericRepository<Vocabulary>
 {
-    public interface IVocabularyRepository : IGenericRepository<Vocabulary>
-    {
-        Task <Property> AddPropertyAync(int vocabularyId, string localName, string label, string TermUri);
-        Task <Property> DeletePropertyAync(int propertyId);
-        Task <Property> UpdatePropertyAync(int propertyId, string localName, string label, string TermUri);
-        Task<bool> HasLinkedValuesAsync(int propertyId);
-        Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName);
-        Task<Vocabulary?> GetByPrefixAsync(string prefix);
-        Task<bool> IsLabelUniqueAsync(string label);
-        Task<bool> IsNamespaceUriUniqueAsync(string uri);
-        Task<Object?> GetWithPropertiesAsync(int id);
-        
-    }
+    // Property Management
+    Task<Property?> GetPropertyByIdAsync(int id);
+    Task AddPropertyAsync(Property property);
+    void UpdateProperty(Property property);
+    Task<bool> DeletePropertyAsync(int propertyId);
+    
+    // Queries
+    Task<IEnumerable<Property>> GetPropertiesByVocabularyIdAsync(int vocabularyId);
+    
+    // Validations
+    Task<bool> HasLinkedValuesAsync(int propertyId);
+    Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName);
+    Task<bool> IsLabelUniqueAsync(string label);
+    Task<bool> IsNamespaceUriUniqueAsync(string uri);
 }
