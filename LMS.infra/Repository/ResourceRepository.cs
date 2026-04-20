@@ -9,14 +9,6 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<Resource>> GetResourcesByTypeAsync(string typeName)
-        {
-            return await _context.Resources
-                .Where(r => r.Type == typeName)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
         public async Task<string> GetResourceTypeAsync(int resourceId)
         {
             var resource = await _context.Resources

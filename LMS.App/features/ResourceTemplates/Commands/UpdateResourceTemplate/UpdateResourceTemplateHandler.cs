@@ -17,7 +17,9 @@ public class UpdateResourceTemplateCommandHandler : IRequestHandler<UpdateResour
         var template = await _unitOfWork.ResourceTemplates.GetByIdAsync(request.Id);
 
         if (template == null) return false;
-
+        if(!_unitOfWork.ResourceTemplates.IsLabelUniqueAsync(request.Label)){
+            throw new Exception("Label already exists");
+        }
         template.Label = request.Label;
         template.Description = request.Description;
 

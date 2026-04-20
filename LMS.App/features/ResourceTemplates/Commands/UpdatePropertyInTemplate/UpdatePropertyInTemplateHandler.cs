@@ -9,7 +9,7 @@ public class UpdatePropertyInTemplateHandler : IRequestHandler<UpdatePropertyInT
     public async Task<bool> Handle(UpdatePropertyInTemplateCommand request, CancellationToken cancellationToken)
     {
         var result = await _unitOfWork.ResourceTemplates.UpdatePropertyInTemplateAsync(
-            request.TemplateId, request.PropertyId, request.LocalName, request.Label, request.TermUri);
+            request.TemplateId, request.PropertyId, request.IsRequired, request.DisplayOrder, request.AlternateLabel);
 
         if (result == null) return false;
 
