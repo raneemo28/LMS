@@ -2,7 +2,7 @@ using LMS.Domain.Entities;
 
 namespace LMS.Domain.Interfaces
 {
-    public interface IResourceRepository : IGenericRepository<Resource>
+public interface IResourceRepository<T> : IGenericRepository<T> where T : Resource
     {
 
         Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language);

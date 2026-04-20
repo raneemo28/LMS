@@ -1,15 +1,13 @@
+using LMS.App.DTOs.Value;
 using MediatR;
 
 namespace LMS.App.Features.Medias.Commands.UpdateMediaCommand;
 
 public record UpdateMediaCommand(
     int Id,
-    string? AltText,
-    string FileName,
-    string StoragePath,
-    string? MimeType,
-    long? FileSize,
     int? ItemId,
-    string? CreatedBy,
+    string FileName,
+    string? AltText,
+    List<ResourceValueDto> Values, // القائمة الجديدة للقيم
     string CurrentUserId
 ) : IRequest<bool>;

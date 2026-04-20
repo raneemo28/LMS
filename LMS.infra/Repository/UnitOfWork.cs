@@ -1,3 +1,4 @@
+using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using LMS.infra.Database;
 
@@ -7,7 +8,7 @@ namespace LMS.infra.Repository
     {
         private readonly LibraryDbContext _context;
 
-        public IResourceRepository Resources { get; private set; }
+        public IResourceRepository<Resource> Resources { get; private set; }
         public IItemRepository Items { get; private set; }
         public IItemSetRepository ItemSets { get; private set; }
         public IVocabularyRepository Vocabularies { get; private set; }
@@ -17,7 +18,7 @@ namespace LMS.infra.Repository
         public UnitOfWork(LibraryDbContext context)
         {
             _context = context;
-            Resources = new ResourceRepository(_context);
+            Resources = new ResourceRepository<Resource>(_context);
             Items = new ItemRepository(_context);
             ItemSets = new ItemSetRepository(_context);
             Vocabularies = new VocabularyRepository(_context);

@@ -1,10 +1,10 @@
 using MediatR;
 
-namespace LMS.Application.Features.Media.Commands.UploadMedia;
+namespace LMS.App.Features.Media.Commands.UploadMediaFile;
 
-public record UploadMediaCommand(
-    int MediaId,          
-    byte[] FileContent,   
-    string FileName,      
-    string MimeType       
-) : IRequest<bool>;
+public record UploadMediaFileCommand(
+    int MediaId,
+    byte[] Content,
+    string MimeType,
+    string FileName
+) : IRequest<string>;

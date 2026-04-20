@@ -1,14 +1,45 @@
 using MediatR;
-using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
+using LMS.App.Interface;
+
 namespace LMS.Application.Features.Media.Commands.DownloadMedia;
-public class DownloadMediaHandler : IRequestHandler<DownloadMediaCommand, LMS.Domain.Entities.Media?>
+
+public class DownloadMediaHandler
+    : IRequestHandler<DownloadMediaCommand, DownloadMediaResult>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public DownloadMediaHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+    private readonly IMediaStorageService _storage;
 
-    public async Task<LMS.Domain.Entities.Media?> Handle(DownloadMediaCommand request, CancellationToken cancellationToken)
+    public DownloadMediaHandler(
+        IUnitOfWork unitOfWork,
+        IMediaStorageService storage)
     {
-        return await _unitOfWork.Media.DownloadMediaAsync(request.MediaId);
+        _unitOfWork = unitOfWork;
+        _storage = storage;
+    }
+
+    public async Task<DownloadMediaResult> Handle(
+        DownloadMediaCommand request,
+        CancellationToken cancellationToken)
+    {
+        var resource = await _unitOfWork.Media.GetByIdAsync(request.MediaId);
+
+        var media = resource as Domain.Entities.Media;
+
+        if (media == null)
+            throw new Exception("Media not found");
+
+        if (string.IsNullOrWhiteSpace(media.StoragePath))
+            throw new Exception("Invalid media storage path");
+
+        (Stream stream, string contentType, string fileName) =
+    await _storage.DownloadAsync(media.StoragePath);
+
+        return new DownloadMediaResult
+        {
+            Stream = stream,
+            ContentType = contentType,
+            FileName = fileName
+        };
     }
 }

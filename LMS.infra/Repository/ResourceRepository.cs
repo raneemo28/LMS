@@ -5,8 +5,7 @@ using LMS.infra.Database;
 
 namespace LMS.infra.Repository
 {
-    public class ResourceRepository : GenericRepository<Resource>, IResourceRepository
-    {
+public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T> where T : Resource    {
         public ResourceRepository(LibraryDbContext context) : base(context)
         {
         }

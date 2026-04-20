@@ -1,6 +1,8 @@
 using System.Reflection;
 using LMS.infra;
 using LMS.App;
+using LMS.App.Interface;
+using LMS.Infrastructure.ServicesStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +15,7 @@ builder.Services.AddOpenApi();
 
 var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot/uploads");
 if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
-
+builder.Services.AddScoped<IMediaProcessingService, MediaProcessingService>();
 var app = builder.Build();
 await app.InitializeDatabaseAsync();
 // Configure the HTTP request pipeline.

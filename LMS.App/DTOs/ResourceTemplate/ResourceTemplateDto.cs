@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LMS.App.DTOs.Property;
 
 namespace LMS.App.DTOs.ResourceTemplate;
 

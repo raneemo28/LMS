@@ -15,29 +15,44 @@ public class UpdateMediaCommandHandler : IRequestHandler<UpdateMediaCommand, boo
 
     public async Task<bool> Handle(UpdateMediaCommand request, CancellationToken cancellationToken)
     {
-
-        var resource = await _unitOfWork.Media.GetByIdAsync(request.Id);
-        var media = resource as Domain.Entities.Media;
+        var media = await _unitOfWork.Media.GetMediaWithMetadataAsync(request.Id);
+        
         if (media == null) return false;
 
-
-        if (media.OwnerId != request.CurrentUserId)
+        if (media.CreatedBy != request.CurrentUserId)
         {
             throw new UnauthorizedAccessException("Don't have permission to edit this file.");
         }
 
         media.FileName = request.FileName;
-        media.StoragePath = request.StoragePath;
-        media.MimeType = request.MimeType;
-        media.FileSize = request.FileSize;
         media.AltText = request.AltText;
         media.ItemId = request.ItemId;
-
+        
         media.ModifiedAt = DateTime.UtcNow;
         media.ModifiedBy = request.CurrentUserId;
 
+        if (request.Values != null)
+        {
+            media.Values.Clear();
+
+            foreach (var v in request.Values)
+            {
+                media.Values.Add(new Value
+                {
+                    ResourceId = media.Id,
+                    PropertyId = v.PropertyId,
+                    ValueText = v.ValueText,
+                    ValueUri = v.ValueUri,
+                    ValueResourceId = v.ValueResourceId,
+                    Type = v.Type,
+                    Language = v.Language
+                });
+            }
+        }
+
         _unitOfWork.Media.Update(media);
-        // _unitOfWork.Resource.Update(resource);
-        return await _unitOfWork.CommitAsync() > 0;
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
     }
 }

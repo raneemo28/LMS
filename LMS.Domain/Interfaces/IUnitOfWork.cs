@@ -1,8 +1,10 @@
+using LMS.Domain.Entities;
+
 namespace LMS.Domain.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
-        IResourceRepository Resources { get; }
+        IResourceRepository<Resource> Resources { get; }
         IItemRepository Items { get; }
         IMediaRepository Media { get; }
         IVocabularyRepository Vocabularies { get; }
