@@ -18,7 +18,6 @@ public class ItemMappingProfile : Profile
             .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
             .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
             .ForMember(d => d.Template, opt => opt.Ignore())
-            .ForMember(d => d.Medias, opt => opt.Ignore())
             .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
 
         CreateMap<UpdateItemDto, Item>()
@@ -27,7 +26,6 @@ public class ItemMappingProfile : Profile
             .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
             .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
             .ForMember(d => d.Template, opt => opt.Ignore())
-            .ForMember(d => d.Medias, opt => opt.Ignore())
             .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
     }
 }

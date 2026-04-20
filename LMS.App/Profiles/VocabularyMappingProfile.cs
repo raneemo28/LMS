@@ -13,10 +13,8 @@ public class VocabularyMappingProfile : Profile
         CreateMap<Property, PropertyDto>();
 
         CreateMap<CreateVocabularyDto, Vocabulary>()
-            .ForMember(d => d.Id, opt => opt.Ignore())
-            .ForMember(d => d.Properties, opt => opt.Ignore());
+            .ForMember(d => d.Id, opt => opt.Ignore());
 
-        CreateMap<UpdateVocabularyDto, Vocabulary>()
-            .ForMember(d => d.Properties, opt => opt.Ignore());
+        CreateMap<UpdateVocabularyDto, Vocabulary>();
     }
 }
