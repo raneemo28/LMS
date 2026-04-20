@@ -142,8 +142,6 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
             return true;
         }
 
-<<<<<<< HEAD
-=======
         public async Task<bool> RemoveValueAsync(int resourceId, int valueId)
         {
             var value = await _context.Values
@@ -159,6 +157,5 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
             _context.Values.Remove(value);
             return true;
         }
->>>>>>> 34f40cdb997e14126488df9db4484b2a70e9d2d2
     }
 }
