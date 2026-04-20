@@ -1,5 +1,5 @@
 using MediatR;
-namespace LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+namespace LMS.App.Features.ResourceTemplates.Commands.UpdatePropertyInTemplate;
 public record UpdatePropertyInTemplateCommand(
     int TemplateId, 
     int PropertyId, 

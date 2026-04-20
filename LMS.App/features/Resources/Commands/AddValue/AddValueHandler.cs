@@ -4,7 +4,7 @@ using MediatR;
 
 namespace LMS.Application.Features.Resources.Commands.AddValue;
 
-public class AddValueHandler : IRequestHandler<AddValueCommand, Value>
+public class AddValueHandler : IRequestHandler<AddValueCommand, bool>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -13,7 +13,7 @@ public class AddValueHandler : IRequestHandler<AddValueCommand, Value>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Value> Handle(AddValueCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(AddValueCommand request, CancellationToken cancellationToken)
     {
         var value = await _unitOfWork.Resources.AddValueAsync(
             request.ResourceId,
@@ -24,9 +24,9 @@ public class AddValueHandler : IRequestHandler<AddValueCommand, Value>
             request.Type,
             request.Language
         );
+        if(value == null) return false;
+        var result = await _unitOfWork.CommitAsync();
 
-        await _unitOfWork.CommitAsync();
-
-        return value;
+        return result > 0;
     }
 }

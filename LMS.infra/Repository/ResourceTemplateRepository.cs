@@ -72,16 +72,16 @@ namespace LMS.infra.Repository
         public async Task<ResourceTemplate> RemovePropertyFromTemplateAsync(int templateId, int propertyId)
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
-
+            if (template == null) return null;
             var link = await _context.TemplateProperties
                 .FirstOrDefaultAsync(tp => tp.TemplateId == templateId && tp.PropertyId == propertyId);
 
             if (link != null)
             {
                 _context.TemplateProperties.Remove(link);
-                return template!;
+                return template;
             }
-            return null!;
+            return null;
         }
         public async Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
         {
