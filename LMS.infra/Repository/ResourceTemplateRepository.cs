@@ -65,7 +65,7 @@ namespace LMS.infra.Repository
                 AlternateLabel = alternateLabel
             };
 
-            await _context.Set<TemplateProperty>().AddAsync(link);
+            await _context.TemplateProperties.AddAsync(link);
 
             return template;
         }
@@ -73,12 +73,12 @@ namespace LMS.infra.Repository
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
 
-            var link = await _context.Set<TemplateProperty>()
+            var link = await _context.TemplateProperties
                 .FirstOrDefaultAsync(tp => tp.TemplateId == templateId && tp.PropertyId == propertyId);
 
             if (link != null)
             {
-                _context.Set<TemplateProperty>().Remove(link);
+                _context.TemplateProperties.Remove(link);
                 return template!;
             }
             return null!;
@@ -92,7 +92,7 @@ namespace LMS.infra.Repository
             propertyLink.IsRequired=isRequired;
             propertyLink.DisplayOrder=displayOrder;
             propertyLink.AlternateLabel=alternateLabel;
-            _context.TemplateProperties.Update(property);
+            _context.TemplateProperties.Update(propertyLink);
 
             return template;
         }

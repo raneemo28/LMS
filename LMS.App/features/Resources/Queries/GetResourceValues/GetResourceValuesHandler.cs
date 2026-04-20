@@ -12,10 +12,6 @@ public class GetResourceValuesHandler : IRequestHandler<GetResourceValuesQuery, 
     public async Task<object> Handle(GetResourceValuesQuery request, CancellationToken cancellationToken)
     {
         var result = await _unitOfWork.Resources.GetResourceValuesAsync(request.ResourceId);
-
-        if (result == null)
-            throw new KeyNotFoundException($"Resource with ID {request.ResourceId} not found.");
-
         return result;
     }
 }
