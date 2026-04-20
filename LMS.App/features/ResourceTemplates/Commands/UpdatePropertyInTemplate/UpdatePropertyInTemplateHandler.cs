@@ -1,6 +1,6 @@
 using MediatR;
 using LMS.Domain.Interfaces;
-namespace LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+namespace LMS.App.Features.ResourceTemplates.Commands.UpdatePropertyInTemplate;
 public class UpdatePropertyInTemplateHandler : IRequestHandler<UpdatePropertyInTemplateCommand, bool>
 {
     private readonly IUnitOfWork _unitOfWork;

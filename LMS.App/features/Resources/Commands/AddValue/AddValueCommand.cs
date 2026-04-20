@@ -11,4 +11,4 @@ public record AddValueCommand(
     int? ValueResourceId, 
     string Type, 
     string? Language
-) : IRequest<Value>;
+) : IRequest<bool>;

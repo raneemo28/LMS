@@ -9,7 +9,7 @@ public class AddPropertyToTemplateHandler : IRequestHandler<AddPropertyToTemplat
     public async Task<bool> Handle(AddPropertyToTemplateCommand request, CancellationToken cancellationToken)
     {
         var result = await _unitOfWork.ResourceTemplates.AddPropertyToTemplateAsync(
-            request.TemplateId, request.IsRequired, request.DisplayOrder, request.AlternateLabel);
+            request.TemplateId, request.PropertyId, request.IsRequired, request.DisplayOrder, request.AlternateLabel);
 
         if (result == null) return false;
 

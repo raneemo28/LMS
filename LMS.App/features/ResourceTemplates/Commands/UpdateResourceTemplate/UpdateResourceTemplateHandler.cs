@@ -17,14 +17,13 @@ public class UpdateResourceTemplateCommandHandler : IRequestHandler<UpdateResour
         var template = await _unitOfWork.ResourceTemplates.GetByIdAsync(request.Id);
 
         if (template == null) return false;
-        if(!_unitOfWork.ResourceTemplates.IsLabelUniqueAsync(request.Label)){
+        if(request.Label != template.Label && !await _unitOfWork.ResourceTemplates.IsLabelUniqueAsync(request.Label)){
             throw new Exception("Label already exists");
         }
         template.Label = request.Label;
         template.Description = request.Description;
 
         _unitOfWork.ResourceTemplates.Update(template);
-
         var result = await _unitOfWork.CommitAsync();
 
         return result > 0;

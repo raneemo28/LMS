@@ -5,6 +5,6 @@ public record CreateResourceValueDto(
     string? ValueText,
     string? ValueUri,
     int? ValueResourceId,
-    string ValueType,
-    string? ValueLanguage
+    string  Type,
+    string? Language
 );
