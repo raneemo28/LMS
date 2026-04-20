@@ -18,7 +18,7 @@ public class ResourceValueMappingProfile : Profile
             .ForMember(d => d.ValueResource, opt => opt.Ignore());
 
         CreateMap<ResourceValueDto, Value>()
-            .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id ?? 0))
+            .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
             .ForMember(d => d.ResourceId, opt => opt.Ignore())
             .ForMember(d => d.Resource, opt => opt.Ignore())
             .ForMember(d => d.Property, opt => opt.Ignore())
