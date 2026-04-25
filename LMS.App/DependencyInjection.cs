@@ -1,5 +1,7 @@
 using System.Reflection;
 using AutoMapper;
+using FluentValidation; // أضف هذا
+using MediatR; // أضف هذا
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -9,10 +11,17 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication2(this IServiceCollection services)
     {
-        services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
-
         var assembly = Assembly.GetExecutingAssembly();
+
+        services.AddMediatR(cfg => 
+        {
+            cfg.RegisterServicesFromAssembly(assembly);
+            
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>)); 
+        });
+
+        services.AddValidatorsFromAssembly(assembly);
+
         services.AddSingleton<IMapper>(_ =>
         {
             var config = new MapperConfiguration(
