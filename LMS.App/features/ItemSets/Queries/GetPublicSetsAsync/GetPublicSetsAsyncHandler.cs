@@ -18,7 +18,7 @@ public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<ItemSet>> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<ItemSetDto>> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
     {
         var result = await _unitOfWork.ItemSets.GetAllAsync();
         var itemSets = result.Cast<ItemSet>().AsQueryable();
