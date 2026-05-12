@@ -6,4 +6,5 @@ public class ResourceTemplate
     public string Label { get; set; } = string.Empty;
     public string? Description { get; set; }
 
+    public virtual ICollection<TemplateProperty> TemplateProperties { get; set; } = new List<TemplateProperty>();
 }

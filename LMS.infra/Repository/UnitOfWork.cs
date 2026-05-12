@@ -1,8 +1,8 @@
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
-using LMS.infra.Database;
+using LMS.Infra.Database;
 
-namespace LMS.infra.Repository
+namespace LMS.Infra.Repository
 {
     public class UnitOfWork : IUnitOfWork
     {
@@ -15,32 +15,24 @@ namespace LMS.infra.Repository
         public IResourceTemplateRepository ResourceTemplates { get; private set; }
         public IMediaRepository Media { get; private set; }
 
-        public UnitOfWork(LibraryDbContext context)
+        public UnitOfWork(LibraryDbContext context,
+            IResourceRepository<Resource> resources,
+            IItemRepository items,
+            IItemSetRepository itemSets,
+            IVocabularyRepository vocabularies,
+            IResourceTemplateRepository templates,
+            IMediaRepository media)
         {
             _context = context;
-            Resources = new ResourceRepository<Resource>(_context);
-            Items = new ItemRepository(_context);
-            ItemSets = new ItemSetRepository(_context);
-            Vocabularies = new VocabularyRepository(_context);
-            ResourceTemplates = new ResourceTemplateRepository(_context);
-            Media = new MediaRepository(_context);
+            Resources = resources; Items = items; ItemSets = itemSets;
+            Vocabularies = vocabularies; ResourceTemplates = templates; Media = media;
         }
 
-        public async Task<int> CommitAsync() 
-        {
-            return await _context.SaveChangesAsync();
-        }
+        public async Task<int> CommitAsync() => await _context.SaveChangesAsync();
 
-        public Task RollbackAsync()
-        {
-            _context.ChangeTracker.Entries().ToList().ForEach(x => x.State = Microsoft.EntityFrameworkCore.EntityState.Detached);
-            return Task.CompletedTask;
-        }
+        public Task RollbackAsync() => Task.CompletedTask; // EF Core auto-rolls back on exception
 
-        public void Dispose()
-        {
-            _context.Dispose();
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() => _context.Dispose();
+
     }
 }

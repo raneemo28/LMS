@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.ItemSets.Queries.GetPublicSetsAsync;
+using LMS.App.Features.ItemSets.Queries.GetPublicSetsAsync;
 
-namespace LMS.Application.Validators.ItemSets;
+namespace LMS.App.Validators.ItemSets;
 public class GetPublicSetsAsyncQueryValidator : AbstractValidator<GetPublicSetsAsyncQuery>
 {
     public GetPublicSetsAsyncQueryValidator()

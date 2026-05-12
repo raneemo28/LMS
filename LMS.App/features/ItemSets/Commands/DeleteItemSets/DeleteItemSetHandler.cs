@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.ItemSets.Commands.DeleteItemSets;
+namespace LMS.App.Features.ItemSets.Commands.DeleteItemSets;
 
 public class DeleteItemSetHandler : IRequestHandler<DeleteItemSetCommand, bool>
 {

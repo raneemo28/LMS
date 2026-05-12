@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.ItemSets.Commands.CreateItemSets;
+using LMS.App.Features.ItemSets.Commands.CreateItemSets;
 
-namespace LMS.Application.Validators.ItemSets;
+namespace LMS.App.Validators.ItemSets;
 
 public class CreateItemSetCommandValidator : AbstractValidator<CreateItemSetCommand>
 {

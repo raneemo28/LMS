@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.ItemSets.Commands.RemoveItemFromSet;
+using LMS.App.Features.ItemSets.Commands.RemoveItemFromSet;
 
-namespace LMS.Application.Validators.ItemSets;
+namespace LMS.App.Validators.ItemSets;
 
 public class RemoveItemFromSetCommandValidator : AbstractValidator<RemoveItemFromSetCommand>
 {

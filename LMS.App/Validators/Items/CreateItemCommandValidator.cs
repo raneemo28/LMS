@@ -1,6 +1,6 @@
 using FluentValidation;
 
-using LMS.Application.Features.Item.Commands.CreateItem;
+using LMS.App.Features.Items.Commands.CreateItem;
 
 namespace LMS.App.Validators.Items;
 

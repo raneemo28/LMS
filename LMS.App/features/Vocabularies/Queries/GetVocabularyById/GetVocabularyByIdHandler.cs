@@ -3,7 +3,7 @@ using LMS.App.DTOs.Vocabulary;
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Vocabularies.Queries.GetVocabularyById;
+namespace LMS.App.Features.Vocabularies.Queries.GetVocabularyById;
 
 public class GetVocabularyByIdHandler : IRequestHandler<GetVocabularyByIdQuery, VocabularyDto?>
 {

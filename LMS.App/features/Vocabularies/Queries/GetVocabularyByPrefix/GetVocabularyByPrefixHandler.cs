@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LMS.Application.Features.Vocabularies.Queries.GetVocabularyByPrefix;
+namespace LMS.App.Features.Vocabularies.Queries.GetVocabularyByPrefix;
 
 public class GetVocabularyByPrefixHandler : IRequestHandler<GetVocabularyByPrefixQuery, List<VocabularyDto>>
 {

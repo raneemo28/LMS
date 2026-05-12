@@ -1,7 +1,6 @@
-using LMS.App.DTO.Auth;
 using MediatR;
 
-namespace LMS.App.features.Logout.Command;
+namespace LMS.App.Features.Logout.Command;
 
-public record LogoutCommand() : IRequest<bool>;
+public record LogoutCommand(string UserId) : IRequest<bool>;
     

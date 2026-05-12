@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Media.Queries.GetMediaByItemId;
+using LMS.App.Features.Media.Queries.GetMediaByItemId;
 
-namespace LMS.Application.Validators.Media;
+namespace LMS.App.Validators.Media;
 
 public class GetMediaByItemIdQueryValidator : AbstractValidator<GetMediaByItemIdQuery>
 {

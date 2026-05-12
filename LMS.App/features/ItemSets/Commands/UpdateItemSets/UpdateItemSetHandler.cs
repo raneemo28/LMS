@@ -2,7 +2,7 @@ using MediatR;
 using LMS.Domain.Interfaces;
 using LMS.Domain.Entities;
 
-namespace LMS.Application.Features.ItemSets.Commands.UpdateItemSets;
+namespace LMS.App.Features.ItemSets.Commands.UpdateItemSets;
  
 public class UpdateItemSetHandler : IRequestHandler<UpdateItemSetCommand, bool>
 {

@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Vocabularies.Commands.UpdateVocabulary;
+using LMS.App.Features.Vocabularies.Commands.UpdateVocabulary;
 
-namespace LMS.Application.Validators.Vocabularie;
+namespace LMS.App.Validators.Vocabulary;
 
 public class UpdateVocabularyCommandValidator : AbstractValidator<UpdateVocabularyCommand>
 {

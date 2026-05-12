@@ -2,7 +2,7 @@ using MediatR;
 using LMS.Domain.Interfaces;
 using LMS.Domain.Entities;
 
-namespace LMS.App.Features.ResourceTemplates.Commands.CreateResourseTemplate;
+namespace LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
 
 public class CreateResourceTemplateCommandHandler : IRequestHandler<CreateResourceTemplateCommand, int>
 {

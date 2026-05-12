@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Vocabularies.Queries.GetVocabularyById;
+using LMS.App.Features.Vocabularies.Queries.GetVocabularyById;
 
-namespace LMS.Application.Validators.Vocabularies;
+namespace LMS.App.Validators.Vocabularies;
 
 public class GetVocabularyByIdQueryValidator : AbstractValidator<GetVocabularyByIdQuery>
 {

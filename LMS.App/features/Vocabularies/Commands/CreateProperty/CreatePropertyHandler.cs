@@ -2,7 +2,7 @@ using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Vocabularies.Commands.CreateProperty;
+namespace LMS.App.Features.Vocabularies.Commands.CreateProperty;
 
 public class CreatePropertyHandler : IRequestHandler<CreatePropertyCommand, int>
 {

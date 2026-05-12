@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Vocabularies.Commands.UpdateProperty;
+using LMS.App.Features.Vocabularies.Commands.UpdateProperty;
 
-namespace LMS.Application.Validators.Vocabularie;
+namespace LMS.App.Validators.Vocabulary;
 
 public class UpdatePropertyCommandValidator : AbstractValidator<UpdatePropertyCommand>
 {

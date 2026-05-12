@@ -2,7 +2,7 @@ using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Vocabularies.Commands.CreateVocabulary;
+namespace LMS.App.Features.Vocabularies.Commands.CreateVocabulary;
 
 public class CreateVocabularyHandler : IRequestHandler<CreateVocabularyCommand, int>
 {

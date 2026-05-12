@@ -1,62 +1,64 @@
-using System.Reflection;
-using LMS.infra;
+using LMS.Infra;
 using LMS.App;
-using LMS.App.Interface;
-using LMS.Infrastructure.ServicesStorage;
+using LMS.Infra.ServiceStorage;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddApplication2();
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
-var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot/uploads");
-if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
-builder.Services.AddScoped<IMediaProcessingService, MediaProcessingService>();
-
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(); // ✅ Fixed name
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-await app.InitializeDatabaseAsync();
+
+// 🔒 Safe, Scoped DB Initialization
+using var scope = app.Services.CreateScope();
+await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
     {
-        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-        var exception = exceptionHandlerPathFeature?.Error;
+        context.Response.ContentType = "application/json";
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
 
-        if (exception is FluentValidation.ValidationException validationException)
+        if (exception is FluentValidation.ValidationException vex)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            var errors = validationException.Errors
-                .GroupBy(e => e.PropertyName)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(e => e.ErrorMessage).ToArray()
-                );
-
-            await context.Response.WriteAsJsonAsync(new { 
-                title = "Validation Error", 
-                status = 400, 
-                errors = errors 
+            await context.Response.WriteAsJsonAsync(new {
+                title = "Validation Error",
+                status = 400,
+                errors = vex.Errors.GroupBy(e => e.PropertyName)
+                                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
             });
+            return;
         }
+
+        if (exception is UnauthorizedAccessException)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { title = "Forbidden", status = 403, message = "Access denied." });
+            return;
+        }
+
+        // Log the unexpected error
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(exception, "An unexpected error occurred during request processing.");
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new { title = "Internal Error", status = 500, message = "An unexpected error occurred." });
     });
 });
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.UseHttpsRedirection(); 
-app.UseAuthorization();
+app.UseHttpsRedirection();
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+app.UseAuthentication(); // ✅ MUST precede Authorization
+app.UseAuthorization();  // ✅ Correct order
 
 app.MapControllers();
-
 app.Run();

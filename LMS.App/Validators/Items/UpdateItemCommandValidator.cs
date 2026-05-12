@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Item.Commands.UpdateItem;
+using LMS.App.Features.Items.Commands.UpdateItem;
 
-namespace LMS.Application.Features.Item.Commands.UpdateItem;
+namespace LMS.App.Validators.Items;
 
 public class UpdateItemCommandValidator : AbstractValidator<UpdateItemCommand>
 {

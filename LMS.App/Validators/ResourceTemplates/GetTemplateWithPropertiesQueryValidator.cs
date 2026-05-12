@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.ResourceTemplates.Queries.GetTemplateWithProperties;
+using LMS.App.Features.ResourceTemplates.Queries.GetTemplateWithProperties;
 
-namespace LMS.Application.Validators.ResourceTemplates;
+namespace LMS.App.Validators.ResourceTemplates;
 
 public class GetTemplateWithPropertiesQueryValidator : AbstractValidator<GetTemplateWithPropertiesQuery>
 {

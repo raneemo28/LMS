@@ -1,6 +1,6 @@
-using LMS.App.DTO.Auth;
+using LMS.App.DTOs.Auth;
 using MediatR;
 
-namespace LMS.App.features.Register.Commands;
+namespace LMS.App.Features.Register.Commands;
 
 public record RegisterCommand(RegisterRequest Data) : IRequest<AuthResponse>;

@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.App.features.Login.Command;
+using LMS.App.Features.Login.Command;
 
-namespace LMS.App.features.Login.validator;
+namespace LMS.App.Validators.Login;
 
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {

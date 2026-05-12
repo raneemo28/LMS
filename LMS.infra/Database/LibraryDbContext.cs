@@ -1,7 +1,7 @@
 using LMS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.infra.Database;
+namespace LMS.Infra.Database;
 
 public class LibraryDbContext : DbContext
 {

@@ -1,6 +1,6 @@
 using MediatR;
 using LMS.App.DTOs.Value;
-namespace LMS.Application.Features.ItemSets.Commands.UpdateItemSets;
+namespace LMS.App.Features.ItemSets.Commands.UpdateItemSets;
 public record UpdateItemSetCommand(
     int Id, 
     string Title, 

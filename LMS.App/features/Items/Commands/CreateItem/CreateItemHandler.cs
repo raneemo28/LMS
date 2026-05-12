@@ -2,7 +2,7 @@ using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Item.Commands.CreateItem;
+namespace LMS.App.Features.Items.Commands.CreateItem;
 
 public class CreateItemHandler : IRequestHandler<CreateItemCommand, int> 
 {
@@ -33,8 +33,8 @@ public class CreateItemHandler : IRequestHandler<CreateItemCommand, int>
                 ValueText = v.ValueText,
                 ValueUri = v.ValueUri,
                 ValueResourceId = v.ValueResourceId,
-                Type = v.ValueType,
-                Language = v.ValueLanguage
+                Type = v.Type,
+                Language = v.Language
             }).ToList()
         };
 

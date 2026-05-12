@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Resources.Commands.AddValue;
+using LMS.App.Features.Resources.Commands.AddValue;
 
-namespace LMS.Application.Validators.Resources;
+namespace LMS.App.Validators.Resources;
 
 public class AddValueCommandValidator : AbstractValidator<AddValueCommand>
 {
@@ -16,11 +16,6 @@ public class AddValueCommandValidator : AbstractValidator<AddValueCommand>
         RuleFor(x => x.Type)
             .NotEmpty().WithMessage("Type is required.");
 
-        RuleFor(x => x.ValueUri)
-            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
-            .When(x => !string.IsNullOrEmpty(x.ValueUri))
-            .WithMessage("The provided URI is not in a valid format.");
-
         RuleFor(x => x.Language)
             .MaximumLength(5) 
             .When(x => x.Language != null);
@@ -31,8 +26,7 @@ public class AddValueCommandValidator : AbstractValidator<AddValueCommand>
 
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.ValueText) ||
-                       !string.IsNullOrWhiteSpace(x.ValueUri) ||
                        x.ValueResourceId.HasValue)
-            .WithMessage("At least one value (Text, Uri, or ResourceId) must be provided.");
+            .WithMessage("At least one value (Text or ResourceId) must be provided.");
     }
 }

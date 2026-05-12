@@ -1,7 +1,7 @@
 using MediatR;
 using LMS.App.DTOs.Value; // Ensure this matches your DTO namespace
 
-namespace LMS.Application.Features.Item.Commands.UpdateItem;
+namespace LMS.App.Features.Items.Commands.UpdateItem;
 
 public record UpdateItemCommand(
     int Id, 

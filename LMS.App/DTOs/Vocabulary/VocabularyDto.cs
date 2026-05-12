@@ -7,6 +7,8 @@ public record VocabularyDto(
     int Id,
     string Prefix,
     string NamespaceUri,
-    string Label,
-    List<PropertyDto> Properties
-);
+    string Label
+)
+{
+    public List<PropertyDto> Properties { get; set; } = new();
+};

@@ -1,4 +1,4 @@
-using LMS.Application.Features.ItemSets.Queries.GetAllItemSets;
+using LMS.App.Features.ItemSets.Queries.GetAllItemSets;
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using MediatR;
@@ -6,7 +6,7 @@ using System.Linq;
 using AutoMapper;
 using LMS.App.DTOs.ItemSet;
 
-namespace LMS.Application.Features.ItemSets.Queries.GetPublicSetsAsync;
+namespace LMS.App.Features.ItemSets.Queries.GetPublicSetsAsync;
 public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery, IEnumerable<ItemSetDto>>
 {
     private readonly IUnitOfWork _unitOfWork;

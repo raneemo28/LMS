@@ -2,7 +2,7 @@ using LMS.Domain.Interfaces;
 using MediatR;
 using LMS.App.DTOs.Item;
 using AutoMapper;    
-namespace LMS.Application.Features.Item.Queries.GetItemWithFullDataAsync;
+namespace LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
 public class GetItemWithFullDataAsyncHandler : IRequestHandler<GetItemWithFullDataAsyncQuery, ItemDto?>
 {
     private readonly IUnitOfWork _unitOfWork;

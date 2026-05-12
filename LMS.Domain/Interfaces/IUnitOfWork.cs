@@ -13,6 +13,5 @@ namespace LMS.Domain.Interfaces
 
         Task<int> CommitAsync();
         Task RollbackAsync();
-        void Dispose();
     }
 }

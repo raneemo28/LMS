@@ -2,7 +2,7 @@ using MediatR;
 using LMS.Domain.Interfaces;
 using LMS.Domain.Entities;
 
-namespace LMS.Application.Features.ItemSets.Commands.CreateItemSets;
+namespace LMS.App.Features.ItemSets.Commands.CreateItemSets;
 
 public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
 {
@@ -26,14 +26,14 @@ public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
             CreatedAt = DateTime.UtcNow,
             CreatedBy = request.CreatedBy,
             OwnerId = request.OwnerId,
-            Values = request.Values.Select(v => new Value
+            Values = request.Values?.Select(v => new Value
             {
                 PropertyId = v.PropertyId,
                 ValueText = v.ValueText,
                 ValueUri = v.ValueUri,
                 Type = v.Type,
                 Language = v.Language
-            }).ToList()
+            }).ToList() ?? new List<Value>()
         };
 
         await _unitOfWork.ItemSets.AddAsync(itemSet);

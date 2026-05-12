@@ -1,12 +1,11 @@
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
-using LMS.infra.Database;
+using LMS.Infra.Database;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using FFMpegCore;
 
-namespace LMS.infra.Repository
+namespace LMS.Infra.Repository
 {
     public class MediaRepository : ResourceRepository<Media>, IMediaRepository
     {

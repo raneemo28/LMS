@@ -1,4 +1,4 @@
-namespace LMS.Application.Features.Media.Commands.DownloadMedia;
+namespace LMS.App.DTOs.Media;
 
 public class DownloadMediaResult
 {

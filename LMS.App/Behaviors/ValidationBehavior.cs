@@ -14,12 +14,9 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         if (_validators.Any())
         {
             var context = new ValidationContext<TRequest>(request);
-            var failures = _validators.Select(v => v.Validate(context))
-                                      .SelectMany(r => r.Errors)
-                                      .Where(f => f != null)
-                                      .ToList();
-            if (failures.Any())
-                throw new ValidationException(failures); // Caught later by global error middleware
+            var results = await Task.WhenAll(_validators.Select(v => v.ValidateAsync(context, cancellationToken))); // ✅ Async
+            var failures = results.SelectMany(r => r.Errors).Where(f => f != null).ToList();
+            if (failures.Any()) throw new ValidationException(failures);
         }
         return await next();
     }

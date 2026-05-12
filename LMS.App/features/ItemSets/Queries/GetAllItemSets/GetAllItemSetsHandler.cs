@@ -4,7 +4,7 @@ using MediatR;
 using AutoMapper;
 using LMS.App.DTOs.ItemSet;
 
-namespace LMS.Application.Features.ItemSets.Queries.GetAllItemSets;
+namespace LMS.App.Features.ItemSets.Queries.GetAllItemSets;
 public class GetAllItemSetsHandler : IRequestHandler<GetAllItemSetsQuery, IEnumerable<ItemSetDto>>
 {
     private readonly IUnitOfWork _unitOfWork;

@@ -1,0 +1,4869 @@
+﻿========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\Controllers\AuthController.cs ==========
+using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using LMS.App.DTOs.Auth;
+using LMS.App.Features.Login.Command;
+using LMS.App.Features.Register.Commands;
+using LMS.App.Features.Logout.Command;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+
+namespace LMS.API.Controllers;
+[ApiController][Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    public AuthController(IMediator mediator) => _mediator = mediator;
+
+    [HttpPost("register")] public async Task<IActionResult> Register([FromBody] RegisterRequest req) =>
+        Ok(await _mediator.Send(new RegisterCommand(req)));
+    [HttpPost("login")] public async Task<IActionResult> Login([FromBody] LogInRequest req) =>
+        Ok(await _mediator.Send(new LoginCommand(req)));
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("sub")
+                     ?? string.Empty;
+        return Ok(await _mediator.Send(new LogoutCommand(userId)));
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\Controllers\WorkflowCheckController.cs ==========
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using MediatR;
+using LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
+
+namespace LMS.API.Controllers;
+[ApiController][Route("api/[controller]")][Authorize]
+public class WorkflowCheckController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    public WorkflowCheckController(IMediator mediator) => _mediator = mediator;
+
+    [HttpGet("verify")]
+    public IActionResult VerifyToken() => Ok(new {
+        Message = "JWT Valid",
+        UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub"),
+        Email = User.FindFirstValue(ClaimTypes.Email),
+        Role = User.FindFirstValue(ClaimTypes.Role),
+        Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+    });
+
+    [HttpPost("create-template")]
+    public async Task<IActionResult> CreateTemplate([FromBody] CreateResourceTemplateCommand cmd) =>
+        CreatedAtAction(nameof(VerifyToken), new { id = await _mediator.Send(cmd) });
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\Properties\launchSettings.json ==========
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5005",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:7264;http://localhost:5005",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\appsettings.Development.json ==========
+{
+  "Jwt": {
+    "Key": "SuperSecureJwtSigningKey_MinimumOf32Characters!!"
+  }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\appsettings.json ==========
+{
+  "ConnectionStrings": {
+    "LibraryConnection": "Server=.;Database=DLMS_Library_Metadata;Trusted_Connection=True;TrustServerCertificate=True",
+    "IdentityConnection": "Server=.;Database=DLMS_Identity_Security;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "Jwt": {
+    "Key": "",
+    "Issuer": "LMS.API",
+    "Audience": "LMS.Users"
+  },
+  "Storage": { "BasePath": "wwwroot/uploads" },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\LMS.API.csproj ==========
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LMS.App\LMS.App.csproj" />
+    <ProjectReference Include="..\LMS.Infra\LMS.Infra.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+</Project>
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.API\Program.cs ==========
+using LMS.Infra;
+using LMS.App;
+using LMS.Infra.ServiceStorage;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.Logging;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(); // âœ… Fixed name
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// ðŸ”’ Safe, Scoped DB Initialization
+using var scope = app.Services.CreateScope();
+await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        if (exception is FluentValidation.ValidationException vex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new {
+                title = "Validation Error",
+                status = 400,
+                errors = vex.Errors.GroupBy(e => e.PropertyName)
+                                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
+            });
+            return;
+        }
+
+        if (exception is UnauthorizedAccessException)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { title = "Forbidden", status = 403, message = "Access denied." });
+            return;
+        }
+
+        // Log the unexpected error
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(exception, "An unexpected error occurred during request processing.");
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new { title = "Internal Error", status = 500, message = "An unexpected error occurred." });
+    });
+});
+
+app.UseHttpsRedirection();
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+app.UseAuthentication(); // âœ… MUST precede Authorization
+app.UseAuthorization();  // âœ… Correct order
+
+app.MapControllers();
+app.Run();
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Behaviors\ValidationBehavior.cs ==========
+using FluentValidation;
+using MediatR;
+
+namespace LMS.App.Behaviors;
+
+public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    private readonly IEnumerable<IValidator<TRequest>> _validators;
+    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators) => _validators = validators;
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        if (_validators.Any())
+        {
+            var context = new ValidationContext<TRequest>(request);
+            var results = await Task.WhenAll(_validators.Select(v => v.ValidateAsync(context, cancellationToken))); // âœ… Async
+            var failures = results.SelectMany(r => r.Errors).Where(f => f != null).ToList();
+            if (failures.Any()) throw new ValidationException(failures);
+        }
+        return await next();
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Auth\AuthResponse.cs ==========
+using System;
+using System.Collections.Generic;
+
+namespace LMS.App.DTOs.Auth;
+
+public record AuthResponse(
+    string Token,
+    string FullName,
+    string Email,
+    string Role,
+    bool Success,
+    string Message
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Auth\LogInRequest.cs ==========
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace LMS.App.DTOs.Auth
+{
+    public class LogInRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Auth\RegisterRequest.cs ==========
+namespace LMS.App.DTOs.Auth;
+
+public record RegisterRequest(
+    string FirstName,
+    string LastName,
+    string? MiddleName,
+    string Email,
+    string Password,
+    string ConfirmPassword,
+    string? PhoneNumber
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Item\CreateItemDto.cs ==========
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Item;
+
+
+public record CreateItemDto(
+    int TemplateId,
+    List<CreateResourceValueDto> Values
+);
+
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Item\ItemDto.cs ==========
+using System;
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Item;
+
+public record ItemDto(
+    int Id,
+    int TemplateId,
+    List<ResourceValueDto> Values
+);
+
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Item\UpdateItemDto.cs ==========
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Item;
+
+public record UpdateItemDto(
+    int Id,
+    int TemplateId,
+    List<ResourceValueDto> Values
+);
+/*
+[HttpPut("{id}")]
+public async Task<IActionResult> Put(int id,UpdateItemDto dto)
+{
+    /var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(ownerId))
+        {
+            return Unauthorized("User ID not found in token.");
+        }
+    var command = new UpdateItemCommand(
+            dto.Id,
+            dto.TemplateId,
+            ownerId,
+            dto.Values
+        );
+
+        // 3. Send through Mediator
+        var result = await _mediator.Send(command);
+
+        return Ok(result);
+}
+*/
+
+
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\ItemSet\CreateItemSetDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.ItemSet;
+
+public record CreateItemSetDto(
+    string Title,
+    string? Description,
+    bool IsPublic,
+    List<ResourceValueDto>? Values
+);  
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\ItemSet\ItemSetDto.cs ==========
+using System;
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.ItemSet;
+
+public record ItemSetDto(
+    int Id,
+    string Title,
+    string? Description,
+    bool IsPublic,
+    List<ResourceValueDto>? Values
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\ItemSet\ItemSetMembersDto.cs ==========
+using LMS.App.DTOs.Item;
+using System.Collections.Generic;
+
+namespace LMS.App.DTOs.ItemSet;
+
+public record ItemSetMembersDto(
+    ItemSetDto SetInfo,
+    List<ItemDto> Members
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\ItemSet\UpdateItemSetDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.ItemSet;
+
+public record UpdateItemSetDto(
+    int Id,
+    string Title,
+    string? Description,
+    bool IsPublic,
+    List<ResourceValueDto>? Values
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Media\CreateMediaDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Media;
+
+public record CreateMediaDto(
+    int? ItemId,
+    string FileName,
+    string? AltText,
+    int? OwnerId,
+    List<ResourceValueDto> Values
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Media\DownloadMediaResultDto.cs ==========
+namespace LMS.App.DTOs.Media;
+
+public class DownloadMediaResult
+{
+    public Stream Stream { get; set; } = default!;
+    public string ContentType { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Media\MediaDto.cs ==========
+using System;
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Media;
+
+public record MediaDto(
+    int Id,
+    int? ItemId,
+    string FileName,
+    string? AltText,
+    List<ResourceValueDto> Values
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Media\MediaWithMetadataDto.cs ==========
+using System;
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Media;
+
+public record MediaWithMetadataDto(
+    int Id,
+    string FileName,
+    string StoragePath,
+    long FileSize,
+    string MimeType,
+    List<MetadataValueDto> Metadata
+);
+
+public record MetadataValueDto(string PropertyLabel, string ValueText);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Media\UpdateMediaDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.DTOs.Media;
+
+public record UpdateMediaDto(
+    int Id,
+    int? ItemId,
+    string FileName,
+    string? AltText,
+    List<ResourceValueDto> Values
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Property\CreatePropertyDTO.cs ==========
+namespace LMS.App.DTOs.Property;
+
+public record CreatePropertyDto(
+    int VocabularyId,
+    string LocalName,
+    string Label,
+    string TermUri
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Property\PropertyDto.cs ==========
+namespace LMS.App.DTOs.Property;
+
+public record PropertyDto(
+    int Id,
+    int VocabularyId,
+    string LocalName,
+    string Label,
+    string TermUri
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Property\UpdatePropertyDto.cs ==========
+namespace LMS.App.DTOs.Property;
+
+public record UpdatePropertyDto(
+    int Id,
+    string LocalName,
+    string Label,
+    string TermUri
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\ResourceProperty\ResourcePropertyDto.cs ==========
+namespace LMS.App.DTOs.ResourceProperty;
+
+public record ResourcePropertyDto(
+    int PropertyId,
+    string LocalName,
+    string Label,
+    string TermUri,
+    bool IsRequired,
+    int DisplayOrder,
+    string? AlternateLabel
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\ResourceTemplate\ResourceTemplateDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.ResourceProperty;
+
+namespace LMS.App.DTOs.ResourceTemplate;
+
+public record ResourceTemplateDto(
+    int Id,
+    string Label,
+    string? Description,
+    List<ResourcePropertyDto> Properties
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Value\CreateResourceValueDto.cs ==========
+
+namespace LMS.App.DTOs.Value;
+public record CreateResourceValueDto(
+    int PropertyId,
+    string? ValueText,
+    string? ValueUri,
+    int? ValueResourceId,
+    string  Type,
+    string? Language
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Value\ResourceValueDto.cs ==========
+namespace LMS.App.DTOs.Value;
+// also the same for update value Dto
+public record ResourceValueDto(
+    int Id,
+    int PropertyId,
+    string? ValueText,
+    string? ValueUri,
+    int? ValueResourceId,
+    string Type,
+    string? Language
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Vocabulary\CreateVocabularyDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Property;
+
+namespace LMS.App.DTOs.Vocabulary;
+
+public record CreateVocabularyDto(
+    string Prefix,
+    string NamespaceUri,
+    string Label,
+    List<CreatePropertyDto>? Properties = null
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Vocabulary\UpdateVocabularyDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Property;
+
+namespace LMS.App.DTOs.Vocabulary;
+
+public record UpdateVocabularyDto(
+    int Id,
+    string Prefix,
+    string NamespaceUri,
+    string Label,
+    List<CreatePropertyDto>? Properties = null
+);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DTOs\Vocabulary\VocabularyDto.cs ==========
+using System.Collections.Generic;
+using LMS.App.DTOs.Property;
+
+namespace LMS.App.DTOs.Vocabulary;
+
+public record VocabularyDto(
+    int Id,
+    string Prefix,
+    string NamespaceUri,
+    string Label
+)
+{
+    public List<PropertyDto> Properties { get; set; } = new();
+};
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Commands\CreateItem\CreateItemCommand.cs ==========
+using LMS.App.DTOs.Value;
+using MediatR;
+
+namespace LMS.App.Features.Items.Commands.CreateItem;
+
+public record CreateItemCommand(
+    int TemplateId, 
+    string OwnerId,
+    List<CreateResourceValueDto> Values
+) : IRequest<int>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Commands\CreateItem\CreateItemHandler.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Items.Commands.CreateItem;
+
+public class CreateItemHandler : IRequestHandler<CreateItemCommand, int> 
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateItemHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<int> Handle(CreateItemCommand request, CancellationToken cancellationToken)
+    {
+        var item = new Domain.Entities.Item
+        {
+            TemplateId = request.TemplateId,
+
+            Type = "Item",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = request.OwnerId,
+            OwnerId = request.OwnerId,
+
+            // Mapping the list of value DTOs directly to the Item's Values collection.
+            // EF Core will automatically handle assigning the new ItemId to these values
+            // during the save process!
+            Values = request.Values.Select(v => new Value
+            {
+                PropertyId = v.PropertyId,
+                ValueText = v.ValueText,
+                ValueUri = v.ValueUri,
+                ValueResourceId = v.ValueResourceId,
+                Type = v.Type,
+                Language = v.Language
+            }).ToList()
+        };
+
+        await _unitOfWork.Items.AddAsync(item);
+        // This single CommitAsync saves both the Item and all its associated Values atomically.
+        await _unitOfWork.CommitAsync();
+         
+
+        return item.Id;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Commands\DeleteItem\DeleteItemCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.Items.Commands.DeleteItem;
+
+public record DeleteItemCommand(int Id, string UserId) : IRequest<bool>;
+
+/*
+[HttpDelete("{id}")] // The 'id' comes from the URL
+public async Task<IActionResult> Delete(int id)
+{
+    // 1. Get the UserId from the authenticated user's claims
+    // This is secure because it comes from the decrypted JWT token
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (userId == null) return Unauthorized();
+
+    // 2. Combine the Route ID and the Secure User ID into the Command
+    var command = new DeleteItemCommand(id, userId);
+
+    // 3. Send it to MediatR
+    var success = await _mediator.Send(command);
+
+    return success ? NoContent() : NotFound();
+}
+
+*/
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Commands\DeleteItem\DeleteItemHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Items.Commands.DeleteItem;
+
+public class DeleteItemHandler : IRequestHandler<DeleteItemCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteItemHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(DeleteItemCommand request, CancellationToken cancellationToken)
+    {
+        var item = await _unitOfWork.Items.GetByIdAsync(request.Id);
+        
+        if (item == null) return false;
+
+        bool isOwner = await _unitOfWork.Items.IsOwnerAsync(request.Id, request.UserId);
+        if (!isOwner)
+        {
+            throw new UnauthorizedAccessException("Don't have permission to delete this item.");
+        }
+
+        _unitOfWork.Items.Delete(item);
+
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Commands\UpdateItem\UpdateItemCommand.cs ==========
+using MediatR;
+using LMS.App.DTOs.Value; // Ensure this matches your DTO namespace
+
+namespace LMS.App.Features.Items.Commands.UpdateItem;
+
+public record UpdateItemCommand(
+    int Id, 
+    int TemplateId,     
+    string OwnerId,
+    List<ResourceValueDto> Values
+) : IRequest<bool>; 
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Commands\UpdateItem\UpdateItemHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
+using System.Linq; // Added for Select/ToList
+
+namespace LMS.App.Features.Items.Commands.UpdateItem;
+
+public class UpdateItemHandler : IRequestHandler<UpdateItemCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateItemHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
+    {
+        
+        var item = await _unitOfWork.Items.GetItemWithFullDataAsync(request.Id);
+
+        if (item == null) return false;
+
+        if (item.OwnerId != request.OwnerId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update this item.");
+        }
+
+        item.TemplateId = request.TemplateId;
+        item.ModifiedAt = DateTime.UtcNow;
+        item.ModifiedBy = request.OwnerId;
+
+        
+        item.Values = request.Values.Select(v => new Value
+        {
+            PropertyId = v.PropertyId,
+            ValueText = v.ValueText,
+            ValueUri = v.ValueUri,
+            ValueResourceId = v.ValueResourceId,
+            Type = v.Type,
+            Language = v.Language
+        }).ToList();
+
+        _unitOfWork.Items.Update(item);
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Queries\GetItemsWithFullDataWithConditionAsync\GetItemsWithFullDataWithConditionAsyncHandler.cs ==========
+using LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
+using LMS.Domain.Interfaces;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AutoMapper;
+using LMS.App.DTOs.Item;
+
+namespace LMS.App.Features.Items.Queries.GetItemsWithFullDataWithConditionAsync
+{
+    public class GetItemsWithFullDataWithConditionAsyncHandler : IRequestHandler<GetItemsWithFullDataWithConditionQuery, IEnumerable<ItemDto>?>
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+
+        public GetItemsWithFullDataWithConditionAsyncHandler(IUnitOfWork unitOfWork,IMapper mapper)
+        {
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
+        }
+    
+        public async Task<IEnumerable<ItemDto>?> Handle(GetItemsWithFullDataWithConditionQuery request, CancellationToken cancellationToken)
+        {
+            var FilteredItems =await _unitOfWork.Items.GetItemsWithFullDataWithConditionAsync(request.Filter);
+            if(FilteredItems == null) return null;
+
+            return _mapper.Map<IEnumerable<ItemDto>>(FilteredItems);
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Queries\GetItemsWithFullDataWithConditionAsync\GetItemsWithFullDatawithConditionAsyncQuery.cs ==========
+using LMS.Domain.Entities;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+using LMS.App.DTOs.Item;
+
+namespace LMS.App.Features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
+
+public record GetItemsWithFullDataWithConditionQuery(Expression<Func<LMS.Domain.Entities.Item, bool>> Filter) : IRequest<IEnumerable<ItemDto>?>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Queries\GetItemWithFullDataAsync\GetItemWithFullDataAsyncHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+using LMS.App.DTOs.Item;
+using AutoMapper;    
+namespace LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
+public class GetItemWithFullDataAsyncHandler : IRequestHandler<GetItemWithFullDataAsyncQuery, ItemDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetItemWithFullDataAsyncHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<ItemDto?> Handle(GetItemWithFullDataAsyncQuery request, CancellationToken cancellationToken)
+    {
+        var item = await _unitOfWork.Items.GetItemWithFullDataAsync(request.Id);
+        if (item == null) return null;
+        var itemDto = _mapper.Map<ItemDto>(item);
+        return itemDto;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Items\Queries\GetItemWithFullDataAsync\GetItemWithFullDataAsyncQuery.cs ==========
+using LMS.App.DTOs.Item;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
+
+public record GetItemWithFullDataAsyncQuery(int Id) : IRequest<ItemDto?>;
+
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\AddItemToSet\AddItemToSetCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.ItemSets.Commands.AddItemToSet;
+public record AddItemToSetCommand(
+    int SetId, 
+    int ItemId, 
+    string UserId
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\AddItemToSet\AddItemToSetHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+namespace LMS.App.Features.ItemSets.Commands.AddItemToSet;
+public class AddItemToSetHandler : IRequestHandler<AddItemToSetCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AddItemToSetHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(AddItemToSetCommand request, CancellationToken cancellationToken)
+    {
+        var itemSet = await _unitOfWork.ItemSets.GetByIdAsync(request.SetId);
+
+        if (itemSet == null) return false ;
+
+
+        if (itemSet.OwnerId != request.UserId)
+        {
+            throw new UnauthorizedAccessException("Don't have permission to modify this set.");
+        }
+ 
+        var result = await _unitOfWork.ItemSets.AddItemToSetAsync(request.SetId, request.ItemId);
+
+        if (result==null) return false;
+
+        itemSet.ModifiedAt = DateTime.UtcNow;
+        itemSet.ModifiedBy = request.UserId;
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\CreateItemSets\CreateItemSetCommand.cs ==========
+using MediatR;
+using LMS.App.DTOs.Value;
+namespace LMS.App.Features.ItemSets.Commands.CreateItemSets;
+
+public record CreateItemSetCommand(
+    string Title, 
+    string? Description, 
+    bool IsPublic,
+    string OwnerId,
+    string? CreatedBy,
+    List<ResourceValueDto>? Values
+) : IRequest<int>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\CreateItemSets\CreateItemSetHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.ItemSets.Commands.CreateItemSets;
+
+public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateItemSetHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+
+    public async Task<int> Handle(CreateItemSetCommand request, CancellationToken cancellationToken)
+    {
+        var itemSet = new ItemSet
+        {
+            Title = request.Title,
+            Description = request.Description,
+            IsPublic = request.IsPublic,
+
+            Type = "ItemSet", 
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = request.CreatedBy,
+            OwnerId = request.OwnerId,
+            Values = request.Values?.Select(v => new Value
+            {
+                PropertyId = v.PropertyId,
+                ValueText = v.ValueText,
+                ValueUri = v.ValueUri,
+                Type = v.Type,
+                Language = v.Language
+            }).ToList() ?? new List<Value>()
+        };
+
+        await _unitOfWork.ItemSets.AddAsync(itemSet);
+
+        await _unitOfWork.CommitAsync();
+
+        return itemSet.Id;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\DeleteItemSets\DeleteItemSetCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.ItemSets.Commands.DeleteItemSets;
+
+public record DeleteItemSetCommand(int Id, string UserId, List<string> UserRoles) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\DeleteItemSets\DeleteItemSetHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.ItemSets.Commands.DeleteItemSets;
+
+public class DeleteItemSetHandler : IRequestHandler<DeleteItemSetCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteItemSetHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(DeleteItemSetCommand request, CancellationToken cancellationToken)
+    {
+        var itemSet = await _unitOfWork.ItemSets.GetByIdAsync(request.Id);
+        
+        if (itemSet == null) return false;
+
+        bool isOwner = await _unitOfWork.ItemSets.IsOwnerAsync(request.Id, request.UserId);
+
+        if (!isOwner)
+        {
+            throw new UnauthorizedAccessException("Do not have permission to delete this item set.");
+        }
+
+        _unitOfWork.ItemSets.Delete(itemSet);
+
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\RemoveItemFromSet\RemoveItemFromSetCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.ItemSets.Commands.RemoveItemFromSet;
+public record RemoveItemFromSetCommand(int SetId, int ItemId, string UserId) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\RemoveItemFromSet\RemoveItemFromSetHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+namespace LMS.App.Features.ItemSets.Commands.RemoveItemFromSet;
+public class RemoveItemFromSetHandler : IRequestHandler<RemoveItemFromSetCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public RemoveItemFromSetHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(RemoveItemFromSetCommand request, CancellationToken cancellationToken)
+    {
+        var itemSet = await _unitOfWork.ItemSets.GetByIdAsync(request.SetId);
+        if (itemSet == null) return false;
+
+        if (itemSet.OwnerId != request.UserId)
+            throw new UnauthorizedAccessException("Don't have permission to modify this set.");
+
+        var result = await _unitOfWork.ItemSets.RemoveItemFromSetAsync(request.SetId, request.ItemId);
+
+        if (result == null) return false;
+
+        itemSet.ModifiedAt = DateTime.UtcNow;
+        itemSet.ModifiedBy = request.UserId;
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\UpdateItemSets\UpdateItemSetCommand.cs ==========
+using MediatR;
+using LMS.App.DTOs.Value;
+namespace LMS.App.Features.ItemSets.Commands.UpdateItemSets;
+public record UpdateItemSetCommand(
+    int Id, 
+    string Title, 
+    string Description, 
+    bool IsPublic,
+    string UserId, 
+    List<string> UserRoles,
+    List<ResourceValueDto>? Values
+) : IRequest<bool>; 
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Commands\UpdateItemSets\UpdateItemSetHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.ItemSets.Commands.UpdateItemSets;
+ 
+public class UpdateItemSetHandler : IRequestHandler<UpdateItemSetCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateItemSetHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(UpdateItemSetCommand request, CancellationToken cancellationToken)
+    {
+        var resource = await _unitOfWork.ItemSets.GetByIdAsync(request.Id);
+        var itemSet = resource as ItemSet;
+        if (itemSet == null) return false;
+
+        bool isOwner = itemSet.OwnerId == request.UserId;
+
+        if (!isOwner)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update this item set.");
+        }
+
+        itemSet.Title = request.Title;
+        itemSet.Description = request.Description;
+        itemSet.IsPublic = request.IsPublic;
+
+        itemSet.ModifiedAt = DateTime.UtcNow;
+        itemSet.ModifiedBy = request.UserId;
+
+        _unitOfWork.ItemSets.Update(itemSet);
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\CheckItemSetOwnership\CheckItemSetOwnershipHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Queries.ItemSets.CheckItemSetOwnership;
+public class CheckItemSetOwnershipHandler : IRequestHandler<CheckItemSetOwnershipQuery, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CheckItemSetOwnershipHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(CheckItemSetOwnershipQuery request, CancellationToken cancellationToken)
+    {
+        return await _unitOfWork.ItemSets.IsOwnerAsync(request.Id, request.UserId);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\CheckItemSetOwnership\CheckItemSetOwnershipQuery.cs ==========
+
+using MediatR;
+
+namespace LMS.App.Features.Queries.ItemSets.CheckItemSetOwnership;
+public record CheckItemSetOwnershipQuery(int Id, string UserId) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\GetAllItemSets\GetAllItemSetsHandler.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+using AutoMapper;
+using LMS.App.DTOs.ItemSet;
+
+namespace LMS.App.Features.ItemSets.Queries.GetAllItemSets;
+public class GetAllItemSetsHandler : IRequestHandler<GetAllItemSetsQuery, IEnumerable<ItemSetDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetAllItemSetsHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+    }
+    public async Task<IEnumerable<ItemSetDto>> Handle(GetAllItemSetsQuery request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.ItemSets.GetAllAsync();
+        var itemSets = result.Cast<ItemSet>();
+        if (itemSets == null) return null!;
+        return _mapper.Map<IEnumerable<ItemSetDto>>(itemSets);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\GetAllItemSets\GetAllItemSetsQuery.cs ==========
+using LMS.Domain.Entities;
+using MediatR;
+using LMS.App.DTOs.ItemSet;
+
+namespace LMS.App.Features.ItemSets.Queries.GetAllItemSets;
+
+public record GetAllItemSetsQuery() : IRequest<IEnumerable<ItemSetDto>>;    
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\GetItemSetWithMembers\GetItemSetWithMembersHandler.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+
+using MediatR;
+using AutoMapper;
+using LMS.App.DTOs.ItemSet;
+using LMS.App.DTOs.Item;
+
+namespace LMS.App.Features.ItemSets.Queries.GetItemSetWithMembers;
+public class GetItemSetWithMembersHandler : IRequestHandler<GetItemSetWithMembersQuery, ItemSetMembersDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    public GetItemSetWithMembersHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<ItemSetMembersDto?> Handle(GetItemSetWithMembersQuery request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.ItemSets.GetSetWithMembersAsync(request.Id);
+    
+        if (result == null) return null;
+        return new ItemSetMembersDto(
+            _mapper.Map<ItemSetDto>(result.SetInfo),
+            _mapper.Map<List<ItemDto>>(result.Members)
+        );  
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\GetItemSetWithMembers\GetItemSetWithMembersQuery.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+using LMS.App.DTOs.ItemSet;
+
+namespace LMS.App.Features.ItemSets.Queries.GetItemSetWithMembers;
+
+public record GetItemSetWithMembersQuery(int Id) : IRequest<ItemSetMembersDto?>;
+
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\GetPublicSetsAsync\GetPublicSetsAsyncHandler.cs ==========
+using LMS.App.Features.ItemSets.Queries.GetAllItemSets;
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+using System.Linq;
+using AutoMapper;
+using LMS.App.DTOs.ItemSet;
+
+namespace LMS.App.Features.ItemSets.Queries.GetPublicSetsAsync;
+public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery, IEnumerable<ItemSetDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetPublicSetsAsyncHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<IEnumerable<ItemSetDto>> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.ItemSets.GetAllAsync();
+        var itemSets = result.Cast<ItemSet>().AsQueryable();
+
+        itemSets = itemSets.Where(x => x.IsPublic || x.OwnerId == request.UserId);
+
+        return _mapper.Map<IEnumerable<ItemSetDto>>(itemSets);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ItemSets\Queries\GetPublicSetsAsync\GetPublicSetsAsyncQuery.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+using LMS.App.DTOs.ItemSet;
+
+namespace LMS.App.Features.ItemSets.Queries.GetPublicSetsAsync;
+
+public record GetPublicSetsAsyncQuery(string UserId) : IRequest<IEnumerable<ItemSetDto>>;
+
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Login\Command\LoginCommand.cs ==========
+using LMS.App.DTOs.Auth;
+using MediatR;
+
+namespace LMS.App.Features.Login.Command;
+
+public record LoginCommand(LogInRequest Data) : IRequest<AuthResponse>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Login\Command\LoginHandler.cs ==========
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using AutoMapper;
+using LMS.App.DTOs.Auth;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
+using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+
+namespace LMS.App.Features.Login.Command;
+
+public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
+{
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IConfiguration _configuration;
+    private readonly IMapper _mapper;
+    private readonly IJwtService _jwtService;
+
+    public LoginHandler(
+        UserManager<ApplicationUser> userManager,
+        IConfiguration configuration,
+        IMapper mapper,
+        IJwtService jwtService)
+    {
+        _userManager = userManager;
+        _configuration = configuration;
+        _mapper = mapper;
+        _jwtService = jwtService;
+    }
+
+    public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Data.Email);
+        
+        if (user == null || !await _userManager.CheckPasswordAsync(user, request.Data.Password))
+        {
+            return new AuthResponse(string.Empty, string.Empty, request.Data.Email, string.Empty, false, "Invalid email or password.");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "Member";
+
+        var authResponse = _mapper.Map<AuthResponse>(user);
+        var token = _jwtService.GenerateJwtToken(user, role);
+
+        return authResponse with 
+        { 
+            Token = token, 
+            Role = role, 
+            Success = true, 
+            Message = "Login successful." 
+        };
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Logout\Command\LogoutCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.Logout.Command;
+
+public record LogoutCommand(string UserId) : IRequest<bool>;
+    
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Logout\Command\LogoutHandler.cs ==========
+using MediatR;
+using Microsoft.AspNetCore.Identity;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.Logout.Command;
+
+public class LogoutHandler : IRequestHandler<LogoutCommand, bool>
+{
+    private readonly SignInManager<ApplicationUser> _signInManager;
+
+    public LogoutHandler(SignInManager<ApplicationUser> signInManager)
+    {
+        _signInManager = signInManager;
+    }
+
+    public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    {
+        // JWT is stateless â€” the client must discard the token.
+        // For cookie-based sessions, sign out here.
+        await _signInManager.SignOutAsync();
+        // Future: add token to a blocklist keyed by request.UserId here.
+        return true;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\CreateMediaCommand\CreateMediaCommand.cs ==========
+using MediatR;
+using LMS.Domain.Constants;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.Features.Media.Commands.CreateMediaCommand;
+public record CreateMediaCommand(
+    int? ItemId,
+    string FileName,
+    string? AltText,
+    string? OwnerId,
+    List<ResourceValueDto> Values
+) : IRequest<int>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\CreateMediaCommand\CreateMediaHandler.cs ==========
+using MediatR;
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+
+namespace LMS.App.Features.Media.Commands.CreateMediaCommand;
+
+public class CreateMediaHandler : IRequestHandler<CreateMediaCommand, int>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateMediaHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<int> Handle(CreateMediaCommand request, CancellationToken cancellationToken)
+    {
+        var media = new Domain.Entities.Media
+        {
+            Type = "Media",
+            CreatedBy = request.OwnerId,
+            CreatedAt = DateTime.UtcNow,
+            
+            ItemId = request.ItemId,
+            FileName = request.FileName,
+            AltText = request.AltText,
+            Values = request.Values.Select(v => new Value
+            {
+                PropertyId = v.PropertyId,
+                ValueText = v.ValueText,
+                ValueUri = v.ValueUri,
+                ValueResourceId = v.ValueResourceId,
+                Type = v.Type,
+                Language = v.Language
+            }).ToList()
+        };
+
+        await _unitOfWork.Media.AddAsync(media);
+
+        await _unitOfWork.CommitAsync();
+
+        return media.Id;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\DeleteMediaCommand\DeleteMediaCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.Media.Commands.DeleteMediaCommand;
+
+public record DeleteMediaCommand(int MediaId, string CurrentUserId) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\DeleteMediaCommand\DeleteMediaHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Media.Commands.DeleteMediaCommand;
+
+public class DeleteMediaCommandHandler : IRequestHandler<DeleteMediaCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteMediaCommandHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(DeleteMediaCommand request, CancellationToken cancellationToken)
+    {
+        
+        var resource = await _unitOfWork.Media.GetByIdAsync(request.MediaId);
+        var media = resource as Domain.Entities.Media;
+        if (media == null) return false;
+
+        if (media.OwnerId != request.CurrentUserId)
+        {
+            throw new UnauthorizedAccessException("You don't have permission to delete this file.");
+        }
+
+        if (File.Exists(media.StoragePath))
+        {
+            File.Delete(media.StoragePath);
+        }
+
+        _unitOfWork.Media.Delete(media);
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\DownloadMedia\DownloadMediaCommand.cs ==========
+using MediatR;
+using LMS.App.DTOs.Media;
+
+namespace LMS.App.Features.Medias.Commands.DownloadMedia;
+
+public class DownloadMediaCommand : IRequest<DownloadMediaResult>
+{
+    public int MediaId { get; set; }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\DownloadMedia\DownloadMediaHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.App.Interface;
+using LMS.App.DTOs.Media;
+
+namespace LMS.App.Features.Medias.Commands.DownloadMedia;
+
+public class DownloadMediaHandler
+    : IRequestHandler<DownloadMediaCommand, DownloadMediaResult>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediaStorageService _storage;
+
+    public DownloadMediaHandler(
+        IUnitOfWork unitOfWork,
+        IMediaStorageService storage)
+    {
+        _unitOfWork = unitOfWork;
+        _storage = storage;
+    }
+
+    public async Task<DownloadMediaResult> Handle(
+        DownloadMediaCommand request,
+        CancellationToken cancellationToken)
+    {
+        var resource = await _unitOfWork.Media.GetByIdAsync(request.MediaId);
+
+        var media = resource as Domain.Entities.Media;
+
+        if (media == null)
+            throw new Exception("Media not found");
+
+        if (string.IsNullOrWhiteSpace(media.StoragePath))
+            throw new Exception("Invalid media storage path");
+
+        (Stream stream, string contentType, string fileName) =
+    await _storage.DownloadAsync(media.StoragePath);
+
+        return new DownloadMediaResult
+        {
+            Stream = stream,
+            ContentType = contentType,
+            FileName = fileName
+        };
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\UpdateMediaCommand\UpdateMediaCommand.cs ==========
+using LMS.App.DTOs.Value;
+using MediatR;
+
+namespace LMS.App.Features.Medias.Commands.UpdateMediaCommand;
+
+public record UpdateMediaCommand(
+    int Id,
+    int? ItemId,
+    string FileName,
+    string? AltText,
+    List<ResourceValueDto> Values, // Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø© Ù„Ù„Ù‚ÙŠÙ…
+    string CurrentUserId
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\UpdateMediaCommand\UpdateMediaHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.Medias.Commands.UpdateMediaCommand;
+
+public class UpdateMediaCommandHandler : IRequestHandler<UpdateMediaCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateMediaCommandHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(UpdateMediaCommand request, CancellationToken cancellationToken)
+    {
+        var media = await _unitOfWork.Media.GetMediaWithMetadataAsync(request.Id);
+        
+        if (media == null) return false;
+
+        if (media.CreatedBy != request.CurrentUserId)
+        {
+            throw new UnauthorizedAccessException("Don't have permission to edit this file.");
+        }
+
+        media.FileName = request.FileName;
+        media.AltText = request.AltText;
+        media.ItemId = request.ItemId;
+        
+        media.ModifiedAt = DateTime.UtcNow;
+        media.ModifiedBy = request.CurrentUserId;
+
+        if (request.Values != null)
+        {
+            media.Values.Clear();
+
+            foreach (var v in request.Values)
+            {
+                media.Values.Add(new Value
+                {
+                    ResourceId = media.Id,
+                    PropertyId = v.PropertyId,
+                    ValueText = v.ValueText,
+                    ValueUri = v.ValueUri,
+                    ValueResourceId = v.ValueResourceId,
+                    Type = v.Type,
+                    Language = v.Language
+                });
+            }
+        }
+
+        _unitOfWork.Media.Update(media);
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\UploadMedia\UploadMediaCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.Media.Commands.UploadMediaFile;
+
+public record UploadMediaFileCommand(
+    int MediaId,
+    byte[] Content,
+    string MimeType,
+    string FileName
+) : IRequest<string>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Commands\UploadMedia\UploadMediaHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.Media.Commands.UploadMediaFile;
+
+public class UploadMediaFileHandler : IRequestHandler<UploadMediaFileCommand, string>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediaStorageService _storage;
+
+    public UploadMediaFileHandler(
+        IUnitOfWork unitOfWork,
+        IMediaStorageService storage)
+    {
+        _unitOfWork = unitOfWork;
+        _storage = storage;
+    }
+
+    public async Task<string> Handle(UploadMediaFileCommand request, CancellationToken cancellationToken)
+    {
+        var media = await _unitOfWork.Media.GetByIdAsync(request.MediaId) as Domain.Entities.Media;
+
+        if (media is null)
+            throw new Exception("Media not found");
+
+
+        var storagePath = await _storage.UploadAsync(
+            request.Content,
+            request.FileName,
+            request.MimeType);
+        media.ModifiedAt = DateTime.UtcNow;
+        media.StoragePath = storagePath;
+        media.MimeType = request.MimeType;
+        media.FileName = request.FileName;
+
+        await _unitOfWork.CommitAsync();
+
+        return storagePath;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaByItemId\GetMediaByItemIdHandler.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Media;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Media.Queries.GetMediaByItemId;
+
+public class GetMediaByItemIdHandler : IRequestHandler<GetMediaByItemIdQuery, List<MediaDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetMediaByItemIdHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<List<MediaDto>> Handle(GetMediaByItemIdQuery request, CancellationToken cancellationToken)
+    {
+        var mediaList = await _unitOfWork.Media.GetMediaByItemIdAsync(request.ItemId);
+
+        return _mapper.Map<List<MediaDto>>(mediaList);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaByItemId\GetMediaByItemIDQuery.cs ==========
+using LMS.App.DTOs.Media;
+using MediatR;
+
+namespace LMS.App.Features.Media.Queries.GetMediaByItemId;
+
+public record GetMediaByItemIdQuery(
+int ItemId
+):IRequest<List<MediaDto>>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaByMimeType\GetMediaByMimeTypeHandler.cs ==========
+using AutoMapper;
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.App.DTOs.Media;
+namespace LMS.App.features.Medias.Queries.GetMediaByMimeType;
+
+public class GetMediaByMimeTypeHandler : IRequestHandler<GetMediaByMimeTypeQuery, List<MediaDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetMediaByMimeTypeHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<List<MediaDto>> Handle(GetMediaByMimeTypeQuery request, CancellationToken cancellationToken)
+    {
+        
+        var results = await _unitOfWork.Media.FindAsync(m => m.MimeType == request.MimeType);
+
+        return _mapper.Map<List<MediaDto>>(results.ToList());
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaByMimeType\GetMediaByMimeTypeQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.Media;
+namespace LMS.App.features.Medias.Queries.GetMediaByMimeType;
+public record GetMediaByMimeTypeQuery(string MimeType) : IRequest<List<MediaDto>>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaByOwner\GetMediaByOwnerHandler.cs ==========
+using MediatR;
+using AutoMapper;
+using LMS.App.DTOs.Media;
+using LMS.Domain.Interfaces;
+
+namespace LMS.App.features.Medias.Queries.GetMediaByOwner;
+public class GetMediaByOwnerHandler : IRequestHandler<GetMediaByOwnerQuery, List<MediaDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetMediaByOwnerHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<List<MediaDto>> Handle(GetMediaByOwnerQuery request, CancellationToken cancellationToken)
+    {
+        var results = await _unitOfWork.Media.FindAsync(m => m.CreatedBy == request.UserId);
+        
+        return _mapper.Map<List<MediaDto>>(results.ToList());
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaByOwner\GetMediaByOwnerQuery.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.App.DTOs.Media;
+
+namespace LMS.App.features.Medias.Queries.GetMediaByOwner;
+public record GetMediaByOwnerQuery(string UserId) : IRequest<List<MediaDto>>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaWithMetadata\GetMediaWithMetadataHandler.cs ==========
+using MediatR;
+using LMS.App.DTOs.Media;
+using LMS.Domain.Interfaces;
+using AutoMapper;
+namespace LMS.App.Features.Medias.Queries.GetMediaWithMetadata;
+
+public class GetMediaWithMetadataHandler : IRequestHandler<GetMediaWithMetadataQuery, MediaWithMetadataDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetMediaWithMetadataHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<MediaWithMetadataDto?> Handle(GetMediaWithMetadataQuery request, CancellationToken cancellationToken)
+    {
+        // Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…ÙŠØ«ÙˆØ¯ Ø§Ù„Ù…Ø®ØµØµØ© Ø§Ù„ØªÙŠ Ø£Ø¶ÙÙ†Ø§Ù‡Ø§ Ù„Ù€ IMediaRepository
+        var media = await _unitOfWork.Media.GetMediaWithMetadataAsync(request.MediaId);
+
+        if (media == null) return null;
+
+        return _mapper.Map<MediaWithMetadataDto>(media);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Medias\Queries\GetMediaWithMetadata\GetMediaWithMetadataQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.Media;
+
+namespace LMS.App.Features.Medias.Queries.GetMediaWithMetadata;
+public record GetMediaWithMetadataQuery(int MediaId) : IRequest<MediaWithMetadataDto?>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Register\Commands\RegisterCommand.cs ==========
+using LMS.App.DTOs.Auth;
+using MediatR;
+
+namespace LMS.App.Features.Register.Commands;
+
+public record RegisterCommand(RegisterRequest Data) : IRequest<AuthResponse>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Register\Commands\RegisterHandler.cs ==========
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using AutoMapper;
+using LMS.App.DTOs.Auth;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
+using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+
+namespace LMS.App.Features.Register.Commands;
+
+public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
+{
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IConfiguration _configuration;
+    private readonly IMapper _mapper;
+    private readonly IJwtService _jwtService;
+    string roleName = "Member";
+
+    public RegisterHandler(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IConfiguration configuration,
+        IMapper mapper,
+        IJwtService jwtService)
+    {
+        _userManager = userManager;
+        _roleManager = roleManager;
+        _configuration = configuration;
+        _mapper = mapper;
+        _jwtService = jwtService;
+    }
+
+    public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
+    {
+        var user = _mapper.Map<ApplicationUser>(request.Data);
+        var result = await _userManager.CreateAsync(user, request.Data.Password);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return new AuthResponse(string.Empty, string.Empty, request.Data.Email, string.Empty, false, $"Registration failed: {errors}");
+        }
+
+        //not necessary for now but i will keep it for future
+        if (!string.IsNullOrWhiteSpace(roleName))
+        {
+            if (await _roleManager.RoleExistsAsync(roleName))
+            {
+                await _userManager.AddToRoleAsync(user, roleName);
+            }
+        }
+
+        var authResponse = _mapper.Map<AuthResponse>(user);
+        
+        var token = _jwtService.GenerateJwtToken(user, roleName);
+        
+        // Set the token that was ignored by the mapper
+        return authResponse with
+        {
+            Token = token,
+            Role = roleName,
+            Success = true,
+            Message = "Registration successful."
+        };
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Commands\AddValue\AddValueCommand.cs ==========
+using MediatR;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.Resources.Commands.AddValue;
+
+public record AddValueCommand(
+    int ResourceId,
+    int PropertyId,
+    string? ValueText,
+    int? ValueResourceId,
+    string Type,
+    string? Language
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Commands\AddValue\AddValueHandler.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Resources.Commands.AddValue;
+
+public class AddValueHandler : IRequestHandler<AddValueCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AddValueHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(AddValueCommand request, CancellationToken cancellationToken)
+    {
+        var property = await _unitOfWork.Vocabularies.GetPropertyByIdAsync(request.PropertyId);
+        if (property == null)
+            throw new KeyNotFoundException($"Property {request.PropertyId} not found.");
+
+        // System constructs the URI from the property definition â€” not user-supplied.
+        var systemUri = property.TermUri;
+
+        var value = await _unitOfWork.Resources.AddValueAsync(
+            request.ResourceId,
+            request.PropertyId,
+            request.ValueText,
+            systemUri,
+            request.ValueResourceId,
+            request.Type,
+            request.Language
+        );
+        if (value == null) return false;
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Commands\RemoveValue\RemoveValueCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.Resources.Commands.RemoveValue;
+
+public record RemoveValueCommand(
+    int ResourceId,
+    int ValueId
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Commands\RemoveValue\RemoveValueHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Resources.Commands.RemoveValue;
+
+public class RemoveValueHandler : IRequestHandler<RemoveValueCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public RemoveValueHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(RemoveValueCommand request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.Resources.RemoveValueAsync(
+            request.ResourceId,
+            request.ValueId
+        );
+
+        if (result)
+            await _unitOfWork.CommitAsync();
+
+        return result;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Commands\UpdateValue\UpdateValueCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.Resources.Commands.UpdateValue;
+
+public record UpdateValueCommand(
+    int ResourceId,
+    int ValueId,
+    string? ValueText,
+    int? ValueResourceId,
+    string Type,
+    string? Language
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Commands\UpdateValue\UpdateValueHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+using System.Linq;
+
+namespace LMS.App.Features.Resources.Commands.UpdateValue;
+
+public class UpdateValueHandler : IRequestHandler<UpdateValueCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateValueHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(UpdateValueCommand request, CancellationToken cancellationToken)
+    {
+        // Fetch the existing value to know its PropertyId
+        // (ResourceRepository.UpdateValueAsync already fetches the value by valueId+resourceId)
+        // We need to look up the property to reconstruct the URI.
+        var values = await _unitOfWork.Resources.GetResourceValuesAsync(request.ResourceId);
+        var existing = values.FirstOrDefault(v => v.Id == request.ValueId);
+        if (existing == null) return false;
+
+        var property = await _unitOfWork.Vocabularies.GetPropertyByIdAsync(existing.PropertyId);
+        var systemUri = property?.TermUri;
+
+        var result = await _unitOfWork.Resources.UpdateValueAsync(
+            request.ResourceId,
+            request.ValueId,
+            request.ValueText,
+            systemUri,
+            request.ValueResourceId,
+            request.Type,
+            request.Language
+        );
+        if (result) await _unitOfWork.CommitAsync();
+        return result;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Queries\GetResourceValues\GetResourceValuesHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+using AutoMapper;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.Features.Resources.Queries.GetResourceValues;
+
+public class GetResourceValuesHandler : IRequestHandler<GetResourceValuesQuery, List<ResourceValueDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetResourceValuesHandler(IUnitOfWork unitOfWork, IMapper mapper) 
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<List<ResourceValueDto>> Handle(GetResourceValuesQuery request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.Resources.GetResourceValuesAsync(request.ResourceId);
+        return _mapper.Map<List<ResourceValueDto>>(result);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Resources\Queries\GetResourceValues\GetResourceValuesQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.Value;
+
+namespace LMS.App.Features.Resources.Queries.GetResourceValues;
+
+public record GetResourceValuesQuery(int ResourceId) : IRequest<List<ResourceValueDto>>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\AddPropertyToTemplate\AddPropertyToTemplateCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.ResourceTemplates.Commands.AddPropertyToTemplate;
+public record AddPropertyToTemplateCommand(
+    int TemplateId,
+    int PropertyId,
+    bool IsRequired,
+    int DisplayOrder,
+    string AlternateLabel
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\AddPropertyToTemplate\AddPropertyToTemplateHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+namespace LMS.App.Features.ResourceTemplates.Commands.AddPropertyToTemplate;
+public class AddPropertyToTemplateHandler : IRequestHandler<AddPropertyToTemplateCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public AddPropertyToTemplateHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(AddPropertyToTemplateCommand request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.ResourceTemplates.AddPropertyToTemplateAsync(
+            request.TemplateId, request.PropertyId, request.IsRequired, request.DisplayOrder, request.AlternateLabel);
+
+        if (result == null) return false;
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\CreateResourceTemplate\CreateResourceTemplateCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
+
+public record CreateResourceTemplateCommand(
+    string Label,
+    string? Description
+) : IRequest<int>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\CreateResourceTemplate\CreateResourceTemplateHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
+
+public class CreateResourceTemplateCommandHandler : IRequestHandler<CreateResourceTemplateCommand, int>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateResourceTemplateCommandHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<int> Handle(CreateResourceTemplateCommand request, CancellationToken cancellationToken)
+    {
+         if(!await _unitOfWork.ResourceTemplates.IsLabelUniqueAsync(request.Label)){
+            throw new Exception("Label already exists");
+        }
+        var template = new ResourceTemplate
+        {
+            Label = request.Label,
+            Description = request.Description
+        };
+
+        await _unitOfWork.ResourceTemplates.AddAsync(template);
+        await _unitOfWork.CommitAsync();
+
+        return template.Id;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\DeleteResourceTemplate\DeleteResourceTemplateCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.ResourceTemplates.Commands.DeleteResourceTemplete;
+
+public record DeleteResourceTemplateCommand(int Id) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\DeleteResourceTemplate\DeleteResourceTemplateHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+
+namespace LMS.App.Features.ResourceTemplates.Commands.DeleteResourceTemplete;
+
+public class DeleteResourceTemplateCommandHandler : IRequestHandler<DeleteResourceTemplateCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteResourceTemplateCommandHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(DeleteResourceTemplateCommand request, CancellationToken cancellationToken)
+    {
+        var template = await _unitOfWork.ResourceTemplates.GetByIdAsync(request.Id);
+
+        if (template == null) return false;
+
+        _unitOfWork.ResourceTemplates.Delete(template);
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\RemovePropertyFromTemplate\RemovePropertyFromTemplateCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.ResourceTemplates.Commands.RemovePropertyFromTemplate;
+public record RemovePropertyFromTemplateCommand(int TemplateId, int PropertyId) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\RemovePropertyFromTemplate\RemovePropertyFromTemplateHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+namespace LMS.App.Features.ResourceTemplates.Commands.RemovePropertyFromTemplate;
+public class RemovePropertyFromTemplateHandler : IRequestHandler<RemovePropertyFromTemplateCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public RemovePropertyFromTemplateHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(RemovePropertyFromTemplateCommand request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.ResourceTemplates.RemovePropertyFromTemplateAsync(
+            request.TemplateId, request.PropertyId);
+
+        if (result == null) return false;
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\UpdatePropertyInTemplate\UpdatePropertyInTemplateCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.ResourceTemplates.Commands.UpdatePropertyInTemplate;
+public record UpdatePropertyInTemplateCommand(
+    int TemplateId, 
+    int PropertyId, 
+    bool IsRequired,
+    int DisplayOrder,
+    string? AlternateLabel
+    ) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\UpdatePropertyInTemplate\UpdatePropertyInTemplateHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+namespace LMS.App.Features.ResourceTemplates.Commands.UpdatePropertyInTemplate;
+public class UpdatePropertyInTemplateHandler : IRequestHandler<UpdatePropertyInTemplateCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public UpdatePropertyInTemplateHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(UpdatePropertyInTemplateCommand request, CancellationToken cancellationToken)
+    {
+        var result = await _unitOfWork.ResourceTemplates.UpdatePropertyInTemplateAsync(
+            request.TemplateId, request.PropertyId, request.IsRequired, request.DisplayOrder, request.AlternateLabel);
+
+        if (result == null) return false;
+
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\UpdateResourceTemplate\UpdateResourceTemplateCommand.cs ==========
+using MediatR;
+
+namespace LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+
+public record UpdateResourceTemplateCommand(
+    int Id,
+    string Label,
+    string? Description
+) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Commands\UpdateResourceTemplate\UpdateResourceTemplateHandler.cs ==========
+using MediatR;
+using LMS.Domain.Interfaces;
+
+namespace LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+
+public class UpdateResourceTemplateCommandHandler : IRequestHandler<UpdateResourceTemplateCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateResourceTemplateCommandHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<bool> Handle(UpdateResourceTemplateCommand request, CancellationToken cancellationToken)
+    {
+        var template = await _unitOfWork.ResourceTemplates.GetByIdAsync(request.Id);
+
+        if (template == null) return false;
+        if(request.Label != template.Label && !await _unitOfWork.ResourceTemplates.IsLabelUniqueAsync(request.Label)){
+            throw new Exception("Label already exists");
+        }
+        template.Label = request.Label;
+        template.Description = request.Description;
+
+        _unitOfWork.ResourceTemplates.Update(template);
+        var result = await _unitOfWork.CommitAsync();
+
+        return result > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Queries\GetTemplateWithProperties\GetTemplateWithPropertiesHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+using AutoMapper;
+using LMS.App.DTOs.ResourceTemplate;
+
+namespace LMS.App.Features.ResourceTemplates.Queries.GetTemplateWithProperties;
+
+public class GetTemplateWithPropertiesHandler : IRequestHandler<GetTemplateWithPropertiesQuery, ResourceTemplateDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetTemplateWithPropertiesHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<ResourceTemplateDto?> Handle(GetTemplateWithPropertiesQuery request, CancellationToken cancellationToken)
+    {
+        var template = await _unitOfWork.ResourceTemplates.GetTemplateWithPropertiesAsync(request.Id);
+        if (template == null) return null;
+        return _mapper.Map<ResourceTemplateDto>(template);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\ResourceTemplates\Queries\GetTemplateWithProperties\GetTemplateWithPropertiesQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.ResourceTemplate;
+
+namespace LMS.App.Features.ResourceTemplates.Queries.GetTemplateWithProperties;
+
+public record GetTemplateWithPropertiesQuery(int Id) : IRequest<ResourceTemplateDto?>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\CreateProperty\CreatePropertyCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.Vocabularies.Commands.CreateProperty;
+public record CreatePropertyCommand(int VocabularyId, string LocalName, string Label, string TermUri) : IRequest<int>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\CreateProperty\CreatePropertyHandler.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Commands.CreateProperty;
+
+public class CreatePropertyHandler : IRequestHandler<CreatePropertyCommand, int>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public CreatePropertyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<int> Handle(CreatePropertyCommand request, CancellationToken ct)
+    {
+        var vocab = await _unitOfWork.Vocabularies.GetByIdAsync(request.VocabularyId);
+        if (vocab == null) throw new KeyNotFoundException($"Vocabulary ID {request.VocabularyId} not found.");
+
+        var property = new Property
+        {
+            VocabularyId = request.VocabularyId,
+            LocalName = request.LocalName,
+            Label = request.Label,
+            TermUri = request.TermUri
+        };
+
+        await _unitOfWork.Vocabularies.AddPropertyAsync(property);
+        await _unitOfWork.CommitAsync();
+        return property.Id;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\CreateVocabulary\CreateVocabularyCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.Vocabularies.Commands.CreateVocabulary;
+public record CreateVocabularyCommand(string Prefix, string NamespaceUri, string Label) : IRequest<int>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\CreateVocabulary\CreateVocabularyHandler.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Commands.CreateVocabulary;
+
+public class CreateVocabularyHandler : IRequestHandler<CreateVocabularyCommand, int>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public CreateVocabularyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<int> Handle(CreateVocabularyCommand request, CancellationToken ct)
+    {
+        if (!await _unitOfWork.Vocabularies.IsLabelUniqueAsync(request.Label))
+            throw new InvalidOperationException($"Vocabulary label '{request.Label}' is already in use.");
+        if (!await _unitOfWork.Vocabularies.IsNamespaceUriUniqueAsync(request.NamespaceUri))
+            throw new InvalidOperationException($"Namespace URI '{request.NamespaceUri}' is already in use.");
+
+        var vocabulary = new Vocabulary
+        {
+            Prefix = request.Prefix,
+            NamespaceUri = request.NamespaceUri,
+            Label = request.Label
+        };
+
+        await _unitOfWork.Vocabularies.AddAsync(vocabulary);
+        await _unitOfWork.CommitAsync();
+        return vocabulary.Id;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\DeleteProperty\DeletePropertyCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.Vocabularies.Commands.DeleteProperty;
+public record DeletePropertyCommand(int Id) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\DeleteProperty\DeletePropertyHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Commands.DeleteProperty;
+
+public class DeletePropertyHandler : IRequestHandler<DeletePropertyCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public DeletePropertyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(DeletePropertyCommand request, CancellationToken ct)
+    {
+        if (await _unitOfWork.Vocabularies.HasLinkedValuesAsync(request.Id))
+            throw new InvalidOperationException("Cannot delete property because it has linked values.");
+
+        var deleted = await _unitOfWork.Vocabularies.DeletePropertyAsync(request.Id);
+        return deleted && await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\DeleteVocabulary\DeleteVocabularyCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.Vocabularies.Commands.DeleteVocabulary;
+public record DeleteVocabularyCommand(int Id) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\DeleteVocabulary\DeleteVocabularyHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Commands.DeleteVocabulary;
+
+public class DeleteVocabularyHandler : IRequestHandler<DeleteVocabularyCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public DeleteVocabularyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(DeleteVocabularyCommand request, CancellationToken ct)
+    {
+        var vocab = await _unitOfWork.Vocabularies.GetByIdAsync(request.Id);
+        if (vocab == null) return false;
+
+        var props = await _unitOfWork.Vocabularies.GetPropertiesByVocabularyIdAsync(request.Id);
+        foreach (var prop in props)
+        {
+            if (await _unitOfWork.Vocabularies.HasLinkedValuesAsync(prop.Id))
+                throw new InvalidOperationException($"Cannot delete: Property '{prop.LocalName}' has linked values. Remove them first.");
+        }
+
+        _unitOfWork.Vocabularies.Delete(vocab);
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\UpdateProperty\UpdatePropertyCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.Vocabularies.Commands.UpdateProperty;
+public record UpdatePropertyCommand(int Id, string LocalName, string Label, string TermUri) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\UpdateProperty\UpdatePropertyHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Commands.UpdateProperty;
+
+public class UpdatePropertyHandler : IRequestHandler<UpdatePropertyCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public UpdatePropertyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(UpdatePropertyCommand request, CancellationToken ct)
+   {
+    var prop = await _unitOfWork.Vocabularies.GetPropertyByIdAsync(request.Id);
+    if (prop == null) return false;
+
+    prop.LocalName = request.LocalName;
+    prop.Label = request.Label;
+    prop.TermUri = request.TermUri;
+    
+    _unitOfWork.Vocabularies.UpdateProperty(prop);
+    return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\UpdateVocabulary\UpdateVocabularyCommand.cs ==========
+using MediatR;
+namespace LMS.App.Features.Vocabularies.Commands.UpdateVocabulary;
+public record UpdateVocabularyCommand(int Id, string Prefix, string NamespaceUri, string Label) : IRequest<bool>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Commands\UpdateVocabulary\UpdateVocabularyHandler.cs ==========
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Commands.UpdateVocabulary;
+
+public class UpdateVocabularyHandler : IRequestHandler<UpdateVocabularyCommand, bool>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public UpdateVocabularyHandler(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
+
+    public async Task<bool> Handle(UpdateVocabularyCommand request, CancellationToken ct)
+    {
+        var vocab = await _unitOfWork.Vocabularies.GetByIdAsync(request.Id);
+        if (vocab == null) return false;
+
+        if (vocab.Label != request.Label && !await _unitOfWork.Vocabularies.IsLabelUniqueAsync(request.Label))
+            throw new InvalidOperationException($"Vocabulary label '{request.Label}' is already in use.");
+
+        vocab.Prefix = request.Prefix;
+        vocab.NamespaceUri = request.NamespaceUri;
+        vocab.Label = request.Label;
+
+        _unitOfWork.Vocabularies.Update(vocab);
+        return await _unitOfWork.CommitAsync() > 0;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Queries\GetAllVocabularies\GetAllVocabulariesHandler.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Vocabulary;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Queries.GetAllVocabularies;
+
+public class GetAllVocabulariesHandler : IRequestHandler<GetAllVocabulariesQuery, List<VocabularyDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    public GetAllVocabulariesHandler(IUnitOfWork unitOfWork, IMapper mapper) { _unitOfWork = unitOfWork; _mapper = mapper; }
+
+    public async Task<List<VocabularyDto>> Handle(GetAllVocabulariesQuery request, CancellationToken ct)
+    {
+        var vocabs = await _unitOfWork.Vocabularies.GetAllAsync();
+        return _mapper.Map<List<VocabularyDto>>(vocabs);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Queries\GetAllVocabularies\GetAllVocabulariesQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.Vocabulary;
+namespace LMS.App.Features.Vocabularies.Queries.GetAllVocabularies;
+public record GetAllVocabulariesQuery : IRequest<List<VocabularyDto>>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Queries\GetVocabularyById\GetVocabularyByIdHandler.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Vocabulary;
+using LMS.Domain.Interfaces;
+using MediatR;
+
+namespace LMS.App.Features.Vocabularies.Queries.GetVocabularyById;
+
+public class GetVocabularyByIdHandler : IRequestHandler<GetVocabularyByIdQuery, VocabularyDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    public GetVocabularyByIdHandler(IUnitOfWork unitOfWork, IMapper mapper) { _unitOfWork = unitOfWork; _mapper = mapper; }
+
+    public async Task<VocabularyDto?> Handle(GetVocabularyByIdQuery request, CancellationToken ct)
+    {
+        var vocab = await _unitOfWork.Vocabularies.GetByIdAsync(request.Id);
+        if (vocab == null) return null;
+
+        var props = await _unitOfWork.Vocabularies.GetPropertiesByVocabularyIdAsync(request.Id);
+        var dto = _mapper.Map<VocabularyDto>(vocab);
+        dto.Properties = _mapper.Map<List<LMS.App.DTOs.Property.PropertyDto>>(props);
+        return dto;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Queries\GetVocabularyById\GetVocabularyByIdQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.Vocabulary;
+namespace LMS.App.Features.Vocabularies.Queries.GetVocabularyById;
+public record GetVocabularyByIdQuery(int Id) : IRequest<VocabularyDto?>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Queries\GetVocabularyByPrefix\GetVocabularyByPrefixHandler.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Vocabulary;
+using LMS.Domain.Interfaces;
+using MediatR;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LMS.App.Features.Vocabularies.Queries.GetVocabularyByPrefix;
+
+public class GetVocabularyByPrefixHandler : IRequestHandler<GetVocabularyByPrefixQuery, List<VocabularyDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    public GetVocabularyByPrefixHandler(IUnitOfWork unitOfWork, IMapper mapper) { _unitOfWork = unitOfWork; _mapper = mapper; }
+
+    public async Task<List<VocabularyDto>> Handle(GetVocabularyByPrefixQuery request, CancellationToken ct)
+    {
+        var vocabs = await _unitOfWork.Vocabularies.FindAsync(v => v.Prefix.StartsWith(request.Prefix));
+        return _mapper.Map<List<VocabularyDto>>(vocabs);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Features\Vocabularies\Queries\GetVocabularyByPrefix\GetVocabularyByPrefixQuery.cs ==========
+using MediatR;
+using LMS.App.DTOs.Vocabulary;
+using System.Collections.Generic;
+
+namespace LMS.App.Features.Vocabularies.Queries.GetVocabularyByPrefix;
+public record GetVocabularyByPrefixQuery(string Prefix) : IRequest<List<VocabularyDto>>;
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Interface\IJwtService.cs ==========
+using LMS.Domain.Entities;
+
+namespace LMS.App.Interface;
+
+public interface IJwtService
+{
+    string GenerateJwtToken(ApplicationUser user, string role);
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Interface\IMediaProcessingService.cs ==========
+namespace LMS.App.Interface;
+public interface IMediaProcessingService
+{
+    Task<byte[]?> GenerateThumbnailAsync(byte[] content, string mimeType, string filePath);
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Interface\IMediaStorageService.cs ==========
+namespace LMS.App.Interface;
+public interface IMediaStorageService
+{
+    Task<string> UploadAsync(byte[] content, string fileName, string contentType);
+    Task<(Stream stream, string contentType, string fileName)> DownloadAsync(string path);
+    }
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\ApplicationUserMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Auth;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class ApplicationUserMappingProfile : Profile
+{
+    public ApplicationUserMappingProfile()
+    {
+        CreateMap<ApplicationUser, AuthResponse>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+            .ForMember(dest => dest.Token, opt => opt.Ignore())
+            .ForMember(dest => dest.Success, opt => opt.MapFrom(_ => true))
+            .ForMember(dest => dest.Message, opt => opt.MapFrom(_ => "Authentication successful."))
+            .ForMember(dest => dest.Role, opt => opt.Ignore()); // Set in Handler
+
+        CreateMap<RegisterRequest, ApplicationUser>()
+            .ForMember(dest => dest.Id,                   opt => opt.Ignore())
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+            .ForMember(dest => dest.PhoneNumber,          opt => opt.MapFrom(src => src.PhoneNumber))
+            .ForMember(dest => dest.PasswordHash,         opt => opt.Ignore())
+            .ForMember(dest => dest.NormalizedEmail,      opt => opt.Ignore())
+            .ForMember(dest => dest.NormalizedUserName,   opt => opt.Ignore())
+            .ForMember(dest => dest.SecurityStamp,        opt => opt.Ignore())
+            .ForMember(dest => dest.ConcurrencyStamp,     opt => opt.Ignore())
+            .ForMember(dest => dest.EmailConfirmed,       opt => opt.Ignore())
+            .ForMember(dest => dest.PhoneNumberConfirmed, opt => opt.Ignore())
+            .ForMember(dest => dest.TwoFactorEnabled,     opt => opt.Ignore())
+            .ForMember(dest => dest.LockoutEnd,           opt => opt.Ignore())
+            .ForMember(dest => dest.LockoutEnabled,       opt => opt.Ignore())
+            .ForMember(dest => dest.AccessFailedCount,    opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt,            opt => opt.MapFrom(_ => DateTime.UtcNow));
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\ItemMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Item;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class ItemMappingProfile : Profile
+{
+    public ItemMappingProfile()
+    {
+        CreateMap<Item, ItemDto>()
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<CreateItemDto, Item>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.CreatedBy, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
+            .ForMember(d => d.Template, opt => opt.Ignore())
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<UpdateItemDto, Item>()
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.CreatedBy, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
+            .ForMember(d => d.Template, opt => opt.Ignore())
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\ItemSetMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.ItemSet;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class ItemSetMappingProfile : Profile
+{
+    public ItemSetMappingProfile()
+    {
+        CreateMap<ItemSet, ItemSetMembersDto>();
+        CreateMap<ItemSet, ItemSetDto>()
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<CreateItemSetDto, ItemSet>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.CreatedBy, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<UpdateItemSetDto, ItemSet>()
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.CreatedBy, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\MediaMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Media;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class MediaMappingProfile : Profile
+{
+    public MediaMappingProfile()
+    {
+        CreateMap<Media, MediaDto>()
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<CreateMediaDto, Media>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.CreatedBy, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
+            .ForMember(d => d.Item, opt => opt.Ignore())
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<UpdateMediaDto, Media>()
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.CreatedBy, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
+            .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
+            .ForMember(d => d.Item, opt => opt.Ignore())
+            .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\ResourceTemplateMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.ResourceTemplate;
+using LMS.App.DTOs.ResourceProperty;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class ResourceTemplateMappingProfile : Profile
+{
+    public ResourceTemplateMappingProfile()
+    {
+        CreateMap<TemplateProperty, ResourcePropertyDto>();
+
+        CreateMap<ResourceTemplate, ResourceTemplateDto>()
+            .ForMember(d => d.Properties, opt => opt.MapFrom(s => s.TemplateProperties)); 
+        CreateMap<ResourcePropertyDto, TemplateProperty>()
+            .ForMember(dest => dest.TemplateId,     opt => opt.Ignore())   // set by handler
+            .ForMember(dest => dest.PropertyId,     opt => opt.MapFrom(src => src.PropertyId))
+            .ForMember(dest => dest.IsRequired,     opt => opt.MapFrom(src => src.IsRequired))
+            .ForMember(dest => dest.DisplayOrder,   opt => opt.MapFrom(src => src.DisplayOrder))
+            .ForMember(dest => dest.AlternateLabel, opt => opt.MapFrom(src => src.AlternateLabel))
+            .ForMember(dest => dest.Template,       opt => opt.Ignore())
+            .ForMember(dest => dest.Property,       opt => opt.Ignore());
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\ResourceValueMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Value;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class ResourceValueMappingProfile : Profile
+{
+    public ResourceValueMappingProfile()
+    {
+        CreateMap<Value, ResourceValueDto>();
+
+        CreateMap<CreateResourceValueDto, Value>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.ResourceId, opt => opt.Ignore())
+            .ForMember(d => d.Resource, opt => opt.Ignore())
+            .ForMember(d => d.Property, opt => opt.Ignore())
+            .ForMember(d => d.ValueResource, opt => opt.Ignore());
+
+        CreateMap<ResourceValueDto, Value>()
+            .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
+            .ForMember(d => d.ResourceId, opt => opt.Ignore())
+            .ForMember(d => d.Resource, opt => opt.Ignore())
+            .ForMember(d => d.Property, opt => opt.Ignore())
+            .ForMember(d => d.ValueResource, opt => opt.Ignore());
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Profiles\VocabularyMappingProfile.cs ==========
+using AutoMapper;
+using LMS.App.DTOs.Vocabulary;
+using LMS.App.DTOs.Property;
+using LMS.Domain.Entities;
+
+namespace LMS.App.Profiles;
+
+public class VocabularyMappingProfile : Profile
+{
+    public VocabularyMappingProfile()
+    {
+        CreateMap<Vocabulary, VocabularyDto>();
+        CreateMap<Property, PropertyDto>();
+
+        CreateMap<CreateVocabularyDto, Vocabulary>()
+            .ForMember(d => d.Id, opt => opt.Ignore());
+
+        CreateMap<UpdateVocabularyDto, Vocabulary>();
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Items\CreateItemCommandValidator.cs ==========
+using FluentValidation;
+
+using LMS.App.Features.Items.Commands.CreateItem;
+
+namespace LMS.App.Validators.Items;
+
+public class CreateItemCommandValidator : AbstractValidator<CreateItemCommand>
+{
+    public CreateItemCommandValidator()
+    {
+        RuleFor(x => x.TemplateId)
+                    .NotEmpty().WithMessage("TemplateId is required.")
+                    .GreaterThan(0).WithMessage("TemplateId must be greater than 0.");
+        RuleFor(x => x.OwnerId)
+                    .NotEmpty().WithMessage("OwnerId is required.")
+                    .NotNull().WithMessage("OwnerId cannot be null.");
+        RuleFor(x => x.Values)
+            .NotNull().WithMessage("Values list cannot be null.")
+            .Must(v => v != null && v.Any()).WithMessage("At least one value is required.");
+        RuleForEach(x => x.Values).ChildRules(value =>
+        {
+            value.RuleFor(v => v.PropertyId)
+                .GreaterThan(0).WithMessage("PropertyId must be a valid ID.");
+
+            value.RuleFor(v => v.Type)
+                .NotEmpty().WithMessage("Type is required.");
+
+            value.RuleFor(v => v)
+                .Must(v => !string.IsNullOrEmpty(v.ValueText) || 
+                           !string.IsNullOrEmpty(v.ValueUri) || 
+                           v.ValueResourceId.HasValue)
+                .WithMessage("Value must contain either Text, Uri, or a Resource ID.");
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Items\GetItemsWithFullDataWithConditionQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
+
+namespace LMS.App.Validators.Items;
+
+public class GetItemsWithFullDataWithConditionQueryValidator : AbstractValidator<GetItemsWithFullDataWithConditionQuery>
+{
+    public GetItemsWithFullDataWithConditionQueryValidator()
+    {
+        RuleFor(x => x.Filter)
+            .NotNull().WithMessage("Filter expression is required.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Items\GetItemWithFullDataAsyncQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
+
+namespace LMS.App.Validators.Items;
+public class GetItemWithFullDataAsyncQueryValidator : AbstractValidator<GetItemWithFullDataAsyncQuery>
+{
+    public GetItemWithFullDataAsyncQueryValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty().WithMessage("Item ID is required.")
+            .GreaterThan(0).WithMessage("Item ID must be a valid positive integer.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Items\UpdateItemCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Items.Commands.UpdateItem;
+
+namespace LMS.App.Validators.Items;
+
+public class UpdateItemCommandValidator : AbstractValidator<UpdateItemCommand>
+{
+    public UpdateItemCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .NotEmpty().WithMessage("Item ID is required for update.")
+            .GreaterThan(0).WithMessage("Item ID must be valid.");
+
+        RuleFor(x => x.TemplateId)
+            .GreaterThan(0).WithMessage("TemplateId must be a positive number.");
+
+        RuleFor(x => x.OwnerId)
+            .NotEmpty().WithMessage("OwnerId is required for security checks.");
+
+        RuleFor(x => x.Values)
+            .NotNull().WithMessage("Values list cannot be null.")
+            .Must(v => v.Any()).WithMessage("You must provide at least one value for the item.");
+
+        RuleForEach(x => x.Values).ChildRules(value =>
+        {
+            value.RuleFor(v => v.PropertyId)
+                .GreaterThan(0).WithMessage("PropertyId must be a valid ID.");
+
+            value.RuleFor(v => v.Type)
+                .NotEmpty().WithMessage("Value Type is required (e.g., Text, Image, etc.).");
+
+            value.RuleFor(v => v)
+                .Must(v => !string.IsNullOrEmpty(v.ValueText) || 
+                           !string.IsNullOrEmpty(v.ValueUri) || 
+                           v.ValueResourceId.HasValue)
+                .WithMessage("Each entry must have at least a ValueText, ValueUri, or a ResourceId.");
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\AddItemToSetCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ItemSets.Commands.AddItemToSet;
+namespace LMS.App.Validators.ItemSet;
+public class AddItemToSetCommandValidator : AbstractValidator<AddItemToSetCommand>
+{
+    public AddItemToSetCommandValidator()
+    {
+        RuleFor(x => x.SetId)
+            .GreaterThan(0).WithMessage("Set ID must be a valid positive number.");
+
+        RuleFor(x => x.ItemId)
+            .GreaterThan(0).WithMessage("Item ID must be a valid positive number.");
+
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("User ID is required to verify ownership.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\CheckItemSetOwnershipQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Queries.ItemSets.CheckItemSetOwnership;
+
+namespace LMS.App.Validators.ItemSets;
+
+public class CheckItemSetOwnershipQueryValidator : AbstractValidator<CheckItemSetOwnershipQuery>
+{
+    public CheckItemSetOwnershipQueryValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("ItemSet ID must be a valid positive number.");
+
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("User ID cannot be empty.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\CreateItemSetCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ItemSets.Commands.CreateItemSets;
+
+namespace LMS.App.Validators.ItemSets;
+
+public class CreateItemSetCommandValidator : AbstractValidator<CreateItemSetCommand>
+{
+    public CreateItemSetCommandValidator()
+    {
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("Title is required.")
+            .MaximumLength(20).WithMessage("Title cannot exceed 20 characters.");
+
+        RuleFor(x => x.OwnerId)
+            .NotEmpty().WithMessage("OwnerId is required.");
+
+        RuleForEach(x => x.Values).ChildRules(value =>
+        {
+            value.RuleFor(v => v.PropertyId)
+                .GreaterThan(0).WithMessage("PropertyId must be valid.");
+
+            value.RuleFor(v => v.Type)
+                .NotEmpty().WithMessage("Value Type is required.");
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\GetItemSetWithMembersQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ItemSets.Queries.GetItemSetWithMembers;
+
+namespace LMS.App.Validators.ItemSets;
+public class GetItemSetWithMembersQueryValidator : AbstractValidator<GetItemSetWithMembersQuery>
+{
+    public GetItemSetWithMembersQueryValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty().WithMessage("ItemSet ID is required.")
+            .GreaterThan(0).WithMessage("ItemSet ID must be a valid positive number.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\GetPublicSetsAsyncQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ItemSets.Queries.GetPublicSetsAsync;
+
+namespace LMS.App.Validators.ItemSets;
+public class GetPublicSetsAsyncQueryValidator : AbstractValidator<GetPublicSetsAsyncQuery>
+{
+    public GetPublicSetsAsyncQueryValidator()
+    {
+        RuleFor(x => x.UserId).NotEmpty().WithMessage("UserId is required to fetch relevant public sets.")
+            .NotEmpty().WithMessage("UserId is required to fetch relevant public sets.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\RemoveItemFromSetCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ItemSets.Commands.RemoveItemFromSet;
+
+namespace LMS.App.Validators.ItemSets;
+
+public class RemoveItemFromSetCommandValidator : AbstractValidator<RemoveItemFromSetCommand>
+{
+    public RemoveItemFromSetCommandValidator()
+    {
+        RuleFor(x => x.SetId)
+            .GreaterThan(0).WithMessage("Set ID must be a valid positive number.");
+
+        RuleFor(x => x.ItemId)
+            .GreaterThan(0).WithMessage("Item ID must be a valid positive number.");
+
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("User ID is required to verify your authority.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ItemSet\UpdateItemSetCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ItemSets.Commands.UpdateItemSets;
+
+namespace LMS.App.Validators.ItemSets;
+
+public class UpdateItemSetCommandValidator : AbstractValidator<UpdateItemSetCommand>
+{
+    public UpdateItemSetCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Valid ItemSet ID is required for update.");
+
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("Title cannot be empty.")
+            .MaximumLength(200).WithMessage("Title is too long.");
+
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("UserId is required for security verification.");
+            
+        RuleForEach(x => x.Values).ChildRules(value =>
+        {
+            value.RuleFor(v => v.PropertyId).GreaterThan(0);
+            value.RuleFor(v => v.Type).NotEmpty();
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Login\LoginCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Login.Command;
+
+namespace LMS.App.Validators.Login;
+
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
+    {
+        RuleFor(x => x.Data.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
+
+        RuleFor(x => x.Data.Password)
+            .NotEmpty().WithMessage("Password is required.")
+            .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
+            .Matches(@"[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
+            .Matches(@"[a-z]").WithMessage("Password must contain at least one lowercase letter.")
+            .Matches(@"\d").WithMessage("Password must contain at least one digit.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\CreateMediaCommandValidator.CS ==========
+using FluentValidation;
+using LMS.App.Features.Media.Commands.CreateMediaCommand;
+
+namespace LMS.App.Validators.Media;
+
+public class CreateMediaCommandValidator : AbstractValidator<CreateMediaCommand>
+{
+    public CreateMediaCommandValidator()
+    {
+        RuleFor(x => x.FileName)
+            .NotEmpty().WithMessage("FileName is required.")
+            .MaximumLength(15).WithMessage("FileName is too long.");
+
+        RuleFor(x => x.OwnerId)
+            .NotEmpty().WithMessage("OwnerId is required.");
+
+        RuleFor(x => x.Values)
+            .NotNull().WithMessage("Values list cannot be null.");
+
+        RuleForEach(x => x.Values).ChildRules(value =>
+        {
+            value.RuleFor(v => v.PropertyId).GreaterThan(0);
+            value.RuleFor(v => v.Type).NotEmpty();
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\DownloadMediaCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Medias.Commands.DownloadMedia;
+
+namespace LMS.App.Validators.Media;
+
+public class DownloadMediaCommandValidator : AbstractValidator<DownloadMediaCommand>
+{
+    public DownloadMediaCommandValidator()
+    {
+        RuleFor(x => x.MediaId)
+            .GreaterThan(0).WithMessage("Valid Media ID is required to download the file.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\GetMediaByItemIdQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Media.Queries.GetMediaByItemId;
+
+namespace LMS.App.Validators.Media;
+
+public class GetMediaByItemIdQueryValidator : AbstractValidator<GetMediaByItemIdQuery>
+{
+    public GetMediaByItemIdQueryValidator()
+    {
+        RuleFor(x => x.ItemId)
+            .GreaterThan(0).WithMessage("Item ID must be a valid positive number.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\GetMediaByMimeTypeQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.features.Medias.Queries.GetMediaByMimeType;
+
+namespace LMS.App.Validators.Media;
+
+public class GetMediaByMimeTypeQueryValidator : AbstractValidator<GetMediaByMimeTypeQuery>
+{
+    public GetMediaByMimeTypeQueryValidator()
+    {
+        RuleFor(x => x.MimeType)
+            .NotEmpty().WithMessage("MimeType is required (e.g., 'image/png').")
+            .Must(x => x.Contains("/")).WithMessage("Invalid MimeType format.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\GetMediaByOwnerQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.features.Medias.Queries.GetMediaByOwner;
+
+namespace LMS.App.Validators.Media;
+
+public class GetMediaByOwnerQueryValidator : AbstractValidator<GetMediaByOwnerQuery>
+{
+    public GetMediaByOwnerQueryValidator()
+    {
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("User ID is required to fetch media.")
+            .MinimumLength(5).WithMessage("Invalid User ID format.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\GetMediaWithMetadataQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Medias.Queries.GetMediaWithMetadata;
+
+namespace LMS.App.Validators.Media;
+
+public class GetMediaWithMetadataQueryValidator : AbstractValidator<GetMediaWithMetadataQuery>
+{
+    public GetMediaWithMetadataQueryValidator()
+    {
+        RuleFor(x => x.MediaId)
+            .GreaterThan(0).WithMessage("Media ID must be a valid positive number.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\UpdateMediaCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Medias.Commands.UpdateMediaCommand;
+
+namespace LMS.App.Validators.Media;
+
+public class UpdateMediaCommandValidator : AbstractValidator<UpdateMediaCommand>
+{
+    public UpdateMediaCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Valid Media ID is required.");
+
+        RuleFor(x => x.FileName)
+            .NotEmpty().WithMessage("FileName cannot be empty.")
+            .MaximumLength(25).WithMessage("FileName cannot exceed 25 characters.");
+
+        RuleFor(x => x.CurrentUserId)
+            .NotEmpty().WithMessage("Current user identity is required.");
+
+        RuleForEach(x => x.Values).ChildRules(value =>
+        {
+            value.RuleFor(v => v.PropertyId).GreaterThan(0);
+            value.RuleFor(v => v.Type).NotEmpty()
+            .MaximumLength(10).WithMessage("Type cannot exceed 10 characters.");
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Media\UploadMediaFileCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Media.Commands.UploadMediaFile;
+
+namespace LMS.App.Validators.Media;
+
+public class UploadMediaFileCommandValidator : AbstractValidator<UploadMediaFileCommand>
+{
+    public UploadMediaFileCommandValidator()
+    {
+        RuleFor(x => x.MediaId)
+            .GreaterThan(0).WithMessage("MediaId must be valid.");
+
+        RuleFor(x => x.Content)
+            .NotEmpty().WithMessage("File content cannot be empty.")
+            .Must(x => x.Length <= 10 * 1024 * 1024)
+            .WithMessage("File size exceeds the 10MB limit.");
+
+        RuleFor(x => x.FileName)
+            .NotEmpty().WithMessage("FileName is required.");
+
+        RuleFor(x => x.MimeType)
+            .NotEmpty().WithMessage("MimeType is required (e.g., image/jpeg).");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Register\RegisterCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Register.Commands;
+
+namespace LMS.App.Validators.Register;
+
+public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
+{
+    public RegisterCommandValidator()
+    {
+        RuleFor(x => x.Data.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
+
+        RuleFor(x => x.Data.FirstName)
+            .NotEmpty().WithMessage("First Name is required.")
+            .MaximumLength(50).WithMessage("First Name must not exceed 50 characters.");
+
+        RuleFor(x => x.Data.LastName)
+            .NotEmpty().WithMessage("Last Name is required.")
+            .MaximumLength(50).WithMessage("Last Name must not exceed 50 characters.");
+
+        RuleFor(x => x.Data.Password)
+            .NotEmpty().WithMessage("Password is required.")
+            .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
+            .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
+            .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
+            .Matches("[0-9]").WithMessage("Password must contain at least one digit.")
+            .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one non-alphanumeric character.");
+
+        RuleFor(x => x.Data.ConfirmPassword)
+            .Equal(x => x.Data.Password).WithMessage("Passwords do not match.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Resource\AddValueCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Resources.Commands.AddValue;
+
+namespace LMS.App.Validators.Resources;
+
+public class AddValueCommandValidator : AbstractValidator<AddValueCommand>
+{
+    public AddValueCommandValidator()
+    {
+        RuleFor(x => x.ResourceId)
+            .GreaterThan(0).WithMessage("ResourceId must be valid.");
+
+        RuleFor(x => x.PropertyId)
+            .GreaterThan(0).WithMessage("PropertyId must be valid.");
+
+        RuleFor(x => x.Type)
+            .NotEmpty().WithMessage("Type is required.");
+
+        RuleFor(x => x.Language)
+            .MaximumLength(5) 
+            .When(x => x.Language != null);
+
+        RuleFor(x => x.ValueText)
+            .MaximumLength(100) 
+            .When(x => !string.IsNullOrEmpty(x.ValueText));
+
+        RuleFor(x => x)
+            .Must(x => !string.IsNullOrWhiteSpace(x.ValueText) ||
+                       x.ValueResourceId.HasValue)
+            .WithMessage("At least one value (Text or ResourceId) must be provided.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Resource\GetResourceValuesQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Resources.Queries.GetResourceValues;
+
+namespace LMS.App.Validators.Resources;
+
+public class GetResourceValuesQueryValidator : AbstractValidator<GetResourceValuesQuery>
+{
+    public GetResourceValuesQueryValidator()
+    {
+        RuleFor(x => x.ResourceId).NotEmpty().WithMessage("Resource ID is required.")
+            .GreaterThan(0).WithMessage("Resource ID must be a valid positive integer.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Resource\UpdateValueCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Resources.Commands.UpdateValue;
+
+namespace LMS.App.Validators.Resources;
+
+public class UpdateValueCommandValidator : AbstractValidator<UpdateValueCommand>
+{
+    public UpdateValueCommandValidator()
+    {
+        RuleFor(x => x.ValueId)
+            .GreaterThan(0).WithMessage("ValueId must be a valid ID.");
+
+        RuleFor(x => x.ResourceId)
+            .GreaterThan(0).WithMessage("ResourceId must be a valid ID.");
+
+        RuleFor(x => x.Type)
+            .NotEmpty().WithMessage("Type is required.");
+
+        RuleFor(x => x.Language)
+            .MaximumLength(5)
+            .When(x => x.Language != null);
+
+        RuleFor(x => x.ValueText)
+            .MaximumLength(100)
+            .When(x => !string.IsNullOrEmpty(x.ValueText));
+
+        RuleFor(x => x)
+            .Must(x => !string.IsNullOrWhiteSpace(x.ValueText) ||
+                       x.ValueResourceId.HasValue)
+            .WithMessage("Update must include at least one value (Text or ResourceId).");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ResourceTemplates\AddPropertyToTemplateCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ResourceTemplates.Commands.AddPropertyToTemplate;
+
+namespace LMS.App.Validators.ResourceTemplates;
+
+public class AddPropertyToTemplateCommandValidator : AbstractValidator<AddPropertyToTemplateCommand>
+{
+    public AddPropertyToTemplateCommandValidator()
+    {
+        RuleFor(x => x.TemplateId)
+            .GreaterThan(0).WithMessage("TemplateId is required.");
+
+        RuleFor(x => x.PropertyId)
+            .GreaterThan(0).WithMessage("PropertyId is required.");
+
+        RuleFor(x => x.DisplayOrder)
+            .GreaterThanOrEqualTo(0).WithMessage("DisplayOrder cannot be negative.");
+
+        RuleFor(x => x.AlternateLabel)
+            .MaximumLength(100).WithMessage("Alternate label is too long.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ResourceTemplates\CreateResourceTemplateCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
+
+namespace LMS.App.Validators.ResourceTemplates;
+    
+public class CreateResourceTemplateCommandValidator : AbstractValidator<CreateResourceTemplateCommand>
+{
+    public CreateResourceTemplateCommandValidator()
+    {
+        RuleFor(x => x.Label)
+            .NotEmpty().WithMessage("Template label is required.")
+            .MaximumLength(100).WithMessage("Label cannot exceed 100 characters.");
+
+        RuleFor(x => x.Description)
+            .MaximumLength(500).WithMessage("Description is too long.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ResourceTemplates\GetTemplateWithPropertiesQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ResourceTemplates.Queries.GetTemplateWithProperties;
+
+namespace LMS.App.Validators.ResourceTemplates;
+
+public class GetTemplateWithPropertiesQueryValidator : AbstractValidator<GetTemplateWithPropertiesQuery>
+{
+    public GetTemplateWithPropertiesQueryValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Template ID must be a valid positive integer.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ResourceTemplates\UpdatePropertyInTemplateCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ResourceTemplates.Commands.UpdatePropertyInTemplate;
+
+namespace LMS.App.Validators.ResourceTemplates;
+
+public class UpdatePropertyInTemplateCommandValidator : AbstractValidator<UpdatePropertyInTemplateCommand>
+{
+    public UpdatePropertyInTemplateCommandValidator()
+    {
+        RuleFor(x => x.TemplateId)
+            .GreaterThan(0).WithMessage("TemplateId is required.");
+
+        RuleFor(x => x.PropertyId)
+            .GreaterThan(0).WithMessage("PropertyId is required.");
+
+        RuleFor(x => x.DisplayOrder)
+            .GreaterThanOrEqualTo(0).WithMessage("DisplayOrder must be 0 or greater.");
+
+        RuleFor(x => x.AlternateLabel)
+            .MaximumLength(100).WithMessage("Alternate label is too long.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\ResourceTemplates\UpdateResourceTemplateCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+
+namespace LMS.App.Validators.ResourceTemplates;
+
+public class UpdateResourceTemplateCommandValidator : AbstractValidator<UpdateResourceTemplateCommand>
+{
+    public UpdateResourceTemplateCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Template ID must be a valid positive number.");
+
+        RuleFor(x => x.Label)
+            .NotEmpty().WithMessage("Template label cannot be empty.")
+            .MaximumLength(100).WithMessage("Label is too long (max 100 chars).");
+
+        RuleFor(x => x.Description)
+            .MaximumLength(500).WithMessage("Description is too long (max 500 chars).");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Vocabulary\CreatePropertyCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Vocabularies.Commands.CreateProperty;
+
+namespace LMS.App.Validators.Vocabulary;
+
+public class CreatePropertyCommandValidator : AbstractValidator<CreatePropertyCommand>
+{
+    public CreatePropertyCommandValidator()
+    {
+        RuleFor(x => x.VocabularyId)
+            .GreaterThan(0).WithMessage("VocabularyId is required.");
+
+        RuleFor(x => x.LocalName)
+            .NotEmpty().WithMessage("LocalName is required.")
+            .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("LocalName must be alphanumeric (no spaces).");
+
+        RuleFor(x => x.Label)
+            .NotEmpty().WithMessage("Label is required.")
+            .MaximumLength(100).WithMessage("Label is too long.");
+
+        RuleFor(x => x.TermUri)
+            .NotEmpty().WithMessage("TermUri is required.")
+            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("TermUri must be a valid absolute URL (e.g., http://schema.org/name).");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Vocabulary\CreateVocabularyCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Vocabularies.Commands.CreateVocabulary;
+
+namespace LMS.App.Validators.Vocabulary;
+
+public class CreateVocabularyCommandValidator : AbstractValidator<CreateVocabularyCommand>
+{
+    public CreateVocabularyCommandValidator()
+    {
+        RuleFor(x => x.Prefix)
+            .NotEmpty().WithMessage("Prefix is required.")
+            .MaximumLength(10).WithMessage("Prefix should be short (e.g., 'dc', 'schema').")
+            .Matches(@"^[a-z]+$").WithMessage("Prefix must be lowercase alphabetic characters only.");
+
+        RuleFor(x => x.NamespaceUri)
+            .NotEmpty().WithMessage("NamespaceUri is required.")
+            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("NamespaceUri must be a valid absolute URL.");
+
+        RuleFor(x => x.Label)
+            .NotEmpty().WithMessage("Label is required.")
+            .MaximumLength(100).WithMessage("Label is too long.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Vocabulary\GetVocabularyByIdQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Vocabularies.Queries.GetVocabularyById;
+
+namespace LMS.App.Validators.Vocabularies;
+
+public class GetVocabularyByIdQueryValidator : AbstractValidator<GetVocabularyByIdQuery>
+{
+    public GetVocabularyByIdQueryValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty().WithMessage("Vocabulary ID is required.")
+            .GreaterThan(0).WithMessage("Vocabulary ID must be a valid positive integer.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Vocabulary\GetVocabularyByPrefixQueryValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Vocabularies.Queries.GetVocabularyByPrefix;
+
+namespace LMS.App.Validators.Vocabulary;
+
+public class GetVocabularyByPrefixQueryValidator : AbstractValidator<GetVocabularyByPrefixQuery>
+{
+    public GetVocabularyByPrefixQueryValidator()
+    {
+        RuleFor(x => x.Prefix)
+            .NotEmpty().WithMessage("Prefix is required for searching.")
+            .Matches(@"^[a-z]+$").WithMessage("Prefix must be lowercase alphabetic characters only.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Vocabulary\UpdatePropertyCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Vocabularies.Commands.UpdateProperty;
+
+namespace LMS.App.Validators.Vocabulary;
+
+public class UpdatePropertyCommandValidator : AbstractValidator<UpdatePropertyCommand>
+{
+    public UpdatePropertyCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Property ID must be valid.");
+
+        RuleFor(x => x.LocalName)
+            .NotEmpty().WithMessage("LocalName is required.")
+            .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("LocalName must be alphanumeric.");
+
+        RuleFor(x => x.Label)
+            .NotEmpty().WithMessage("Label is required.")
+            .MaximumLength(100);
+
+        RuleFor(x => x.TermUri)
+            .NotEmpty().WithMessage("TermUri is required.")
+            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("TermUri must be a valid absolute URL.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\Validators\Vocabulary\UpdateVocabularyCommandValidator.cs ==========
+using FluentValidation;
+using LMS.App.Features.Vocabularies.Commands.UpdateVocabulary;
+
+namespace LMS.App.Validators.Vocabulary;
+
+public class UpdateVocabularyCommandValidator : AbstractValidator<UpdateVocabularyCommand>
+{
+    public UpdateVocabularyCommandValidator()
+    {
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage("Vocabulary ID is required.");
+
+        RuleFor(x => x.Prefix)
+            .NotEmpty().WithMessage("Prefix is required.")
+            .Matches(@"^[a-z]+$").WithMessage("Prefix must be lowercase alphabetic characters.");
+
+        RuleFor(x => x.NamespaceUri)
+            .NotEmpty().WithMessage("NamespaceUri is required.")
+            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("NamespaceUri must be a valid absolute URL.");
+
+        RuleFor(x => x.Label)
+            .NotEmpty().WithMessage("Label is required.")
+            .MaximumLength(100);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\DependencyInjection.cs ==========
+using System.Reflection;
+using AutoMapper;
+using FluentValidation;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
+using LMS.App.Behaviors;
+
+namespace LMS.App;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddApplication(this IServiceCollection services)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+        services.AddValidatorsFromAssembly(assembly);
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddAutoMapper(typeof(DependencyInjection).Assembly);
+        return services;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.App\LMS.App.csproj ==========
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.1.3" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="MediatR" Version="13.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="9.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LMS.Domain\LMS.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DTOs\" />
+  </ItemGroup>
+
+</Project>
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Constants\Permissions.cs ==========
+namespace LMS.Domain.Constants;
+
+public static class Permissions
+{
+    public static class System
+    {
+        public const string ManageUsers = "Permissions.System.Users.Manage";
+        public const string ViewLogs = "Permissions.System.Logs.View";
+    }
+
+    public static class Metadata
+    {
+        public const string ManageVocabularies = "Permissions.Metadata.Vocabularies.Manage";
+        public const string ManageTemplates = "Permissions.Metadata.Templates.Manage";
+    }
+
+    public static class Catalog
+    {
+        public const string CreateItem = "Permissions.Catalog.Items.Create";
+        public const string EditItem = "Permissions.Catalog.Items.Edit";
+        public const string DeleteItem = "Permissions.Catalog.Items.Delete";
+        public const string ManageSets = "Permissions.Catalog.Sets.Manage";
+        public const string ManageMedia = "Permissions.Catalog.Media.Manage";
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Constants\Roles.cs ==========
+namespace LMS.Domain.Constants;
+
+public static class Roles
+{
+    public const string Admin = "Admin";
+    public const string Librarian = "Librarian";
+    public const string Member = "Member";
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Constants\SystemConstants.cs ==========
+namespace LMS.Domain.Constants;
+
+public static class SystemConstants
+{
+    // Vocabulary Config
+    public const string SystemPrefix = "sys";
+    public const string SystemNamespace = "http://schema.lms.com/system#";
+    public const string SystemLabel = "System Internal Vocabulary";
+
+    // Structural Properties 
+    public const string IsMemberOf = "isMemberOf";    
+    public const string HasMedia = "hasMedia";        
+    public const string HasThumbnail = "hasThumbnail"; 
+    
+    // Value Types
+    public const string TypeResource = "resource"; 
+    public const string TypeText = "text";         
+    public const string TypeUri = "uri";           
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\ApplicationUser.cs ==========
+using Microsoft.AspNetCore.Identity;
+
+namespace LMS.Domain.Entities;
+
+public class ApplicationUser : IdentityUser
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? MiddleName { get; set; } 
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\Item.cs ==========
+namespace LMS.Domain.Entities;
+
+public class Item : Resource
+{
+    public int? TemplateId { get; set; }
+    public virtual ResourceTemplate? Template { get; set; }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\ItemSet.cs ==========
+namespace LMS.Domain.Entities;
+
+public class ItemSet : Resource
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsPublic { get; set; }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\ItemSetWithMembers.cs ==========
+using System.Collections.Generic;
+
+namespace LMS.Domain.Entities;
+
+public record ItemSetWithMembers(ItemSet SetInfo, IEnumerable<Item> Members);
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\Media.cs ==========
+namespace LMS.Domain.Entities;
+
+public class Media : Resource
+{
+    public int? ItemId { get; set; }
+    public string StoragePath { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public string? MimeType { get; set; }
+    public long? FileSize { get; set; }
+    public string? AltText { get; set; }
+
+    public virtual Item? Item { get; set; }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\Property.cs ==========
+namespace LMS.Domain.Entities;
+
+public class Property
+{
+    public int Id { get; set; }
+    public int VocabularyId { get; set; }
+    public string LocalName { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string TermUri { get; set; } = string.Empty;
+
+    public virtual Vocabulary Vocabulary { get; set; } = null!;
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\Resource.cs ==========
+namespace LMS.Domain.Entities;
+
+public abstract class Resource
+{
+    public int Id { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? ModifiedAt { get; set; }
+    public string? ModifiedBy { get; set; }
+    public string? OwnerId { get; set; } 
+
+    public virtual ICollection<Value> Values { get; set; } = new List<Value>();
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\ResourceTemplate.cs ==========
+namespace LMS.Domain.Entities;
+
+public class ResourceTemplate
+{
+    public int Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public string? Description { get; set; }
+
+    public virtual ICollection<TemplateProperty> TemplateProperties { get; set; } = new List<TemplateProperty>();
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\TemplateProperty.cs ==========
+namespace LMS.Domain.Entities;
+
+public class TemplateProperty
+{
+    public int TemplateId { get; set; }
+    public int PropertyId { get; set; }
+    public bool IsRequired { get; set; }
+    public int DisplayOrder { get; set; }
+    public string? AlternateLabel { get; set; }
+
+    public virtual ResourceTemplate Template { get; set; } = null!;
+    public virtual Property Property { get; set; } = null!;
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\Value.cs ==========
+namespace LMS.Domain.Entities;
+
+public class Value
+{
+    public int Id { get; set; }
+    public int ResourceId { get; set; }
+    public int PropertyId { get; set; }
+    public string? ValueText { get; set; }
+    public string? ValueUri { get; set; }
+    public int? ValueResourceId { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string? Language { get; set; }
+
+    public virtual Resource Resource { get; set; } = null!;
+    public virtual Property Property { get; set; } = null!;
+    public virtual Resource? ValueResource { get; set; }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Entities\Vocabulary.cs ==========
+namespace LMS.Domain.Entities;
+
+public class Vocabulary
+{
+    public int Id { get; set; }
+    public string Prefix { get; set; } = string.Empty;
+    public string NamespaceUri { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+
+ }
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IGenericRepository.cs ==========
+using System.Linq.Expressions;
+
+namespace LMS.Domain.Interfaces
+{
+    public interface IGenericRepository<T> where T : class
+    {
+        Task<IEnumerable<T>> GetAllAsync();
+        Task<T?> GetByIdAsync(int id);
+        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
+        Task AddAsync(T entity);
+        void Update(T entity);
+        void Delete(T entity);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IItemRepository.cs ==========
+using LMS.Domain.Entities;
+using System.Linq.Expressions;
+
+namespace LMS.Domain.Interfaces
+{
+    public interface IItemRepository : IResourceRepository<Item>
+    {
+        Task<Item?> GetItemWithFullDataAsync(int id);
+        Task<IEnumerable<Item>> GetItemsWithFullDataWithConditionAsync(Expression<Func<Item, bool>> filter);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IItemSetRepository.cs ==========
+using LMS.Domain.Entities;
+
+namespace LMS.Domain.Interfaces;
+public interface IItemSetRepository : IResourceRepository<ItemSet>
+{
+    Task<Item> AddItemToSetAsync(int setId, int itemId);
+    Task<Item> RemoveItemFromSetAsync(int setId, int itemId);
+
+    Task<ItemSetWithMembers?> GetSetWithMembersAsync(int setId);
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IMediaRepository.cs ==========
+using LMS.Domain.Entities;
+
+namespace LMS.Domain.Interfaces
+{
+    public interface IMediaRepository : IResourceRepository<Media>
+    {
+        Task<IEnumerable<Media>> GetMediaByItemIdAsync(int itemId);
+        Task<Media?> GetMediaWithMetadataAsync(int mediaId);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IResourceRepository.cs ==========
+using LMS.Domain.Entities;
+
+namespace LMS.Domain.Interfaces
+{
+public interface IResourceRepository<T> : IGenericRepository<T> where T : Resource
+    {
+
+        Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language);
+        Task<bool> RemoveValueAsync(int resourceId, int valueId);
+        Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId);
+        Task<string> GetResourceTypeAsync(int resourceId);
+        Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language);
+        Task<bool> IsOwnerAsync(int resourceId, string userId);
+        Task<bool> IsPropertyValidForItem(int propertyId, int itemId);
+        Task<bool> IsPropertyRequiredForItem(int propertyId, int itemId);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IResourceTemplateRepository.cs ==========
+using LMS.Domain.Entities;
+
+namespace LMS.Domain.Interfaces
+{
+    public interface IResourceTemplateRepository : IGenericRepository<ResourceTemplate>
+    {
+        Task<ResourceTemplate> AddPropertyToTemplateAsync(int templateId,int propertyId,bool isRequired,int displayOrder,string? alternateLabel);
+        Task<ResourceTemplate> RemovePropertyFromTemplateAsync(int templateId, int propertyId);
+        Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId, bool isRequired,int displayOrder,string? alternateLabel);
+        Task<ResourceTemplate?> GetTemplateWithPropertiesAsync(int id);
+        Task<bool> IsLabelUniqueAsync(string label);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IUnitOfWork.cs ==========
+using LMS.Domain.Entities;
+
+namespace LMS.Domain.Interfaces
+{
+    public interface IUnitOfWork : IDisposable
+    {
+        IResourceRepository<Resource> Resources { get; }
+        IItemRepository Items { get; }
+        IMediaRepository Media { get; }
+        IVocabularyRepository Vocabularies { get; }
+        IItemSetRepository ItemSets { get; }
+        IResourceTemplateRepository ResourceTemplates { get; }
+
+        Task<int> CommitAsync();
+        Task RollbackAsync();
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\Interfaces\IVocabularyRepository.cs ==========
+using LMS.Domain.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace LMS.Domain.Interfaces;
+
+public interface IVocabularyRepository : IGenericRepository<Vocabulary>
+{
+    // Property Management
+    Task<Property?> GetPropertyByIdAsync(int id);
+    Task AddPropertyAsync(Property property);
+    void UpdateProperty(Property property);
+    Task<bool> DeletePropertyAsync(int propertyId);
+    
+    // Queries
+    Task<IEnumerable<Property>> GetPropertiesByVocabularyIdAsync(int vocabularyId);
+    
+    // Validations
+    Task<bool> HasLinkedValuesAsync(int propertyId);
+    Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName);
+    Task<bool> IsLabelUniqueAsync(string label);
+    Task<bool> IsNamespaceUriUniqueAsync(string uri);
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Domain\LMS.Domain.csproj ==========
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Database\AppIdentityDbContext.cs ==========
+using LMS.Domain.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace LMS.Infra.Database;
+
+public class AppIdentityDbContext : IdentityDbContext<ApplicationUser>
+{
+    public AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options) 
+        : base(options) 
+    { 
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        
+        // Isolate Identity tables into the 'auth' schema
+        builder.HasDefaultSchema("auth");
+
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(e => e.FirstName).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.LastName).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.MiddleName).HasMaxLength(50);
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Database\DbSeeder.cs ==========
+using LMS.Domain.Constants;
+using LMS.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace LMS.Infra.Database;
+
+public static class DbSeeder
+{
+    public static async Task SeedSystemMetadataAsync(LibraryDbContext context, ILogger logger)
+    {
+        // 1. Ensure System Vocabulary exists
+        var sysVocab = await context.Vocabularies
+            .FirstOrDefaultAsync(v => v.Prefix == SystemConstants.SystemPrefix);
+            
+        if (sysVocab == null)
+        {
+            sysVocab = new Vocabulary 
+            { 
+                Prefix = SystemConstants.SystemPrefix, 
+                NamespaceUri = SystemConstants.SystemNamespace,
+                Label = SystemConstants.SystemLabel 
+            };
+            context.Vocabularies.Add(sysVocab);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Seeded System Vocabulary: {Prefix}", SystemConstants.SystemPrefix);
+        }
+
+        // 2. Ensure Structural Properties exist
+        var propsToSeed = new List<Property>
+        {
+            new() { LocalName = SystemConstants.IsMemberOf, Label = "Member Of" },
+            new() { LocalName = SystemConstants.HasMedia, Label = "Associated Media" },
+            new() { LocalName = SystemConstants.HasThumbnail, Label = "Thumbnail" }
+        };
+
+        foreach (var prop in propsToSeed)
+        {
+            var exists = await context.Properties
+                .AnyAsync(p => p.LocalName == prop.LocalName && p.VocabularyId == sysVocab.Id);
+
+            if (!exists)
+            {
+                context.Properties.Add(new Property 
+                {
+                    VocabularyId = sysVocab.Id,
+                    LocalName = prop.LocalName,
+                    Label = prop.Label,
+                    TermUri = $"{SystemConstants.SystemNamespace}{prop.LocalName}"
+                });
+            }
+        }
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("System Properties seeded successfully.");
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Database\LibraryDbContext.cs ==========
+using LMS.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace LMS.Infra.Database;
+
+public class LibraryDbContext : DbContext
+{
+    public LibraryDbContext(DbContextOptions<LibraryDbContext> options) : base(options) { }
+
+    public DbSet<Vocabulary> Vocabularies { get; set; }
+    public DbSet<Property> Properties { get; set; }
+    public DbSet<ResourceTemplate> ResourceTemplates { get; set; }
+    public DbSet<TemplateProperty> TemplateProperties { get; set; }
+    public DbSet<Resource> Resources { get; set; }
+    public DbSet<Item> Items { get; set; }
+    public DbSet<ItemSet> ItemSets { get; set; }
+    public DbSet<Media> Medias { get; set; }
+    public DbSet<Value> Values { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Vocabulary>(entity =>
+        {
+            entity.ToTable("VOCABULARY");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Prefix).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.NamespaceUri).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Label).IsRequired().HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<ResourceTemplate>(entity =>
+        {
+            entity.ToTable("RESOURCE_TEMPLATE");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Label).IsRequired().HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<Property>(entity =>
+        {
+            entity.ToTable("PROPERTY");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.LocalName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Label).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.TermUri).IsRequired().HasMaxLength(255);
+            entity.HasOne(d => d.Vocabulary).WithMany().HasForeignKey(d => d.VocabularyId);
+        });
+
+        modelBuilder.Entity<TemplateProperty>(entity =>
+        {
+            entity.ToTable("TEMPLATE_PROPERTY");
+            entity.HasKey(e => new { e.TemplateId, e.PropertyId });
+            entity.HasOne(d => d.Template).WithMany().HasForeignKey(d => d.TemplateId);
+            entity.HasOne(d => d.Property).WithMany().HasForeignKey(d => d.PropertyId);
+        });
+
+        modelBuilder.Entity<Resource>(entity =>
+        {
+            entity.ToTable("RESOURCE");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.OwnerId).HasMaxLength(450);
+        });
+
+        modelBuilder.Entity<ItemSet>(entity =>
+        {
+            entity.ToTable("ITEM_SET");
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<Item>(entity =>
+        {
+            entity.ToTable("ITEM");
+            entity.HasOne(d => d.Template).WithMany().HasForeignKey(d => d.TemplateId);
+        });
+
+        modelBuilder.Entity<Media>(entity =>
+        {
+            entity.ToTable("MEDIA");
+            entity.Property(e => e.StoragePath).IsRequired();
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+            entity.HasOne(d => d.Item).WithMany().HasForeignKey(d => d.ItemId);
+        });
+
+        modelBuilder.Entity<Value>(entity =>
+        {
+            entity.ToTable("VALUE");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Language).HasMaxLength(10);
+            
+            entity.HasOne(d => d.Resource)
+                .WithMany(p => p.Values)
+                .HasForeignKey(d => d.ResourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Property)
+                .WithMany()
+                .HasForeignKey(d => d.PropertyId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(d => d.ValueResource)
+                .WithMany()
+                .HasForeignKey(d => d.ValueResourceId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\GenericRepository.cs ==========
+
+using System.Linq.Expressions;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using Microsoft.EntityFrameworkCore;
+
+namespace LMS.Infra.Repository
+{
+    public class GenericRepository<T> : IGenericRepository<T> where T : class
+    {
+        protected readonly LibraryDbContext _context;
+        public GenericRepository(LibraryDbContext context)
+        {
+            _context = context;
+        }
+        public async Task AddAsync(T entity)
+        {
+            await _context.Set<T>().AddAsync(entity);
+        }
+
+        public void Delete(T entity)
+        {
+            _context.Set<T>().Remove(entity);
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync()
+        {
+            return await _context.Set<T>().AsNoTracking().ToListAsync();
+        }
+
+        public async Task<T?> GetByIdAsync(int id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().Where(predicate).ToListAsync();
+        }
+
+        public void Update(T entity)
+        {
+            _context.Set<T>().Update(entity);
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\ItemRepository.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+
+namespace LMS.Infra.Repository
+{
+    public class ItemRepository : ResourceRepository<Item>, IItemRepository
+    {
+        public ItemRepository(LibraryDbContext context) : base(context)
+        {
+        }
+
+        public async Task<IEnumerable<Item>> GetItemsWithFullDataWithConditionAsync(Expression<Func<Item, bool>> filter)
+        {
+            return await _context.Items
+            .Include(i => i.Template)
+            .Include(i => i.Values)
+            .ThenInclude(p => p.Property)
+            .ThenInclude(v => v.Vocabulary)
+            .AsNoTracking()
+            .Where(filter)
+            .ToListAsync();
+        }
+
+        public async Task<Item?> GetItemWithFullDataAsync(int id)
+        {
+            return await _context.Items
+                .Include(i => i.Template)
+                .Include(i => i.Values)
+                .ThenInclude(p => p.Property)
+                .ThenInclude(v => v.Vocabulary)
+                .AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\ItemSetRepository.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using Microsoft.EntityFrameworkCore;
+using LMS.Domain.Constants;
+
+namespace LMS.Infra.Repository
+{
+    public class ItemSetRepository : ResourceRepository<ItemSet>, IItemSetRepository
+    {
+        public ItemSetRepository(LibraryDbContext context) : base(context)
+        {
+        }
+        public async Task<ItemSetWithMembers?> GetSetWithMembersAsync(int setId)
+        {
+            var itemSet = await _context.ItemSets
+                .Include(s => s.Values)
+                    .ThenInclude(v => v.Property)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == setId);
+
+            if (itemSet == null) return null;
+
+            var members = await _context.Items
+                .Where(i => i.Values.Any(v =>
+                    v.Property.TermUri == SystemConstants.IsMemberOf &&
+                    v.ValueText == setId.ToString()))
+                .Include(i => i.Template)
+                .Include(i => i.Values)
+                    .ThenInclude(v => v.Property)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return new ItemSetWithMembers(itemSet, members);
+        }
+        public async Task<Item> AddItemToSetAsync(int setId, int itemId)
+        {
+            //still need to check the duplication 
+            var item = await _context.Items.FindAsync(itemId);
+            if (item == null) return null!;
+
+            var memberOfProperty = await _context.Properties
+                .FirstOrDefaultAsync(p => p.TermUri == SystemConstants.IsMemberOf);
+
+            if (memberOfProperty == null)
+            {
+                throw new InvalidOperationException("Property 'IsMemberOf' not defined in vocabularies.");
+            }
+
+            var memberValue = new Value
+            {
+                ResourceId = itemId,
+                PropertyId = memberOfProperty.Id,
+                ValueText = setId.ToString(),
+                Type = SystemConstants.TypeText   // "text"
+            };
+
+            await _context.Values.AddAsync(memberValue);
+
+            return item;
+        }
+        public async Task<Item> RemoveItemFromSetAsync(int setId, int itemId)
+        {
+            var item = await _context.Items.FindAsync(itemId);
+            if (item == null) return null!;
+
+            var linkValue = await _context.Values
+                .FirstOrDefaultAsync(v =>
+                    v.ResourceId == itemId &&
+                    v.Property.TermUri == SystemConstants.IsMemberOf &&
+                    v.ValueText == setId.ToString());
+
+            if (linkValue != null)
+            {
+                _context.Values.Remove(linkValue);
+            }
+
+            return item;
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\MediaRepository.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+
+namespace LMS.Infra.Repository
+{
+    public class MediaRepository : ResourceRepository<Media>, IMediaRepository
+    {
+
+        public MediaRepository(LibraryDbContext context) : base(context)
+        {
+            
+        }
+
+        public async Task<IEnumerable<Media>> GetMediaByItemIdAsync(int itemId)
+        {
+            return await _context.Medias
+                .Where(m => m.ItemId == itemId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<Media?> GetMediaWithMetadataAsync(int mediaId)
+        {
+            return await _context.Medias
+                .AsNoTracking()
+                .Include(m => m.Values)
+                    .ThenInclude(v => v.Property) 
+                .FirstOrDefaultAsync(m => m.Id == mediaId);
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\ResourceRepository.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using LMS.Infra.Database;
+
+namespace LMS.Infra.Repository
+{
+public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T> where T : Resource    {
+        public ResourceRepository(LibraryDbContext context) : base(context)
+        {
+        }
+        public async Task<string> GetResourceTypeAsync(int resourceId)
+        {
+            var resource = await _context.Resources
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == resourceId) ?? throw new KeyNotFoundException("Resource not found");
+            return resource.Type;
+        }
+
+        public async Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId)
+        {
+            return await _context.Values
+                .Where(v => v.ResourceId == resourceId)
+                .Include(v => v.Property)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        public async Task<bool> IsOwnerAsync(int resourceId, string userId)
+        {
+            return await _context.Resources.AsNoTracking()
+                .AnyAsync(r => r.Id == resourceId && r.OwnerId == userId);
+        }
+
+        public async Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
+        {
+            bool isResourceValid = await ResourceExistsAsync(resourceId);
+            bool isPropertyValid = await PropertyExistsAsync(propertyId);
+            bool isDuplicate = await IsValueDuplicateAsync(resourceId, propertyId, valueText, valueUri, valueResourceId, language);
+            if (await GetResourceTypeAsync(resourceId)=="Item")
+            {
+                bool isPropertyValidForItem = await IsPropertyValidForItem(propertyId, resourceId);
+                if (!isPropertyValidForItem)
+                {
+                    throw new Exception("Value validation failed: Property is not valid for this item.");
+                }
+            }
+            if (!isResourceValid)
+            {
+                throw new Exception("Value validation failed: Target Resource does not exist.");
+            }
+
+            if (!isPropertyValid)
+            {
+                throw new Exception("Value validation failed: Referenced Property does not exist.");
+            }
+
+            if (isDuplicate)
+            {
+                throw new Exception("Value validation failed: This specific value already exists for this property on the target resource.");
+            }
+
+            var newValue = new Value
+            {
+                ResourceId = resourceId,
+                PropertyId = propertyId,
+                ValueText = valueText,
+                ValueUri = valueUri,
+                ValueResourceId = valueResourceId,
+                Type = type,
+                Language = language
+            };
+
+            var entry = await _context.Values.AddAsync(newValue);
+            return entry.Entity;
+        }
+
+        public async Task<bool> ResourceExistsAsync(int resourceId)
+        {
+            return await _context.Resources
+                .AsNoTracking()
+                .AnyAsync(r => r.Id == resourceId);
+        }
+
+        public async Task<bool> PropertyExistsAsync(int propertyId)
+        {
+            return await _context.Properties
+                .AsNoTracking()
+                .AnyAsync(p => p.Id == propertyId);
+        }
+
+        public async Task<bool> IsValueDuplicateAsync(int resourceId, int propertyId, string? text, string? uri, int? resId, string? lang)
+        {
+            return await _context.Values
+                .AsNoTracking()
+                .AnyAsync(v =>
+                    v.ResourceId == resourceId &&
+                    v.PropertyId == propertyId &&
+                    v.ValueText == text &&
+                    v.ValueUri == uri &&
+                    v.ValueResourceId == resId &&
+                    v.Language == lang);
+        }
+        public async Task<bool> IsPropertyValidForItem(int propertyId, int itemId)
+        {
+            var item = await _context.Items
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == itemId);
+            if (item == null) return false;
+            return await _context.TemplateProperties
+                .AsNoTracking()
+                .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId);
+        }
+        public async Task<bool> IsPropertyRequiredForItem(int propertyId,int ItemId)
+        {
+            var item = await _context.Items
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == ItemId);
+            if (item == null) return false;
+            return await _context.TemplateProperties
+                .AsNoTracking()
+                .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId && tp.IsRequired);
+        }
+        public async Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
+        {
+            var value = await _context.Values
+                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
+            if (value == null) return false;
+            value.ValueText = valueText;
+            value.ValueUri = valueUri;
+            value.ValueResourceId = valueResourceId;
+            value.Type = type;
+            value.Language = language;
+            return true;
+        }
+
+        public async Task<bool> RemoveValueAsync(int resourceId, int valueId)
+        {
+            var value = await _context.Values
+                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
+            if (value == null) return false;
+            if(await GetResourceTypeAsync(resourceId)=="Item")
+            {
+                if(await IsPropertyRequiredForItem(value.PropertyId,resourceId))
+                {
+                    throw new Exception("Value validation failed: Property is required for this item.");
+                }
+            }
+            _context.Values.Remove(value);
+            return true;
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\ResourceTemplateRepository.cs ==========
+using LMS.Domain.Constants;
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using Microsoft.EntityFrameworkCore;
+
+namespace LMS.Infra.Repository
+{
+    public class ResourceTemplateRepository : GenericRepository<ResourceTemplate>, IResourceTemplateRepository
+    {
+        public ResourceTemplateRepository(LibraryDbContext context) : base(context)
+        {
+        }
+        public async Task<ResourceTemplate?> GetTemplateWithPropertiesAsync(int id)
+        {
+            return await _context.ResourceTemplates
+                .Include(t => t.TemplateProperties)
+                    .ThenInclude(tp => tp.Property)
+                        .ThenInclude(p => p.Vocabulary)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == id);
+        }
+
+        public async Task<bool> IsLabelUniqueAsync(string label)
+        {
+            return await _context.ResourceTemplates
+                .AsNoTracking()
+                .AllAsync(t => t.Label != label);
+        }
+
+        public async Task<ResourceTemplate> AddPropertyToTemplateAsync(int templateId,int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
+        {
+            var template = await _context.ResourceTemplates.FindAsync(templateId);
+            if (template == null) return null!;
+            var property = await _context.Properties.FindAsync(propertyId);
+            if (property == null) return null!;
+            var link = new TemplateProperty
+            {
+                TemplateId = templateId,
+                PropertyId = propertyId,
+                IsRequired = isRequired,
+                DisplayOrder = displayOrder,
+                AlternateLabel = alternateLabel
+            };
+
+            await _context.TemplateProperties.AddAsync(link);
+
+            return template;
+        }
+        public async Task<ResourceTemplate> RemovePropertyFromTemplateAsync(int templateId, int propertyId)
+        {
+            var template = await _context.ResourceTemplates.FindAsync(templateId);
+            if (template == null) return null;
+            var link = await _context.TemplateProperties
+                .FirstOrDefaultAsync(tp => tp.TemplateId == templateId && tp.PropertyId == propertyId);
+
+            if (link != null)
+            {
+                _context.TemplateProperties.Remove(link);
+                return template;
+            }
+            return null;
+        }
+        public async Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
+        {
+            var template = await _context.ResourceTemplates.FindAsync(templateId);
+            var propertyLink = await _context.TemplateProperties
+             .FirstOrDefaultAsync(p => p.TemplateId == templateId && p.PropertyId == propertyId);
+            if (template == null || propertyLink == null) return null!;
+            propertyLink.IsRequired=isRequired;
+            propertyLink.DisplayOrder=displayOrder;
+            propertyLink.AlternateLabel=alternateLabel;
+            _context.TemplateProperties.Update(propertyLink);
+
+            return template;
+        }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\UnitOfWork.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+
+namespace LMS.Infra.Repository
+{
+    public class UnitOfWork : IUnitOfWork
+    {
+        private readonly LibraryDbContext _context;
+
+        public IResourceRepository<Resource> Resources { get; private set; }
+        public IItemRepository Items { get; private set; }
+        public IItemSetRepository ItemSets { get; private set; }
+        public IVocabularyRepository Vocabularies { get; private set; }
+        public IResourceTemplateRepository ResourceTemplates { get; private set; }
+        public IMediaRepository Media { get; private set; }
+
+        public UnitOfWork(LibraryDbContext context,
+            IResourceRepository<Resource> resources,
+            IItemRepository items,
+            IItemSetRepository itemSets,
+            IVocabularyRepository vocabularies,
+            IResourceTemplateRepository templates,
+            IMediaRepository media)
+        {
+            _context = context;
+            Resources = resources; Items = items; ItemSets = itemSets;
+            Vocabularies = vocabularies; ResourceTemplates = templates; Media = media;
+        }
+
+        public async Task<int> CommitAsync() => await _context.SaveChangesAsync();
+
+        public Task RollbackAsync() => Task.CompletedTask; // EF Core auto-rolls back on exception
+
+        public void Dispose() => _context.Dispose();
+
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Repository\VocabularyRepository.cs ==========
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace LMS.Infra.Repository;
+
+public class VocabularyRepository : GenericRepository<Vocabulary>, IVocabularyRepository
+{
+    public VocabularyRepository(LibraryDbContext context) : base(context) { }
+
+    // --- Property Commands ---
+    public async Task AddPropertyAsync(Property property)
+    {
+        bool existsLocal = await IsPropertyExistsInVocabularyAsync(property.VocabularyId, property.LocalName);
+        if (existsLocal)
+            throw new InvalidOperationException($"Property '{property.LocalName}' already exists in this vocabulary.");
+
+        await _context.Properties.AddAsync(property);
+    }
+    public async Task<Property?> GetPropertyByIdAsync(int id) {
+        return await _context.Properties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+    }
+    public void UpdateProperty(Property property) => _context.Properties.Update(property);
+
+    public async Task<bool> DeletePropertyAsync(int propertyId)
+    {
+        var property = await _context.Properties.FindAsync(propertyId);
+        if (property == null) return false;
+        _context.Properties.Remove(property);
+        return true;
+    }
+
+    // --- Queries ---
+    public async Task<IEnumerable<Property>> GetPropertiesByVocabularyIdAsync(int vocabularyId) =>
+        await _context.Properties
+            .Where(p => p.VocabularyId == vocabularyId)
+            .AsNoTracking()
+            .ToListAsync();
+
+    // --- Validations ---
+    public async Task<bool> HasLinkedValuesAsync(int propertyId) =>
+        await _context.Values.AnyAsync(v => v.PropertyId == propertyId);
+
+    public async Task<bool> IsPropertyExistsInVocabularyAsync(int vocabularyId, string localName) =>
+        await _context.Properties.AsNoTracking()
+            .AnyAsync(p => p.VocabularyId == vocabularyId && p.LocalName == localName);
+
+    public async Task<bool> IsLabelUniqueAsync(string label) =>
+        await _context.Vocabularies.AsNoTracking().AllAsync(v => v.Label != label);
+
+    public async Task<bool> IsNamespaceUriUniqueAsync(string uri) =>
+        await _context.Vocabularies.AsNoTracking().AllAsync(v => v.NamespaceUri != uri);
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\Services\JwtService.cs ==========
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+
+namespace LMS.Infra.Services;
+
+public class JwtService : IJwtService
+{
+    private readonly IConfiguration _configuration;
+
+    public JwtService(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public string GenerateJwtToken(ApplicationUser user, string role)
+    {
+        var jwtSettings = _configuration.GetSection("Jwt");
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings["Key"]
+                ?? throw new InvalidOperationException("JWT Key missing")));
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id),
+            new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Email, user.Email ?? string.Empty),
+            new(ClaimTypes.Role, role),
+            new("firstName", user.FirstName),
+            new("lastName", user.LastName),
+        };
+
+        var token = new JwtSecurityToken(
+            issuer:   jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims:   claims,
+            expires:  DateTime.UtcNow.AddHours(8),
+            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\ServiceStorage\LocalMediaStorageService.cs ==========
+using LMS.App.Interface;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Configuration;
+
+namespace LMS.Infra.ServiceStorage;
+
+public class LocalMediaStorageService : IMediaStorageService
+{
+    private readonly string _basePath;
+    private readonly FileExtensionContentTypeProvider _provider = new();
+
+    public LocalMediaStorageService(IConfiguration config)
+    {
+        var relative = config["Storage:BasePath"] ?? "wwwroot/uploads";
+        _basePath = Path.Combine(AppContext.BaseDirectory, relative);
+        Directory.CreateDirectory(_basePath);
+    }
+
+    public async Task<string> UploadAsync(byte[] content, string fileName, string contentType)
+    {
+        var filePath = Path.Combine(_basePath, fileName);
+
+        await File.WriteAllBytesAsync(filePath, content);
+
+        return filePath;
+    }
+
+    public async Task<(Stream stream, string contentType, string fileName)> DownloadAsync(string path)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("File not found", path);
+
+        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        var fileName = Path.GetFileName(path);
+        var contentType = "application/octet-stream";
+        _provider.TryGetContentType(fileName, out contentType);
+
+        return (stream, contentType ?? "application/octet-stream", fileName);
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\ServiceStorage\MediaProcessingService.cs ==========
+using LMS.App.Interface;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+
+namespace LMS.Infra.ServiceStorage;
+
+public class MediaProcessingService : IMediaProcessingService
+{
+    public async Task<byte[]?> GenerateThumbnailAsync(byte[] content, string mimeType, string filePath)
+    {
+        if (!mimeType.StartsWith("image/")) return null;
+        using var inStream = new MemoryStream(content);
+        using var image = await Image.LoadAsync(inStream);
+        image.Mutate(x => x.Resize(new ResizeOptions { 
+            Size = new SixLabors.ImageSharp.Size(150, 150), 
+            Mode = ResizeMode.Max }));
+        using var outStream = new MemoryStream();
+        await image.SaveAsJpegAsync(outStream);
+        return outStream.ToArray();
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\DatabaseInitializer.cs ==========
+using LMS.Infra.Database;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace LMS.Infra;
+public class DatabaseInitializer
+{
+    private readonly IServiceProvider _services;
+    public DatabaseInitializer(IServiceProvider services) => _services = services;
+
+    public async Task InitializeAsync()
+    {
+        using var scope = _services.CreateScope();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<LibraryDbContext>>();
+        try
+        {
+            await scope.ServiceProvider.GetRequiredService<LibraryDbContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>().Database.MigrateAsync();
+            
+            // Seed Identity Roles
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            if (!await roleManager.RoleExistsAsync("Member"))
+                await roleManager.CreateAsync(new IdentityRole("Member"));
+            if (!await roleManager.RoleExistsAsync("Admin"))
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            
+            await DbSeeder.SeedSystemMetadataAsync(
+                scope.ServiceProvider.GetRequiredService<LibraryDbContext>(), logger);
+        }
+        catch (Exception ex) { logger.LogError(ex, "DB init failed."); throw; }
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\DependencyInjection.cs ==========
+using System.Reflection;
+using System.Text;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using LMS.Infra.Repository;
+using LMS.Infra.ServiceStorage;
+using LMS.Infra.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+
+namespace LMS.Infra;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        // 1. Database Contexts
+        // LibraryConnection: For Metadata (Vocabulary, Resource, etc.)
+        // IdentityConnection: For Security (Users, Roles, Claims)
+        
+        services.AddDbContext<LibraryDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("LibraryConnection"),
+                b => b.MigrationsAssembly("LMS.Infra")));
+
+        services.AddDbContext<AppIdentityDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("IdentityConnection"),
+                b => b.MigrationsAssembly("LMS.Infra")));
+
+        // 2. Identity & RBAC Configuration
+        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            options.Password.RequireDigit = true;
+            options.Password.RequiredLength = 8;
+            options.Password.RequireNonAlphanumeric = true;
+            options.User.RequireUniqueEmail = true;
+        })
+        .AddEntityFrameworkStores<AppIdentityDbContext>()
+        .AddDefaultTokenProviders();
+
+        // 3. JWT Authentication Configuration
+        var jwtSettings = configuration.GetSection("Jwt");
+        var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] 
+            ?? throw new InvalidOperationException("JWT Key is missing in appsettings.json"));
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
+        {
+            opt.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                ValidAudience = jwtSettings["Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+        });
+
+        services.AddAuthorization();
+        // 4. Storage Services (MISSING IN SCAN - ADDED NOW)
+        services.AddScoped<IMediaProcessingService, MediaProcessingService>();
+        services.AddScoped<IMediaStorageService>(sp => 
+            new LocalMediaStorageService(sp.GetRequiredService<IConfiguration>()));
+        services.AddScoped<IJwtService, JwtService>();
+
+        // 5. Repositories & UnitOfWork (MISSING IN SCAN - ADDED NOW)
+        services.AddScoped(typeof(IResourceRepository<>), typeof(ResourceRepository<>));
+        services.AddScoped<IItemRepository, ItemRepository>();
+        services.AddScoped<IItemSetRepository, ItemSetRepository>();
+        services.AddScoped<IVocabularyRepository, VocabularyRepository>();
+        services.AddScoped<IResourceTemplateRepository, ResourceTemplateRepository>();
+        services.AddScoped<IMediaRepository, MediaRepository>();
+        
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<DatabaseInitializer>(); // Required for Program.cs
+
+        return services;
+    }
+}
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.Infra\LMS.Infra.csproj ==========
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Migration\**" />
+    <EmbeddedResource Remove="Migration\**" />
+    <None Remove="Migration\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Database\Entities\" />
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LMS.App\LMS.App.csproj" />
+  </ItemGroup>
+
+</Project>
+========== C:\Users\DELL\Desktop\Projects\LMS\LMS.sln ==========
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36804.6 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LMS.Domain", "LMS.Domain\LMS.Domain.csproj", "{26794360-42F0-4270-BE4F-EA839F4046AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LMS.App", "LMS.App\LMS.App.csproj", "{9D5CAE75-2921-418C-A25A-6EDF8A400362}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LMS.Infra", "LMS.Infra\LMS.Infra.csproj", "{BC28195E-4F6F-495E-AFAA-270A92499E50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LMS.API", "LMS.API\LMS.API.csproj", "{2EA6FE73-C775-4022-B708-644D4AEE76EA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{26794360-42F0-4270-BE4F-EA839F4046AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26794360-42F0-4270-BE4F-EA839F4046AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26794360-42F0-4270-BE4F-EA839F4046AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26794360-42F0-4270-BE4F-EA839F4046AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D5CAE75-2921-418C-A25A-6EDF8A400362}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D5CAE75-2921-418C-A25A-6EDF8A400362}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D5CAE75-2921-418C-A25A-6EDF8A400362}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D5CAE75-2921-418C-A25A-6EDF8A400362}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC28195E-4F6F-495E-AFAA-270A92499E50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC28195E-4F6F-495E-AFAA-270A92499E50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC28195E-4F6F-495E-AFAA-270A92499E50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC28195E-4F6F-495E-AFAA-270A92499E50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EA6FE73-C775-4022-B708-644D4AEE76EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EA6FE73-C775-4022-B708-644D4AEE76EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EA6FE73-C775-4022-B708-644D4AEE76EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EA6FE73-C775-4022-B708-644D4AEE76EA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A99ABDB7-E80E-4FDE-B215-FC66C2F7DCDB}
+	EndGlobalSection
+EndGlobal

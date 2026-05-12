@@ -1,5 +1,5 @@
 using FluentValidation;
-using LMS.App.Features.Media.Queries.GetMediaWithMetadata;
+using LMS.App.Features.Medias.Queries.GetMediaWithMetadata;
 
 namespace LMS.App.Validators.Media;
 

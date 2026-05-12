@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.ItemSets.Queries.GetItemSetWithMembers;
+using LMS.App.Features.ItemSets.Queries.GetItemSetWithMembers;
 
-namespace LMS.Application.Validators.ItemSets;
+namespace LMS.App.Validators.ItemSets;
 public class GetItemSetWithMembersQueryValidator : AbstractValidator<GetItemSetWithMembersQuery>
 {
     public GetItemSetWithMembersQueryValidator()
