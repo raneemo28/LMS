@@ -1,12 +1,12 @@
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
-using LMS.infra.Database;
+using LMS.Infra.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace LMS.infra.Repository;
+namespace LMS.Infra.Repository;
 
 public class VocabularyRepository : GenericRepository<Vocabulary>, IVocabularyRepository
 {
@@ -22,7 +22,8 @@ public class VocabularyRepository : GenericRepository<Vocabulary>, IVocabularyRe
         await _context.Properties.AddAsync(property);
     }
     public async Task<Property?> GetPropertyByIdAsync(int id) {
-    await _context.Properties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);}
+        return await _context.Properties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+    }
     public void UpdateProperty(Property property) => _context.Properties.Update(property);
 
     public async Task<bool> DeletePropertyAsync(int propertyId)

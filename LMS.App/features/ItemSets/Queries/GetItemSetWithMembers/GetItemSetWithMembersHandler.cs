@@ -6,7 +6,7 @@ using AutoMapper;
 using LMS.App.DTOs.ItemSet;
 using LMS.App.DTOs.Item;
 
-namespace LMS.Application.Features.ItemSets.Queries.GetItemSetWithMembers;
+namespace LMS.App.Features.ItemSets.Queries.GetItemSetWithMembers;
 public class GetItemSetWithMembersHandler : IRequestHandler<GetItemSetWithMembersQuery, ItemSetMembersDto?>
 {
     private readonly IUnitOfWork _unitOfWork;

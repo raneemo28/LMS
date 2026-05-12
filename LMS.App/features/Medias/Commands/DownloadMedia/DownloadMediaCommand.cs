@@ -1,6 +1,7 @@
 using MediatR;
+using LMS.App.DTOs.Media;
 
-namespace LMS.Application.Features.Media.Commands.DownloadMedia;
+namespace LMS.App.Features.Medias.Commands.DownloadMedia;
 
 public class DownloadMediaCommand : IRequest<DownloadMediaResult>
 {

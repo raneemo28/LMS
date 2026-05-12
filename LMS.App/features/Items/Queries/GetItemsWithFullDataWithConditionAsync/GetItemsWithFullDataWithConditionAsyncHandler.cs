@@ -1,4 +1,4 @@
-﻿using LMS.Application.Features.Item.Queries.GetItemWithFullDataAsync;
+using LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
 using LMS.Domain.Interfaces;
 using MediatR;
 using System;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using LMS.App.DTOs.Item;
 
-namespace LMS.App.features.Items.Queries.GetItemsWithFullDataWithConditionAsync
+namespace LMS.App.Features.Items.Queries.GetItemsWithFullDataWithConditionAsync
 {
     public class GetItemsWithFullDataWithConditionAsyncHandler : IRequestHandler<GetItemsWithFullDataWithConditionQuery, IEnumerable<ItemDto>?>
     {

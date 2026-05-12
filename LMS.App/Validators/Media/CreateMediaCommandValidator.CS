@@ -1,7 +1,7 @@
 using FluentValidation;
 using LMS.App.Features.Media.Commands.CreateMediaCommand;
 
-namespace LMS.Application.Validators.Media;
+namespace LMS.App.Validators.Media;
 
 public class CreateMediaCommandValidator : AbstractValidator<CreateMediaCommand>
 {

@@ -1,9 +1,9 @@
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using LMS.infra.Database;
+using LMS.Infra.Database;
 
-namespace LMS.infra.Repository
+namespace LMS.Infra.Repository
 {
 public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T> where T : Resource    {
         public ResourceRepository(LibraryDbContext context) : base(context)
@@ -25,11 +25,10 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                 .AsNoTracking()
                 .ToListAsync();
         }
-        public async Task<bool> IsOwnerAsync(int setId, string userId)
+        public async Task<bool> IsOwnerAsync(int resourceId, string userId)
         {
-            return await _context.Resources
-                .AsNoTracking()
-                .AnyAsync(s => s.Id == setId && s.CreatedBy == userId);
+            return await _context.Resources.AsNoTracking()
+                .AnyAsync(r => r.Id == resourceId && r.OwnerId == userId);
         }
 
         public async Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
@@ -111,7 +110,7 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                 .AsNoTracking()
                 .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId);
         }
-        public async Task<bool> IsPropertyRequieredForItem(int propertyId,int ItemId)
+        public async Task<bool> IsPropertyRequiredForItem(int propertyId,int ItemId)
         {
             var item = await _context.Items
                 .AsNoTracking()
@@ -141,7 +140,7 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
             if (value == null) return false;
             if(await GetResourceTypeAsync(resourceId)=="Item")
             {
-                if(await IsPropertyRequieredForItem(value.PropertyId,resourceId))
+                if(await IsPropertyRequiredForItem(value.PropertyId,resourceId))
                 {
                     throw new Exception("Value validation failed: Property is required for this item.");
                 }

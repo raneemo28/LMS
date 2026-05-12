@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Vocabularies.Commands.DeleteProperty;
+namespace LMS.App.Features.Vocabularies.Commands.DeleteProperty;
 
 public class DeletePropertyHandler : IRequestHandler<DeletePropertyCommand, bool>
 {

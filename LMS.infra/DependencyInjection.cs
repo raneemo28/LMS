@@ -1,7 +1,12 @@
 using System.Reflection;
 using System.Text;
+using LMS.App.Interface;
 using LMS.Domain.Entities;
-using LMS.infra.Database;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
+using LMS.Infra.Repository;
+using LMS.Infra.ServiceStorage;
+using LMS.Infra.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace LMS.infra;
+namespace LMS.Infra;
 
 public static class DependencyInjection
 {
@@ -22,12 +27,12 @@ public static class DependencyInjection
         services.AddDbContext<LibraryDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("LibraryConnection"),
-                b => b.MigrationsAssembly("LMS.infra")));
+                b => b.MigrationsAssembly("LMS.Infra")));
 
         services.AddDbContext<AppIdentityDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("IdentityConnection"),
-                b => b.MigrationsAssembly("LMS.infra")));
+                b => b.MigrationsAssembly("LMS.Infra")));
 
         // 2. Identity & RBAC Configuration
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -42,16 +47,12 @@ public static class DependencyInjection
 
         // 3. JWT Authentication Configuration
         var jwtSettings = configuration.GetSection("Jwt");
-        var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "A_Default_Secure_Key_32_Chars_Long_12345");
+        var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] 
+            ?? throw new InvalidOperationException("JWT Key is missing in appsettings.json"));
 
-        services.AddAuthentication(options =>
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
+            opt.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
@@ -64,6 +65,22 @@ public static class DependencyInjection
         });
 
         services.AddAuthorization();
+        // 4. Storage Services (MISSING IN SCAN - ADDED NOW)
+        services.AddScoped<IMediaProcessingService, MediaProcessingService>();
+        services.AddScoped<IMediaStorageService>(sp => 
+            new LocalMediaStorageService(sp.GetRequiredService<IConfiguration>()));
+        services.AddScoped<IJwtService, JwtService>();
+
+        // 5. Repositories & UnitOfWork (MISSING IN SCAN - ADDED NOW)
+        services.AddScoped(typeof(IResourceRepository<>), typeof(ResourceRepository<>));
+        services.AddScoped<IItemRepository, ItemRepository>();
+        services.AddScoped<IItemSetRepository, ItemSetRepository>();
+        services.AddScoped<IVocabularyRepository, VocabularyRepository>();
+        services.AddScoped<IResourceTemplateRepository, ResourceTemplateRepository>();
+        services.AddScoped<IMediaRepository, MediaRepository>();
+        
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<DatabaseInitializer>(); // Required for Program.cs
 
         return services;
     }

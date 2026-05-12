@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Queries.ItemSets.CheckItemSetOwnership;
+using LMS.App.Features.Queries.ItemSets.CheckItemSetOwnership;
 
-namespace LMS.Application.Validators.ItemSets;
+namespace LMS.App.Validators.ItemSets;
 
 public class CheckItemSetOwnershipQueryValidator : AbstractValidator<CheckItemSetOwnershipQuery>
 {

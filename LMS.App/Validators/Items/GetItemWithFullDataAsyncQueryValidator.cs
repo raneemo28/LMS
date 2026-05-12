@@ -1,5 +1,5 @@
 using FluentValidation;
-using LMS.Application.Features.Item.Queries.GetItemWithFullDataAsync;
+using LMS.App.Features.Items.Queries.GetItemWithFullDataAsync;
 
 namespace LMS.App.Validators.Items;
 public class GetItemWithFullDataAsyncQueryValidator : AbstractValidator<GetItemWithFullDataAsyncQuery>

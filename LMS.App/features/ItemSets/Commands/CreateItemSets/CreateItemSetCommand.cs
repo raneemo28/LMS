@@ -1,6 +1,6 @@
 using MediatR;
 using LMS.App.DTOs.Value;
-namespace LMS.Application.Features.ItemSets.Commands.CreateItemSets;
+namespace LMS.App.Features.ItemSets.Commands.CreateItemSets;
 
 public record CreateItemSetCommand(
     string Title, 

@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Vocabularies.Commands.UpdateVocabulary;
+namespace LMS.App.Features.Vocabularies.Commands.UpdateVocabulary;
 
 public class UpdateVocabularyHandler : IRequestHandler<UpdateVocabularyCommand, bool>
 {

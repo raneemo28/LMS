@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Vocabularies.Commands.UpdateProperty;
+namespace LMS.App.Features.Vocabularies.Commands.UpdateProperty;
 
 public class UpdatePropertyHandler : IRequestHandler<UpdatePropertyCommand, bool>
 {

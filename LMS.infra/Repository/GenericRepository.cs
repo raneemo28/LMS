@@ -1,9 +1,10 @@
 
 using System.Linq.Expressions;
-using LMS.infra.Database;
+using LMS.Domain.Interfaces;
+using LMS.Infra.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Domain.Interfaces
+namespace LMS.Infra.Repository
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {

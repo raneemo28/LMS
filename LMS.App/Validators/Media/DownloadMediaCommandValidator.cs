@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Media.Commands.DownloadMedia;
+using LMS.App.Features.Medias.Commands.DownloadMedia;
 
-namespace LMS.Application.Validators.Media;
+namespace LMS.App.Validators.Media;
 
 public class DownloadMediaCommandValidator : AbstractValidator<DownloadMediaCommand>
 {

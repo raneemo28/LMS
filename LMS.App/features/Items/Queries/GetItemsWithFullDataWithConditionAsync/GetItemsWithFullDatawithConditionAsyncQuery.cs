@@ -1,4 +1,4 @@
-﻿using LMS.Domain.Entities;
+using LMS.Domain.Entities;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using LMS.App.DTOs.Item;
 
-namespace LMS.App.features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
+namespace LMS.App.Features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
 
-public record GetItemsWithFullDataWithConditionQuery(Expression<Func<Item, bool>> Filter) : IRequest<IEnumerable<ItemDto>?>;
+public record GetItemsWithFullDataWithConditionQuery(Expression<Func<LMS.Domain.Entities.Item, bool>> Filter) : IRequest<IEnumerable<ItemDto>?>;

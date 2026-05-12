@@ -1,46 +1,24 @@
 using LMS.Domain.Constants;
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
-using LMS.infra.Database;
+using LMS.Infra.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.infra.Repository
+namespace LMS.Infra.Repository
 {
     public class ResourceTemplateRepository : GenericRepository<ResourceTemplate>, IResourceTemplateRepository
     {
         public ResourceTemplateRepository(LibraryDbContext context) : base(context)
         {
         }
-        public async Task<object?> GetTemplateWithPropertiesAsync(int id)
+        public async Task<ResourceTemplate?> GetTemplateWithPropertiesAsync(int id)
         {
-            var template = await _context.ResourceTemplates
+            return await _context.ResourceTemplates
+                .Include(t => t.TemplateProperties)
+                    .ThenInclude(tp => tp.Property)
+                        .ThenInclude(p => p.Vocabulary)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (template == null) return null;
-
-            var properties = await (from tp in _context.Set<TemplateProperty>()
-                                    join p in _context.Properties on tp.PropertyId equals p.Id
-                                    where tp.TemplateId == id
-                                    select new
-                                    {
-                                        p.Id,
-                                        p.LocalName,
-                                        p.Label,
-                                        p.TermUri,
-                                        tp.IsRequired,
-                                        tp.DisplayOrder,
-                                        tp.AlternateLabel
-                                    })
-                                    .AsNoTracking()
-                                    .OrderBy(x => x.DisplayOrder)
-                                    .ToListAsync();
-
-            return new
-            {
-                template =template,
-                Properties = properties
-            };
         }
 
         public async Task<bool> IsLabelUniqueAsync(string label)

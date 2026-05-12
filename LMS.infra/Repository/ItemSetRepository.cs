@@ -1,10 +1,10 @@
 using LMS.Domain.Entities;
 using LMS.Domain.Interfaces;
-using LMS.infra.Database;
+using LMS.Infra.Database;
 using Microsoft.EntityFrameworkCore;
 using LMS.Domain.Constants;
 
-namespace LMS.infra.Repository
+namespace LMS.Infra.Repository
 {
     public class ItemSetRepository : ResourceRepository<ItemSet>, IItemSetRepository
     {
@@ -52,6 +52,7 @@ namespace LMS.infra.Repository
                 ResourceId = itemId,
                 PropertyId = memberOfProperty.Id,
                 ValueText = setId.ToString(),
+                Type = SystemConstants.TypeText   // "text"
             };
 
             await _context.Values.AddAsync(memberValue);

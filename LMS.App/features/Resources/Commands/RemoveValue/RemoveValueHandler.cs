@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Resources.Commands.RemoveValue;
+namespace LMS.App.Features.Resources.Commands.RemoveValue;
 
 public class RemoveValueHandler : IRequestHandler<RemoveValueCommand, bool>
 {

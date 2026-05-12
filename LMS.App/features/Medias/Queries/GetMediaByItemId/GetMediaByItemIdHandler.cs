@@ -3,7 +3,7 @@ using LMS.App.DTOs.Media;
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Media.Queries.GetMediaByItemId;
+namespace LMS.App.Features.Media.Queries.GetMediaByItemId;
 
 public class GetMediaByItemIdHandler : IRequestHandler<GetMediaByItemIdQuery, List<MediaDto>>
 {

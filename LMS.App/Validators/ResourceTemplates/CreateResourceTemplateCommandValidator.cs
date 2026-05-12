@@ -1,5 +1,5 @@
 using FluentValidation;
-using LMS.App.Features.ResourceTemplates.Commands.CreateResourseTemplate;
+using LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
 
 namespace LMS.App.Validators.ResourceTemplates;
     

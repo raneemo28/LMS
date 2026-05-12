@@ -2,7 +2,7 @@ using MediatR;
 using LMS.App.DTOs.Media;
 using LMS.Domain.Interfaces;
 using AutoMapper;
-namespace LMS.App.Features.Media.Queries.GetMediaWithMetadata;
+namespace LMS.App.Features.Medias.Queries.GetMediaWithMetadata;
 
 public class GetMediaWithMetadataHandler : IRequestHandler<GetMediaWithMetadataQuery, MediaWithMetadataDto?>
 {

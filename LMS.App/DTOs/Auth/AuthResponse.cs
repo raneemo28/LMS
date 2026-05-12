@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LMS.App.DTO.Auth;
+namespace LMS.App.DTOs.Auth;
 
 public record AuthResponse(
     string Token,

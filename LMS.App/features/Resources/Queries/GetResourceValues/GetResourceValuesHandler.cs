@@ -3,7 +3,7 @@ using MediatR;
 using AutoMapper;
 using LMS.App.DTOs.Value;
 
-namespace LMS.Application.Features.Resources.Queries.GetResourceValues;
+namespace LMS.App.Features.Resources.Queries.GetResourceValues;
 
 public class GetResourceValuesHandler : IRequestHandler<GetResourceValuesQuery, List<ResourceValueDto>>
 {

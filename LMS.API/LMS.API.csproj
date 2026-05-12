@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LMS.App\LMS.App.csproj" />
-    <ProjectReference Include="..\LMS.infra\LMS.infra.csproj" />
+    <ProjectReference Include="..\LMS.Infra\LMS.Infra.csproj" />
   </ItemGroup>
 
   <ItemGroup>

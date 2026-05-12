@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Resources.Queries.GetResourceValues;
+using LMS.App.Features.Resources.Queries.GetResourceValues;
 
-namespace LMS.Application.Validators.Resources;
+namespace LMS.App.Validators.Resources;
 
 public class GetResourceValuesQueryValidator : AbstractValidator<GetResourceValuesQuery>
 {

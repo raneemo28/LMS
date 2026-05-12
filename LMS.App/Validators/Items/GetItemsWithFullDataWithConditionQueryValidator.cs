@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.App.features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
+using LMS.App.Features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
 
-namespace LMS.App.features.Items.Queries.GetItemsWithFullDataWithConditionAsync;
+namespace LMS.App.Validators.Items;
 
 public class GetItemsWithFullDataWithConditionQueryValidator : AbstractValidator<GetItemsWithFullDataWithConditionQuery>
 {

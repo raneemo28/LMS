@@ -2,7 +2,7 @@ using LMS.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.infra.Database;
+namespace LMS.Infra.Database;
 
 public class AppIdentityDbContext : IdentityDbContext<ApplicationUser>
 {

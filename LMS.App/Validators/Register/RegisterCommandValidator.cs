@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.App.features.Register.Commands;
+using LMS.App.Features.Register.Commands;
 
-namespace LMS.App.features.Register.Validators;
+namespace LMS.App.Validators.Register;
 
 public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {

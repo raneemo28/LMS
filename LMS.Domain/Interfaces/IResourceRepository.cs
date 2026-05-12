@@ -10,8 +10,8 @@ public interface IResourceRepository<T> : IGenericRepository<T> where T : Resour
         Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId);
         Task<string> GetResourceTypeAsync(int resourceId);
         Task<Value> AddValueAsync(int resourceId, int propertyId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language);
-        Task<bool> IsOwnerAsync(int setId, string userId);
+        Task<bool> IsOwnerAsync(int resourceId, string userId);
         Task<bool> IsPropertyValidForItem(int propertyId, int itemId);
-        Task<bool> IsPropertyRequieredForItem(int propertyId,int ItemId);
+        Task<bool> IsPropertyRequiredForItem(int propertyId, int itemId);
     }
 }

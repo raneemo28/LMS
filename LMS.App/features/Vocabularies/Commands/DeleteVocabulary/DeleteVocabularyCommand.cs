@@ -1,3 +1,3 @@
 using MediatR;
-namespace LMS.Application.Features.Vocabularies.Commands.DeleteVocabulary;
+namespace LMS.App.Features.Vocabularies.Commands.DeleteVocabulary;
 public record DeleteVocabularyCommand(int Id) : IRequest<bool>;

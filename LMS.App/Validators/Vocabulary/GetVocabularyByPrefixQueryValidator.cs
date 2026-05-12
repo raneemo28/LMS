@@ -1,7 +1,7 @@
 using FluentValidation;
-using LMS.Application.Features.Vocabularies.Queries.GetVocabularyByPrefix;
+using LMS.App.Features.Vocabularies.Queries.GetVocabularyByPrefix;
 
-namespace LMS.Application.Validators.Vocabularie;
+namespace LMS.App.Validators.Vocabulary;
 
 public class GetVocabularyByPrefixQueryValidator : AbstractValidator<GetVocabularyByPrefixQuery>
 {

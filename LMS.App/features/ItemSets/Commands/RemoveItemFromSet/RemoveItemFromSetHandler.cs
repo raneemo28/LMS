@@ -1,6 +1,6 @@
 using MediatR;
 using LMS.Domain.Interfaces;
-namespace LMS.Application.Features.ItemSets.Commands.RemoveItemFromSet;
+namespace LMS.App.Features.ItemSets.Commands.RemoveItemFromSet;
 public class RemoveItemFromSetHandler : IRequestHandler<RemoveItemFromSetCommand, bool>
 {
     private readonly IUnitOfWork _unitOfWork;

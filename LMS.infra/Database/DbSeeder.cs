@@ -3,7 +3,7 @@ using LMS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace LMS.infra.Database;
+namespace LMS.Infra.Database;
 
 public static class DbSeeder
 {

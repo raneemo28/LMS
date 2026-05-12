@@ -1,7 +1,7 @@
 using LMS.Domain.Interfaces;
 using MediatR;
 
-namespace LMS.Application.Features.Queries.ItemSets.CheckItemSetOwnership;
+namespace LMS.App.Features.Queries.ItemSets.CheckItemSetOwnership;
 public class CheckItemSetOwnershipHandler : IRequestHandler<CheckItemSetOwnershipQuery, bool>
 {
     private readonly IUnitOfWork _unitOfWork;
