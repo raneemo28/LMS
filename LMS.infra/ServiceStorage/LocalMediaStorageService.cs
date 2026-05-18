@@ -16,11 +16,12 @@ public class LocalMediaStorageService : IMediaStorageService
         Directory.CreateDirectory(_basePath);
     }
 
-    public async Task<string> UploadAsync(byte[] content, string fileName, string contentType)
+    public async Task<string> UploadAsync(Stream content, string fileName, string contentType)
     {
         var filePath = Path.Combine(_basePath, fileName);
 
-        await File.WriteAllBytesAsync(filePath, content);
+        using var fileStream = new FileStream(filePath, FileMode.Create);
+        await content.CopyToAsync(fileStream);
 
         return filePath;
     }

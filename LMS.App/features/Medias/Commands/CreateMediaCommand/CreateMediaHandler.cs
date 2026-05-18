@@ -13,33 +13,31 @@ public class CreateMediaHandler : IRequestHandler<CreateMediaCommand, int>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<int> Handle(CreateMediaCommand request, CancellationToken cancellationToken)
+
+public async Task<int> Handle(CreateMediaCommand request, CancellationToken cancellationToken)
+{
+    var media = new Domain.Entities.Media
     {
-        var media = new Domain.Entities.Media
+        Type = "Media",
+        CreatedBy = request.Dto.OwnerId,
+        OwnerId = request.Dto.OwnerId,
+        CreatedAt = DateTime.UtcNow,
+        
+        ItemId = request.Dto.ItemId,
+        FileName = request.Dto.FileName,
+        AltText = request.Dto.AltText,
+        Values = request.Dto.Values.Select(v => new Value
         {
-            Type = "Media",
-            CreatedBy = request.OwnerId,
-            OwnerId = request.OwnerId,
-            CreatedAt = DateTime.UtcNow,
-            
-            ItemId = request.ItemId,
-            FileName = request.FileName,
-            AltText = request.AltText,
-            Values = request.Values.Select(v => new Value
-            {
-                PropertyId = v.PropertyId,
-                ValueText = v.ValueText,
-                ValueUri = v.ValueUri,
-                ValueResourceId = v.ValueResourceId,
-                Type = v.Type,
-                Language = v.Language
-            }).ToList()
-        };
+            PropertyId = v.PropertyId,
+            ValueText = v.ValueText,
+            ValueUri = v.ValueUri,
+            Type = v.Type,
+            Language = v.Language
+        }).ToList()
+    };
 
-        await _unitOfWork.Media.AddAsync(media);
-
-        await _unitOfWork.CommitAsync();
-
-        return media.Id;
-    }
+    await _unitOfWork.Media.AddAsync(media);
+    await _unitOfWork.CommitAsync();
+    return media.Id;
+}
 }

@@ -1,6 +1,11 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
-using LMS.Domain.Interfaces;
 using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using LMS.App.DTOs.Media;
 
 namespace LMS.App.Features.Medias.Commands.UpdateMediaCommand;
 
@@ -15,44 +20,46 @@ public class UpdateMediaCommandHandler : IRequestHandler<UpdateMediaCommand, boo
 
     public async Task<bool> Handle(UpdateMediaCommand request, CancellationToken cancellationToken)
     {
-        var media = await _unitOfWork.Media.GetMediaWithMetadataAsync(request.Id);
-        
-        if (media == null) return false;
+        var media = await _unitOfWork.Media.GetMediaWithMetadataAsync(request.Dto.Id);
 
-        if (media.OwnerId != request.CurrentUserId)
+        if (media == null)
         {
-            throw new UnauthorizedAccessException("Don't have permission to edit this file.");
+            return false;
         }
 
-        media.FileName = request.FileName;
-        media.AltText = request.AltText;
-        media.ItemId = request.ItemId;
-        
+        media.FileName = request.Dto.FileName;
+        media.AltText = request.Dto.AltText;
+        media.ItemId = request.Dto.ItemId;
+        media.ModifiedBy = request.Dto.CurrentUserId;
         media.ModifiedAt = DateTime.UtcNow;
-        media.ModifiedBy = request.CurrentUserId;
 
-        if (request.Values != null)
+        if (request.Dto.Values != null)
         {
-            media.Values.Clear();
+            if (media.Values != null)
+            {
+                media.Values.Clear();
+            }
+            else
+            {
+                media.Values = new List<Value>();
+            }
 
-            foreach (var v in request.Values)
+            foreach (var v in request.Dto.Values)
             {
                 media.Values.Add(new Value
                 {
-                    ResourceId = media.Id,
                     PropertyId = v.PropertyId,
                     ValueText = v.ValueText,
                     ValueUri = v.ValueUri,
-                    ValueResourceId = v.ValueResourceId,
+                    ValueResourceId = request.Dto.Id,
                     Type = v.Type,
                     Language = v.Language
                 });
             }
         }
 
-        _unitOfWork.Media.Update(media);
-        var result = await _unitOfWork.CommitAsync();
+        await _unitOfWork.CommitAsync();
 
-        return result > 0;
+        return true;
     }
 }
