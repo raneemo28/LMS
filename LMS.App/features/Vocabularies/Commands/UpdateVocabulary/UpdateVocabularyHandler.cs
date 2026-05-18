@@ -16,6 +16,9 @@ public class UpdateVocabularyHandler : IRequestHandler<UpdateVocabularyCommand, 
         if (vocab.Label != request.Label && !await _unitOfWork.Vocabularies.IsLabelUniqueAsync(request.Label))
             throw new InvalidOperationException($"Vocabulary label '{request.Label}' is already in use.");
 
+        if (vocab.NamespaceUri != request.NamespaceUri && !await _unitOfWork.Vocabularies.IsNamespaceUriUniqueAsync(request.NamespaceUri))
+            throw new InvalidOperationException($"Vocabulary namespace URI '{request.NamespaceUri}' is already in use.");
+
         vocab.Prefix = request.Prefix;
         vocab.NamespaceUri = request.NamespaceUri;
         vocab.Label = request.Label;

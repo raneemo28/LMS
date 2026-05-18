@@ -15,6 +15,7 @@ public class VocabularyMappingProfile : Profile
         CreateMap<CreateVocabularyDto, Vocabulary>()
             .ForMember(d => d.Id, opt => opt.Ignore());
 
-        CreateMap<UpdateVocabularyDto, Vocabulary>();
+        CreateMap<UpdateVocabularyDto, Vocabulary>()
+            .ForMember(d => d.Id, opt => opt.Ignore());
     }
 }

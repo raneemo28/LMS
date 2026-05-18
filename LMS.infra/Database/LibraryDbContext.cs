@@ -26,6 +26,14 @@ public class LibraryDbContext : DbContext
             entity.Property(e => e.Prefix).IsRequired().HasMaxLength(50);
             entity.Property(e => e.NamespaceUri).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Label).IsRequired().HasMaxLength(255);
+
+            entity.HasData(new Vocabulary
+            {
+                Id = 1,
+                Prefix = "sys",
+                NamespaceUri = "http://schema.lms.com/system#",
+                Label = "System Internal Vocabulary"
+            });
         });
 
         modelBuilder.Entity<ResourceTemplate>(entity =>
@@ -43,13 +51,32 @@ public class LibraryDbContext : DbContext
             entity.Property(e => e.Label).IsRequired().HasMaxLength(255);
             entity.Property(e => e.TermUri).IsRequired().HasMaxLength(255);
             entity.HasOne(d => d.Vocabulary).WithMany().HasForeignKey(d => d.VocabularyId);
+
+            entity.HasData(
+                new Property
+                {
+                    Id = 1,
+                    Label = "Associated Media",
+                    LocalName = "hasMedia",
+                    TermUri = "http://schema.lms.com/system#hasMedia",
+                    VocabularyId = 1
+                },
+                new Property
+                {
+                    Id = 2,
+                    Label = "Thumbnail",
+                    LocalName = "hasThumbnail",
+                    TermUri = "http://schema.lms.com/system#hasThumbnail",
+                    VocabularyId = 1
+                }
+            );
         });
 
         modelBuilder.Entity<TemplateProperty>(entity =>
         {
             entity.ToTable("TEMPLATE_PROPERTY");
             entity.HasKey(e => new { e.TemplateId, e.PropertyId });
-            entity.HasOne(d => d.Template).WithMany().HasForeignKey(d => d.TemplateId);
+            entity.HasOne(d => d.Template).WithMany(t => t.TemplateProperties).HasForeignKey(d => d.TemplateId);
             entity.HasOne(d => d.Property).WithMany().HasForeignKey(d => d.PropertyId);
         });
 
@@ -88,7 +115,7 @@ public class LibraryDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Language).HasMaxLength(10);
-            
+
             entity.HasOne(d => d.Resource)
                 .WithMany(p => p.Values)
                 .HasForeignKey(d => d.ResourceId)

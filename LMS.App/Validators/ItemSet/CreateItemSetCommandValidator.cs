@@ -9,7 +9,7 @@ public class CreateItemSetCommandValidator : AbstractValidator<CreateItemSetComm
     {
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required.")
-            .MaximumLength(20).WithMessage("Title cannot exceed 20 characters.");
+            .MaximumLength(255).WithMessage("Title cannot exceed 255 characters.");
 
         RuleFor(x => x.OwnerId)
             .NotEmpty().WithMessage("OwnerId is required.");

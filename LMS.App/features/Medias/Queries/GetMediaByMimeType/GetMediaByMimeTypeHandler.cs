@@ -17,9 +17,7 @@ public class GetMediaByMimeTypeHandler : IRequestHandler<GetMediaByMimeTypeQuery
 
     public async Task<List<MediaDto>> Handle(GetMediaByMimeTypeQuery request, CancellationToken cancellationToken)
     {
-        
-        var results = await _unitOfWork.Media.FindAsync(m => m.MimeType == request.MimeType);
-
-        return _mapper.Map<List<MediaDto>>(results.ToList());
+        var results = await _unitOfWork.Media.GetMediaByMimeTypeAsync(request.MimeType);
+        return _mapper.Map<List<MediaDto>>(results.ToList()) ?? new List<MediaDto>();
     }
 }

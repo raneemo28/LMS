@@ -30,6 +30,24 @@ public class UpdateItemSetHandler : IRequestHandler<UpdateItemSetCommand, bool>
         itemSet.Description = request.Description;
         itemSet.IsPublic = request.IsPublic;
 
+        if (request.Values != null)
+        {
+            itemSet.Values.Clear();
+            foreach (var v in request.Values)
+            {
+                itemSet.Values.Add(new Value
+                {
+                    ResourceId = itemSet.Id,
+                    PropertyId = v.PropertyId,
+                    ValueText = v.ValueText,
+                    ValueUri = v.ValueUri,
+                    ValueResourceId = v.ValueResourceId,
+                    Type = v.Type,
+                    Language = v.Language
+                });
+            }
+        }
+
         itemSet.ModifiedAt = DateTime.UtcNow;
         itemSet.ModifiedBy = request.UserId;
 

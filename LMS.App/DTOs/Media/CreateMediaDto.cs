@@ -7,6 +7,6 @@ public record CreateMediaDto(
     int? ItemId,
     string FileName,
     string? AltText,
-    int? OwnerId,
+    string? OwnerId,
     List<ResourceValueDto> Values
 );

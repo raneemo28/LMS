@@ -17,6 +17,6 @@ public class GetVocabularyByPrefixHandler : IRequestHandler<GetVocabularyByPrefi
     public async Task<List<VocabularyDto>> Handle(GetVocabularyByPrefixQuery request, CancellationToken ct)
     {
         var vocabs = await _unitOfWork.Vocabularies.FindAsync(v => v.Prefix.StartsWith(request.Prefix));
-        return _mapper.Map<List<VocabularyDto>>(vocabs);
+        return _mapper.Map<List<VocabularyDto>>(vocabs) ?? new List<VocabularyDto>();
     }
 }

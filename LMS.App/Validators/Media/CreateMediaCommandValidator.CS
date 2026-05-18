@@ -9,7 +9,7 @@ public class CreateMediaCommandValidator : AbstractValidator<CreateMediaCommand>
     {
         RuleFor(x => x.FileName)
             .NotEmpty().WithMessage("FileName is required.")
-            .MaximumLength(15).WithMessage("FileName is too long.");
+            .MaximumLength(255).WithMessage("FileName is too long.");
 
         RuleFor(x => x.OwnerId)
             .NotEmpty().WithMessage("OwnerId is required.");

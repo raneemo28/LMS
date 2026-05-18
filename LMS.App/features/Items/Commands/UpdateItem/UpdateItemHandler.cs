@@ -17,7 +17,7 @@ public class UpdateItemHandler : IRequestHandler<UpdateItemCommand, bool>
     public async Task<bool> Handle(UpdateItemCommand request, CancellationToken cancellationToken)
     {
         
-        var item = await _unitOfWork.Items.GetItemWithFullDataAsync(request.Id);
+        var item = await _unitOfWork.Items.GetItemWithFullDataForUpdateAsync(request.Id);
 
         if (item == null) return false;
 

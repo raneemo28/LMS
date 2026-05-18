@@ -22,9 +22,9 @@ public class GetItemSetWithMembersHandler : IRequestHandler<GetItemSetWithMember
         var result = await _unitOfWork.ItemSets.GetSetWithMembersAsync(request.Id);
     
         if (result == null) return null;
-        return new ItemSetMembersDto(
-            _mapper.Map<ItemSetDto>(result.SetInfo),
-            _mapper.Map<List<ItemDto>>(result.Members)
-        );  
+
+        var setInfo = _mapper.Map<ItemSetDto>(result.SetInfo) ?? throw new InvalidOperationException("Unable to map item set info.");
+        var members = _mapper.Map<List<ItemDto>>(result.Members) ?? new List<ItemDto>();
+        return new ItemSetMembersDto(setInfo, members);
     }
 }

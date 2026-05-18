@@ -31,6 +31,7 @@ public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
                 PropertyId = v.PropertyId,
                 ValueText = v.ValueText,
                 ValueUri = v.ValueUri,
+                ValueResourceId = v.ValueResourceId,
                 Type = v.Type,
                 Language = v.Language
             }).ToList() ?? new List<Value>()

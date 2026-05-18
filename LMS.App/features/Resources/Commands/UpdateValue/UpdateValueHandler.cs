@@ -18,8 +18,7 @@ public class UpdateValueHandler : IRequestHandler<UpdateValueCommand, bool>
         // Fetch the existing value to know its PropertyId
         // (ResourceRepository.UpdateValueAsync already fetches the value by valueId+resourceId)
         // We need to look up the property to reconstruct the URI.
-        var values = await _unitOfWork.Resources.GetResourceValuesAsync(request.ResourceId);
-        var existing = values.FirstOrDefault(v => v.Id == request.ValueId);
+        var existing = await _unitOfWork.Resources.GetValueByIdAsync(request.ValueId, request.ResourceId);
         if (existing == null) return false;
 
         var property = await _unitOfWork.Vocabularies.GetPropertyByIdAsync(existing.PropertyId);

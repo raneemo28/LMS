@@ -1,34 +1,47 @@
 using LMS.Infra.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace LMS.Infra;
 public class DatabaseInitializer
 {
-    private readonly IServiceProvider _services;
-    public DatabaseInitializer(IServiceProvider services) => _services = services;
+    private readonly LibraryDbContext _libraryContext;
+    private readonly AppIdentityDbContext _identityContext;
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly ILogger<DatabaseInitializer> _logger;
+
+    public DatabaseInitializer(
+        LibraryDbContext libraryContext,
+        AppIdentityDbContext identityContext,
+        RoleManager<IdentityRole> roleManager,
+        ILogger<DatabaseInitializer> logger)
+    {
+        _libraryContext = libraryContext;
+        _identityContext = identityContext;
+        _roleManager = roleManager;
+        _logger = logger;
+    }
 
     public async Task InitializeAsync()
     {
-        using var scope = _services.CreateScope();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<LibraryDbContext>>();
         try
         {
-            await scope.ServiceProvider.GetRequiredService<LibraryDbContext>().Database.MigrateAsync();
-            await scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>().Database.MigrateAsync();
+            await _libraryContext.Database.MigrateAsync();
+            await _identityContext.Database.MigrateAsync();
             
-            // Seed Identity Roles
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            if (!await roleManager.RoleExistsAsync("Member"))
-                await roleManager.CreateAsync(new IdentityRole("Member"));
-            if (!await roleManager.RoleExistsAsync("Admin"))
-                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            if (!await _roleManager.RoleExistsAsync("Member"))
+                await _roleManager.CreateAsync(new IdentityRole("Member"));
+            if (!await _roleManager.RoleExistsAsync("Admin"))
+                await _roleManager.CreateAsync(new IdentityRole("Admin"));
+            if (!await _roleManager.RoleExistsAsync("Librarian"))
+                await _roleManager.CreateAsync(new IdentityRole("Librarian"));
             
-            await DbSeeder.SeedSystemMetadataAsync(
-                scope.ServiceProvider.GetRequiredService<LibraryDbContext>(), logger);
         }
-        catch (Exception ex) { logger.LogError(ex, "DB init failed."); throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DB init failed.");
+            throw;
+        }
     }
 }

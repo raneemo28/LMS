@@ -14,6 +14,6 @@ public class GetAllVocabulariesHandler : IRequestHandler<GetAllVocabulariesQuery
     public async Task<List<VocabularyDto>> Handle(GetAllVocabulariesQuery request, CancellationToken ct)
     {
         var vocabs = await _unitOfWork.Vocabularies.GetAllAsync();
-        return _mapper.Map<List<VocabularyDto>>(vocabs);
+        return _mapper.Map<List<VocabularyDto>>(vocabs) ?? new List<VocabularyDto>();
     }
 }

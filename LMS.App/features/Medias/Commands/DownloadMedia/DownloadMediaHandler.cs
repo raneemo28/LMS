@@ -28,10 +28,10 @@ public class DownloadMediaHandler
         var media = resource as Domain.Entities.Media;
 
         if (media == null)
-            throw new Exception("Media not found");
+            throw new KeyNotFoundException("Media not found.");
 
         if (string.IsNullOrWhiteSpace(media.StoragePath))
-            throw new Exception("Invalid media storage path");
+            throw new InvalidOperationException("Media storage path is not set.");
 
         (Stream stream, string contentType, string fileName) =
     await _storage.DownloadAsync(media.StoragePath);

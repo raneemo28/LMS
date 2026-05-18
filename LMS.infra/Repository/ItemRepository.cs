@@ -33,5 +33,15 @@ namespace LMS.Infra.Repository
                 .ThenInclude(v => v.Vocabulary)
                 .AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
         }
+
+        public async Task<Item?> GetItemWithFullDataForUpdateAsync(int id)
+        {
+            return await _context.Items
+                .Include(i => i.Template)
+                .Include(i => i.Values)
+                .ThenInclude(p => p.Property)
+                .ThenInclude(v => v.Vocabulary)
+                .FirstOrDefaultAsync(i => i.Id == id);
+        }
     }
 }

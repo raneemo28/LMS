@@ -11,13 +11,13 @@ public class ApplicationUserMappingProfile : Profile
         CreateMap<ApplicationUser, AuthResponse>()
             .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
             .ForMember(dest => dest.Token, opt => opt.Ignore())
-            .ForMember(dest => dest.Success, opt => opt.MapFrom(_ => true))
-            .ForMember(dest => dest.Message, opt => opt.MapFrom(_ => "Authentication successful."))
+            .ForMember(dest => dest.Success, opt => opt.Ignore())
+            .ForMember(dest => dest.Message, opt => opt.Ignore())
             .ForMember(dest => dest.Role, opt => opt.Ignore()); // Set in Handler
 
         CreateMap<RegisterRequest, ApplicationUser>()
             .ForMember(dest => dest.Id,                   opt => opt.Ignore())
-            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.PhoneNumber,          opt => opt.MapFrom(src => src.PhoneNumber))
             .ForMember(dest => dest.PasswordHash,         opt => opt.Ignore())
             .ForMember(dest => dest.NormalizedEmail,      opt => opt.Ignore())

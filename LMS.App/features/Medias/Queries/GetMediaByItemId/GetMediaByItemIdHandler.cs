@@ -20,6 +20,6 @@ public class GetMediaByItemIdHandler : IRequestHandler<GetMediaByItemIdQuery, Li
     {
         var mediaList = await _unitOfWork.Media.GetMediaByItemIdAsync(request.ItemId);
 
-        return _mapper.Map<List<MediaDto>>(mediaList);
+        return _mapper.Map<List<MediaDto>>(mediaList) ?? new List<MediaDto>();
     }
 }

@@ -1,5 +1,6 @@
 using FluentValidation;
 using LMS.App.Features.Resources.Commands.AddValue;
+using LMS.Domain.Constants;
 
 namespace LMS.App.Validators.Resources;
 
@@ -14,7 +15,9 @@ public class AddValueCommandValidator : AbstractValidator<AddValueCommand>
             .GreaterThan(0).WithMessage("PropertyId must be valid.");
 
         RuleFor(x => x.Type)
-            .NotEmpty().WithMessage("Type is required.");
+            .NotEmpty().WithMessage("Type is required.")
+            .Must(t => new[] { SystemConstants.TypeText, SystemConstants.TypeUri, SystemConstants.TypeResource }.Contains(t))
+            .WithMessage("Type must be 'text', 'uri', or 'resource'.");
 
         RuleFor(x => x.Language)
             .MaximumLength(5) 

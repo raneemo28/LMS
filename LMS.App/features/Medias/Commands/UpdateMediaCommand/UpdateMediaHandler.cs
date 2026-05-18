@@ -19,7 +19,7 @@ public class UpdateMediaCommandHandler : IRequestHandler<UpdateMediaCommand, boo
         
         if (media == null) return false;
 
-        if (media.CreatedBy != request.CurrentUserId)
+        if (media.OwnerId != request.CurrentUserId)
         {
             throw new UnauthorizedAccessException("Don't have permission to edit this file.");
         }

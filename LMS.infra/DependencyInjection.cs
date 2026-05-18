@@ -21,9 +21,6 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // 1. Database Contexts
-        // LibraryConnection: For Metadata (Vocabulary, Resource, etc.)
-        // IdentityConnection: For Security (Users, Roles, Claims)
-        
         services.AddDbContext<LibraryDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("LibraryConnection"),
@@ -45,42 +42,54 @@ public static class DependencyInjection
         .AddEntityFrameworkStores<AppIdentityDbContext>()
         .AddDefaultTokenProviders();
 
-        // 3. JWT Authentication Configuration
+        // 3. JWT Authentication — explicitly override the schemes AddIdentity set
+        //    AddIdentity internally registers Cookie as the default scheme.
+        //    We must override DefaultAuthenticateScheme AND DefaultChallengeScheme
+        //    so that [Authorize] uses JWT and returns 401, not a cookie redirect → 404.
         var jwtSettings = configuration.GetSection("Jwt");
-        var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] 
-            ?? throw new InvalidOperationException("JWT Key is missing in appsettings.json"));
+        var jwtKey = jwtSettings["Key"];
+        if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+            throw new InvalidOperationException("JWT Key must be set in configuration and must be at least 32 characters long.");
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
+        var key = Encoding.UTF8.GetBytes(jwtKey);
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme             = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(opt =>
         {
             opt.TokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
+                ValidateIssuer           = true,
+                ValidateAudience         = true,
+                ValidateLifetime         = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSettings["Issuer"],
-                ValidAudience = jwtSettings["Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(key)
+                ValidIssuer              = jwtSettings["Issuer"],
+                ValidAudience            = jwtSettings["Audience"],
+                IssuerSigningKey         = new SymmetricSecurityKey(key)
             };
         });
 
         services.AddAuthorization();
-        // 4. Storage Services (MISSING IN SCAN - ADDED NOW)
+
+        // 4. Storage Services
         services.AddScoped<IMediaProcessingService, MediaProcessingService>();
-        services.AddScoped<IMediaStorageService>(sp => 
+        services.AddScoped<IMediaStorageService>(sp =>
             new LocalMediaStorageService(sp.GetRequiredService<IConfiguration>()));
         services.AddScoped<IJwtService, JwtService>();
 
-        // 5. Repositories & UnitOfWork (MISSING IN SCAN - ADDED NOW)
+        // 5. Repositories & UnitOfWork
         services.AddScoped(typeof(IResourceRepository<>), typeof(ResourceRepository<>));
         services.AddScoped<IItemRepository, ItemRepository>();
         services.AddScoped<IItemSetRepository, ItemSetRepository>();
         services.AddScoped<IVocabularyRepository, VocabularyRepository>();
         services.AddScoped<IResourceTemplateRepository, ResourceTemplateRepository>();
         services.AddScoped<IMediaRepository, MediaRepository>();
-        
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<DatabaseInitializer>(); // Required for Program.cs
+        services.AddScoped<DatabaseInitializer>();
 
         return services;
     }

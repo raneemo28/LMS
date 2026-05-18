@@ -1,6 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using AutoMapper;
 using LMS.App.DTOs.Auth;
 using LMS.App.Interface;
@@ -8,7 +5,6 @@ using LMS.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 
 namespace LMS.App.Features.Login.Command;
 
@@ -34,24 +30,29 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
     public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByEmailAsync(request.Data.Email);
-        
-        if (user == null || !await _userManager.CheckPasswordAsync(user, request.Data.Password))
-        {
-            return new AuthResponse(string.Empty, string.Empty, request.Data.Email, string.Empty, false, "Invalid email or password.");
-        }
+
+        if (user is null || !await _userManager.CheckPasswordAsync(user, request.Data.Password))
+            return new AuthResponse
+            {
+                Email   = request.Data.Email,
+                Success = false,
+                Message = "Invalid email or password."
+            };
 
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? "Member";
 
-        var authResponse = _mapper.Map<AuthResponse>(user);
+        var authResponse = _mapper.Map<AuthResponse>(user)
+            ?? throw new InvalidOperationException("Failed to map auth response.");
+
         var token = _jwtService.GenerateJwtToken(user, role);
 
-        return authResponse with 
-        { 
-            Token = token, 
-            Role = role, 
-            Success = true, 
-            Message = "Login successful." 
+        return authResponse with
+        {
+            Token   = token,
+            Role    = role,
+            Success = true,
+            Message = "Login successful."
         };
     }
 }
