@@ -10,9 +10,9 @@ public class ResourceTemplateMappingProfile : Profile
     public ResourceTemplateMappingProfile()
     {
         CreateMap<TemplateProperty, ResourcePropertyDto>()
-            .ForMember(d => d.LocalName, opt => opt.MapFrom(src => src.Property.LocalName))
-            .ForMember(d => d.Label, opt => opt.MapFrom(src => src.Property.Label))
-            .ForMember(d => d.TermUri, opt => opt.MapFrom(src => src.Property.TermUri));
+            .ForMember(d => d.LocalName, opt => opt.MapFrom(src => src.Property != null ? src.Property.LocalName : string.Empty))
+            .ForMember(d => d.Label, opt => opt.MapFrom(src => src.Property != null ? src.Property.Label : string.Empty))
+            .ForMember(d => d.TermUri, opt => opt.MapFrom(src => src.Property != null ? src.Property.TermUri : string.Empty));
 
         CreateMap<ResourceTemplate, ResourceTemplateDto>()
             .ForMember(d => d.Properties, opt => opt.MapFrom(s => s.TemplateProperties)); 

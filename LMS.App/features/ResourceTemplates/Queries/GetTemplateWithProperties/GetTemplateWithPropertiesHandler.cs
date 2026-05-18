@@ -20,6 +20,8 @@ public class GetTemplateWithPropertiesHandler : IRequestHandler<GetTemplateWithP
     {
         var template = await _unitOfWork.ResourceTemplates.GetTemplateWithPropertiesAsync(request.Id);
         if (template == null) return null;
-        return _mapper.Map<ResourceTemplateDto>(template);
+        var dto = _mapper.Map<ResourceTemplateDto>(template);
+        if (dto==null) throw new Exception("mapping Recource Tamplate failed");
+        return dto;
     }
 }
