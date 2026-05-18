@@ -111,8 +111,16 @@ app.UseExceptionHandler(errorApp =>
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         logger.LogError(exception, "An unexpected error occurred during request processing.");
 
+        var isDev = context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await context.Response.WriteAsJsonAsync(new { title = "Internal Error", status = 500, message = "An unexpected error occurred." });
+        await context.Response.WriteAsJsonAsync(new
+        {
+            title = "Internal Error",
+            status = 500,
+            message = isDev ? exception?.Message : "An unexpected error occurred.",
+            exceptionType = isDev ? exception?.GetType().FullName : null,
+            innerMessage = isDev ? exception?.InnerException?.Message : null
+        });
     });
 });
 
