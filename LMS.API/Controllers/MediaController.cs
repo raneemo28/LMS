@@ -17,19 +17,23 @@ namespace LMS.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
+[Authorize]
 public class MediaController : ControllerBase
 {
     private readonly IMediator _mediator;
-    private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50MB
 
     public MediaController(IMediator mediator) => _mediator = mediator;
 
-    [HttpGet("item/{itemId:int}")]
-    public async Task<IActionResult> GetMediaByItemId(int itemId)
+
+    [HttpPost("createMedia")]
+    public async Task<IActionResult> CreateMedia([FromBody] CreateMediaDto dto)
     {
-        var result = await _mediator.Send(new GetMediaByItemIdQuery(itemId));
-        return result != null ? Ok(result) : NotFound($"No media found for item {itemId}.");
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        var updatedDto = userId != null ? dto with { OwnerId = userId } : dto;
+
+        var result = await _mediator.Send(new CreateMediaCommand(updatedDto));
+        return CreatedAtAction(nameof(GetMediaWithMetadata), new { mediaId = result }, result);
     }
 
     [HttpPost("upload")]
@@ -52,37 +56,6 @@ public class MediaController : ControllerBase
         return Ok(new { path = storagePath });
     }
 
-    // 🎯 التأكد من وجود هذا السطر صراحةً لتحديد نوع الـ HTTP Method والمسار لـ Swagger
-[HttpDelete("{mediaId}")]
-public async Task<IActionResult> DeleteMedia([FromRoute] int mediaId)
-{
-    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-    if (string.IsNullOrEmpty(currentUserId))
-        return Unauthorized("User identity could not be verified.");
-
-    bool isAdmin = User.IsInRole("Admin");
-
-    var command = new DeleteMediaCommand(mediaId, currentUserId, isAdmin);
-
-    bool result = await _mediator.Send(command);
-
-    return result
-        ? Ok(new { message = "Media deleted successfully." })
-        : BadRequest("Failed to delete media.");
-}
-
-    [HttpPost("createMedia")]
-    public async Task<IActionResult> CreateMedia([FromBody] CreateMediaDto dto)
-    {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-        var updatedDto = userId != null ? dto with { OwnerId = userId } : dto;
-
-        var result = await _mediator.Send(new CreateMediaCommand(updatedDto));
-        return CreatedAtAction(nameof(GetMediaWithMetadata), new { mediaId = result }, result);
-    }
-
     [HttpPut("EditMedia/{id}")]
     public async Task<IActionResult> EditMedia(int id, [FromBody] UpdateMediaDto dto)
     {
@@ -99,6 +72,32 @@ public async Task<IActionResult> DeleteMedia([FromRoute] int mediaId)
 
         var result = await _mediator.Send(command);
         return Ok(new { message = "Media updated successfully." });
+    }
+
+    [HttpDelete("{mediaId}")]
+    public async Task<IActionResult> DeleteMedia([FromRoute] int mediaId)
+    {
+        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(currentUserId))
+            return Unauthorized("User identity could not be verified.");
+
+        bool isAdmin = User.IsInRole("Admin");
+
+        var command = new DeleteMediaCommand(mediaId, currentUserId, isAdmin);
+
+        bool result = await _mediator.Send(command);
+
+        return result
+            ? Ok(new { message = "Media deleted successfully." })
+            : BadRequest("Failed to delete media.");
+    }
+
+    [HttpGet("item/{itemId:int}")]
+    public async Task<IActionResult> GetMediaByItemId(int itemId)
+    {
+        var result = await _mediator.Send(new GetMediaByItemIdQuery(itemId));
+        return result != null ? Ok(result) : NotFound($"No media found for item {itemId}.");
     }
 
     [HttpGet("/DownloadMedia/{mediaId:int}")]
