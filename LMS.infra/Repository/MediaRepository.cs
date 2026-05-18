@@ -44,9 +44,9 @@ namespace LMS.Infra.Repository
         public async Task<Media?> GetMediaWithMetadataAsync(int mediaId)
         {
             return await _context.Medias
-                .AsNoTracking()
+                .Include(m => m.Item)
                 .Include(m => m.Values)
-                    .ThenInclude(v => v.Property) 
+                    .ThenInclude(v => v.Property)
                 .FirstOrDefaultAsync(m => m.Id == mediaId);
         }
     }

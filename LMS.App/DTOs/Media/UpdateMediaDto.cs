@@ -8,5 +8,6 @@ public record UpdateMediaDto(
     int? ItemId,
     string FileName,
     string? AltText,
-    List<ResourceValueDto> Values
+    List<ResourceValueDto> Values,
+    string CurrentUserId
 );

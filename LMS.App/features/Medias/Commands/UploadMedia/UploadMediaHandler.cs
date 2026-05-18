@@ -20,22 +20,32 @@ public class UploadMediaFileHandler : IRequestHandler<UploadMediaFileCommand, st
 
     public async Task<string> Handle(UploadMediaFileCommand request, CancellationToken cancellationToken)
     {
-        var media = await _unitOfWork.Media.GetByIdAsync(request.MediaId) as Domain.Entities.Media;
+        if (request.Content is null || request.Content.Length == 0)
+            throw new ArgumentException("File content cannot be empty.");
 
+        var media = await _unitOfWork.Media.GetByIdAsync(request.MediaId);
         if (media is null)
-            throw new Exception("Media not found");
-
+            throw new KeyNotFoundException($"Media with ID {request.MediaId} not found.");
 
         var storagePath = await _storage.UploadAsync(
             request.Content,
             request.FileName,
             request.MimeType);
-        media.ModifiedAt = DateTime.UtcNow;
-        media.StoragePath = storagePath;
-        media.MimeType = request.MimeType;
-        media.FileName = request.FileName;
 
-        await _unitOfWork.CommitAsync();
+        try
+        {
+            media.ModifiedAt = DateTime.UtcNow;
+            media.StoragePath = storagePath;
+            media.MimeType = request.MimeType;
+            media.FileName = request.FileName;
+
+            await _unitOfWork.CommitAsync();
+        }
+        catch
+        {
+            await _storage.DeleteAsync(storagePath);
+            throw;
+        }
 
         return storagePath;
     }

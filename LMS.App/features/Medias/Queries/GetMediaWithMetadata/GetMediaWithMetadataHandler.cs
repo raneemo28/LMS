@@ -1,7 +1,13 @@
 using MediatR;
+using AutoMapper;
 using LMS.App.DTOs.Media;
 using LMS.Domain.Interfaces;
-using AutoMapper;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
+
 namespace LMS.App.Features.Medias.Queries.GetMediaWithMetadata;
 
 public class GetMediaWithMetadataHandler : IRequestHandler<GetMediaWithMetadataQuery, MediaWithMetadataDto?>
@@ -17,11 +23,29 @@ public class GetMediaWithMetadataHandler : IRequestHandler<GetMediaWithMetadataQ
 
     public async Task<MediaWithMetadataDto?> Handle(GetMediaWithMetadataQuery request, CancellationToken cancellationToken)
     {
-        // استخدام الميثود المخصصة التي أضفناها لـ IMediaRepository
         var media = await _unitOfWork.Media.GetMediaWithMetadataAsync(request.MediaId);
 
-        if (media == null) return null;
+        if (media == null)  throw new InvalidOperationException("media not found.");
 
-        return _mapper.Map<MediaWithMetadataDto>(media);
+
+        if (media.ItemId == null || media.Item == null || media.Item.Id == 0)
+        {
+            throw new InvalidOperationException("The requested Media exists, but its associated Item does not exist in the system.");
+        }
+
+        var metadataValues = new List<MetadataValueDto>();
+        if (media.Values != null && media.Values.Any())
+        {
+            metadataValues = _mapper.Map<List<MetadataValueDto>>(media.Values);
+        }
+
+        return new MediaWithMetadataDto(
+            media.Id,
+            media.FileName ?? string.Empty,
+            media.StoragePath ?? string.Empty,
+            media.FileSize ?? 0,
+            media.MimeType ?? "application/octet-stream",
+            metadataValues
+        );
     }
 }

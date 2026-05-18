@@ -7,17 +7,17 @@ public class UpdateMediaCommandValidator : AbstractValidator<UpdateMediaCommand>
 {
     public UpdateMediaCommandValidator()
     {
-        RuleFor(x => x.Id)
+        RuleFor(x => x.Dto.Id)
             .GreaterThan(0).WithMessage("Valid Media ID is required.");
 
-        RuleFor(x => x.FileName)
+        RuleFor(x => x.Dto.FileName)
             .NotEmpty().WithMessage("FileName cannot be empty.")
             .MaximumLength(255).WithMessage("FileName cannot exceed 255 characters.");
 
-        RuleFor(x => x.CurrentUserId)
+        RuleFor(x => x.Dto.CurrentUserId)
             .NotEmpty().WithMessage("Current user identity is required.");
 
-        RuleForEach(x => x.Values).ChildRules(value =>
+        RuleForEach(x => x.Dto.Values).ChildRules(value =>
         {
             value.RuleFor(v => v.PropertyId).GreaterThan(0);
             value.RuleFor(v => v.Type).NotEmpty()

@@ -1,4 +1,5 @@
 using AutoMapper;
+using System.Collections.Generic;
 using LMS.App.DTOs.Media;
 using LMS.Domain.Entities;
 
@@ -28,7 +29,11 @@ public class MediaMappingProfile : Profile
             .ForMember(d => d.Item, opt => opt.Ignore())
             .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
 
+        CreateMap<Value, MetadataValueDto>()
+            .ForCtorParam("propertyLabel", opt => opt.MapFrom(src => src.Property != null ? src.Property.Label : "Unknown Property"))
+            .ForCtorParam("valueText", opt => opt.MapFrom(src => src.ValueText ?? src.ValueUri ?? string.Empty));
+
         CreateMap<Media, MediaWithMetadataDto>()
-            .ForMember(d => d.Metadata, opt => opt.MapFrom(src => src.Values.Select(v => new MetadataValueDto(v.Property.Label, v.ValueText ?? string.Empty))));
+            .ForMember(d => d.Metadata, opt => opt.MapFrom(s => s.Values));
     }
 }

@@ -9,6 +9,8 @@ public class GetMediaByMimeTypeQueryValidator : AbstractValidator<GetMediaByMime
     {
         RuleFor(x => x.MimeType)
             .NotEmpty().WithMessage("MimeType is required (e.g., 'image/png').")
-            .Must(x => x.Contains("/")).WithMessage("Invalid MimeType format.");
+            .Must(x => x.Contains("/") || 
+                       x.Contains("%2F", StringComparison.OrdinalIgnoreCase)) 
+            .WithMessage("Invalid MimeType format.");
     }
 }
