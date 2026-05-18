@@ -23,7 +23,7 @@ namespace LMS.Infra.Repository
 
             var members = await _context.Items
                 .Where(i => i.Values.Any(v =>
-                    v.Property.TermUri == SystemConstants.IsMemberOf &&
+                    v.Property.TermUri == SystemConstants.IsMemberOfUri &&
                     v.ValueText == setId.ToString()))
                 .Include(i => i.Template)
                 .Include(i => i.Values)
@@ -33,6 +33,14 @@ namespace LMS.Infra.Repository
 
             return new ItemSetWithMembers(itemSet, members);
         }
+
+        public async Task<IEnumerable<ItemSet>> GetPublicOrOwnedAsync(string userId)
+        {
+            return await _context.ItemSets
+                .Where(s => s.IsPublic || s.OwnerId == userId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
         public async Task<Item> AddItemToSetAsync(int setId, int itemId)
         {
             //still need to check the duplication 
@@ -40,7 +48,7 @@ namespace LMS.Infra.Repository
             if (item == null) return null!;
 
             var memberOfProperty = await _context.Properties
-                .FirstOrDefaultAsync(p => p.TermUri == SystemConstants.IsMemberOf);
+                .FirstOrDefaultAsync(p => p.TermUri == SystemConstants.IsMemberOfUri);
 
             if (memberOfProperty == null)
             {
@@ -67,7 +75,7 @@ namespace LMS.Infra.Repository
             var linkValue = await _context.Values
                 .FirstOrDefaultAsync(v =>
                     v.ResourceId == itemId &&
-                    v.Property.TermUri == SystemConstants.IsMemberOf &&
+                    v.Property.TermUri == SystemConstants.IsMemberOfUri &&
                     v.ValueText == setId.ToString());
 
             if (linkValue != null)

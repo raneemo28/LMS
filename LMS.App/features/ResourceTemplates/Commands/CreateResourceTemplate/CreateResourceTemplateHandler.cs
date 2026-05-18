@@ -16,7 +16,7 @@ public class CreateResourceTemplateCommandHandler : IRequestHandler<CreateResour
     public async Task<int> Handle(CreateResourceTemplateCommand request, CancellationToken cancellationToken)
     {
          if(!await _unitOfWork.ResourceTemplates.IsLabelUniqueAsync(request.Label)){
-            throw new Exception("Label already exists");
+            throw new InvalidOperationException("Label already exists.");
         }
         var template = new ResourceTemplate
         {

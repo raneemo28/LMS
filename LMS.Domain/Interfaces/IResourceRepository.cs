@@ -13,5 +13,6 @@ public interface IResourceRepository<T> : IGenericRepository<T> where T : Resour
         Task<bool> IsOwnerAsync(int resourceId, string userId);
         Task<bool> IsPropertyValidForItem(int propertyId, int itemId);
         Task<bool> IsPropertyRequiredForItem(int propertyId, int itemId);
+        Task<Value?> GetValueByIdAsync(int valueId, int resourceId);
     }
 }

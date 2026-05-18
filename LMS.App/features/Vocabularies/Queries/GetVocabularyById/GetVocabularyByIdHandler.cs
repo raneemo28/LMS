@@ -18,7 +18,7 @@ public class GetVocabularyByIdHandler : IRequestHandler<GetVocabularyByIdQuery, 
 
         var props = await _unitOfWork.Vocabularies.GetPropertiesByVocabularyIdAsync(request.Id);
         var dto = _mapper.Map<VocabularyDto>(vocab);
-        dto.Properties = _mapper.Map<List<LMS.App.DTOs.Property.PropertyDto>>(props);
+        dto.Properties = _mapper.Map<List<LMS.App.DTOs.Property.PropertyDto>>(props) ?? new List<LMS.App.DTOs.Property.PropertyDto>();
         return dto;
     }
 }

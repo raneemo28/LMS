@@ -19,6 +19,7 @@ public class CreateMediaHandler : IRequestHandler<CreateMediaCommand, int>
         {
             Type = "Media",
             CreatedBy = request.OwnerId,
+            OwnerId = request.OwnerId,
             CreatedAt = DateTime.UtcNow,
             
             ItemId = request.ItemId,

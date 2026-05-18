@@ -1,24 +1,17 @@
 using MediatR;
-using Microsoft.AspNetCore.Identity;
-using LMS.Domain.Entities;
 
 namespace LMS.App.Features.Logout.Command;
 
 public class LogoutHandler : IRequestHandler<LogoutCommand, bool>
 {
-    private readonly SignInManager<ApplicationUser> _signInManager;
-
-    public LogoutHandler(SignInManager<ApplicationUser> signInManager)
+    public LogoutHandler()
     {
-        _signInManager = signInManager;
     }
 
-    public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    public Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
-        // JWT is stateless — the client must discard the token.
-        // For cookie-based sessions, sign out here.
-        await _signInManager.SignOutAsync();
-        // Future: add token to a blocklist keyed by request.UserId here.
-        return true;
+        // JWT is stateless — client-side token deletion is the logout mechanism.
+        // Future: add server-side token blocklist or revocation state keyed by request.UserId here.
+        return Task.FromResult(true);
     }
 }

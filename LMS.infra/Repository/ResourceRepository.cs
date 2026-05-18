@@ -106,6 +106,7 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == itemId);
             if (item == null) return false;
+            if (item.TemplateId == null) return true;
             return await _context.TemplateProperties
                 .AsNoTracking()
                 .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId);
@@ -116,10 +117,19 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id == ItemId);
             if (item == null) return false;
+            if (item.TemplateId == null) return false;
             return await _context.TemplateProperties
                 .AsNoTracking()
                 .AnyAsync(tp => tp.PropertyId == propertyId && tp.TemplateId == item.TemplateId && tp.IsRequired);
         }
+
+        public async Task<Value?> GetValueByIdAsync(int valueId, int resourceId)
+        {
+            return await _context.Values
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
+        }
+
         public async Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
         {
             var value = await _context.Values

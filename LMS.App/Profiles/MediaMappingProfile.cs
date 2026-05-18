@@ -27,5 +27,8 @@ public class MediaMappingProfile : Profile
             .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
             .ForMember(d => d.Item, opt => opt.Ignore())
             .ForMember(d => d.Values, opt => opt.MapFrom(s => s.Values));
+
+        CreateMap<Media, MediaWithMetadataDto>()
+            .ForMember(d => d.Metadata, opt => opt.MapFrom(src => src.Values.Select(v => new MetadataValueDto(v.Property.Label, v.ValueText ?? string.Empty))));
     }
 }

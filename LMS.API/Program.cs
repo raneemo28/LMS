@@ -4,21 +4,52 @@ using LMS.Infra.ServiceStorage;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddApplication(); // ✅ Fixed name
+builder.Services.AddApplication();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name         = "Authorization",
+        Type         = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme       = "Bearer",
+        BearerFormat = "JWT",
+        In           = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description  = "Enter your JWT token. Example: eyJhbGci..."
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id   = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-// 🔒 Safe, Scoped DB Initialization
+// Safe, Scoped DB Initialization
 using var scope = app.Services.CreateScope();
 await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
 
-if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseExceptionHandler(errorApp =>
 {
@@ -31,10 +62,11 @@ app.UseExceptionHandler(errorApp =>
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsJsonAsync(new {
-                title = "Validation Error",
+                title  = "Validation Error",
                 status = 400,
-                errors = vex.Errors.GroupBy(e => e.PropertyName)
-                                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
+                errors = vex.Errors
+                            .GroupBy(e => e.PropertyName)
+                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
             });
             return;
         }
@@ -46,7 +78,27 @@ app.UseExceptionHandler(errorApp =>
             return;
         }
 
-        // Log the unexpected error
+        if (exception is KeyNotFoundException)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message });
+            return;
+        }
+
+        if (exception is FileNotFoundException)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message });
+            return;
+        }
+
+        if (exception is InvalidOperationException)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new { title = "Bad Request", status = 400, message = exception.Message });
+            return;
+        }
+
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         logger.LogError(exception, "An unexpected error occurred during request processing.");
 
@@ -55,10 +107,12 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-app.UseHttpsRedirection();
+// ⚠️ UseHttpsRedirection intentionally removed — running on HTTP locally.
+// Add it back when deploying to production with HTTPS.
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-app.UseAuthentication(); // ✅ MUST precede Authorization
-app.UseAuthorization();  // ✅ Correct order
+app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.Run();

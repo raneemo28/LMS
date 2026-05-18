@@ -17,8 +17,7 @@ public class GetMediaByOwnerHandler : IRequestHandler<GetMediaByOwnerQuery, List
 
     public async Task<List<MediaDto>> Handle(GetMediaByOwnerQuery request, CancellationToken cancellationToken)
     {
-        var results = await _unitOfWork.Media.FindAsync(m => m.CreatedBy == request.UserId);
-        
-        return _mapper.Map<List<MediaDto>>(results.ToList());
+        var results = await _unitOfWork.Media.GetMediaByOwnerAsync(request.UserId);
+        return _mapper.Map<List<MediaDto>>(results.ToList()) ?? new List<MediaDto>();
     }
 }

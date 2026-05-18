@@ -9,6 +9,7 @@ public static class SystemConstants
 
     // Structural Properties 
     public const string IsMemberOf = "isMemberOf";    
+    public const string IsMemberOfUri = "http://schema.lms.com/system#isMemberOf";
     public const string HasMedia = "hasMedia";        
     public const string HasThumbnail = "hasThumbnail"; 
     

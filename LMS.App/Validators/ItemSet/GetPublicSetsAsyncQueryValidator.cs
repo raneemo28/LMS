@@ -6,7 +6,6 @@ public class GetPublicSetsAsyncQueryValidator : AbstractValidator<GetPublicSetsA
 {
     public GetPublicSetsAsyncQueryValidator()
     {
-        RuleFor(x => x.UserId).NotEmpty().WithMessage("UserId is required to fetch relevant public sets.")
-            .NotEmpty().WithMessage("UserId is required to fetch relevant public sets.");
+        RuleFor(x => x.UserId).NotEmpty().WithMessage("UserId is required to fetch relevant public sets.");
     }
 }

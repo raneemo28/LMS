@@ -38,4 +38,15 @@ public class LocalMediaStorageService : IMediaStorageService
 
         return (stream, contentType ?? "application/octet-stream", fileName);
     }
+
+    public Task DeleteAsync(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return Task.CompletedTask;
+        }
+
+        File.Delete(path);
+        return Task.CompletedTask;
+    }
 }

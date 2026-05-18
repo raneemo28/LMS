@@ -28,12 +28,12 @@ namespace LMS.Infra.Repository
                 .AllAsync(t => t.Label != label);
         }
 
-        public async Task<ResourceTemplate> AddPropertyToTemplateAsync(int templateId,int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
+        public async Task<ResourceTemplate?> AddPropertyToTemplateAsync(int templateId,int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
-            if (template == null) return null!;
+            if (template == null) return null;
             var property = await _context.Properties.FindAsync(propertyId);
-            if (property == null) return null!;
+            if (property == null) return null;
             var link = new TemplateProperty
             {
                 TemplateId = templateId,
@@ -47,7 +47,7 @@ namespace LMS.Infra.Repository
 
             return template;
         }
-        public async Task<ResourceTemplate> RemovePropertyFromTemplateAsync(int templateId, int propertyId)
+        public async Task<ResourceTemplate?> RemovePropertyFromTemplateAsync(int templateId, int propertyId)
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
             if (template == null) return null;
@@ -61,12 +61,12 @@ namespace LMS.Infra.Repository
             }
             return null;
         }
-        public async Task<ResourceTemplate> UpdatePropertyInTemplateAsync(int templateId, int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
+        public async Task<ResourceTemplate?> UpdatePropertyInTemplateAsync(int templateId, int propertyId,bool isRequired,int displayOrder,string? alternateLabel)
         {
             var template = await _context.ResourceTemplates.FindAsync(templateId);
             var propertyLink = await _context.TemplateProperties
              .FirstOrDefaultAsync(p => p.TemplateId == templateId && p.PropertyId == propertyId);
-            if (template == null || propertyLink == null) return null!;
+            if (template == null || propertyLink == null) return null;
             propertyLink.IsRequired=isRequired;
             propertyLink.DisplayOrder=displayOrder;
             propertyLink.AlternateLabel=alternateLabel;

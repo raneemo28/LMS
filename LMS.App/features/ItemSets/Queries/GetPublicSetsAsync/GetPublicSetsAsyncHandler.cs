@@ -20,11 +20,7 @@ public class GetPublicSetsAsyncHandler : IRequestHandler<GetPublicSetsAsyncQuery
 
     public async Task<IEnumerable<ItemSetDto>> Handle(GetPublicSetsAsyncQuery request, CancellationToken cancellationToken)
     {
-        var result = await _unitOfWork.ItemSets.GetAllAsync();
-        var itemSets = result.Cast<ItemSet>().AsQueryable();
-
-        itemSets = itemSets.Where(x => x.IsPublic || x.OwnerId == request.UserId);
-
-        return _mapper.Map<IEnumerable<ItemSetDto>>(itemSets);
+        var result = await _unitOfWork.ItemSets.GetPublicOrOwnedAsync(request.UserId);
+        return _mapper.Map<IEnumerable<ItemSetDto>>(result) ?? Enumerable.Empty<ItemSetDto>();
     }
 }

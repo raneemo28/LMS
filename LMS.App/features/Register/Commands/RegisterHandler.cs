@@ -1,6 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using AutoMapper;
 using LMS.App.DTOs.Auth;
 using LMS.App.Interface;
@@ -8,7 +5,6 @@ using LMS.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 
 namespace LMS.App.Features.Register.Commands;
 
@@ -19,7 +15,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
     private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
     private readonly IJwtService _jwtService;
-    string roleName = "Member";
+    private const string RoleName = "Member";
 
     public RegisterHandler(
         UserManager<ApplicationUser> userManager,
@@ -37,33 +33,33 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
 
     public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var user = _mapper.Map<ApplicationUser>(request.Data);
+        var user = _mapper.Map<ApplicationUser>(request.Data)
+            ?? throw new InvalidOperationException("Failed to map application user.");
+
         var result = await _userManager.CreateAsync(user, request.Data.Password);
 
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            return new AuthResponse(string.Empty, string.Empty, request.Data.Email, string.Empty, false, $"Registration failed: {errors}");
+            return new AuthResponse
+            {
+                Email   = request.Data.Email,
+                Success = false,
+                Message = $"Registration failed: {errors}"
+            };
         }
 
-        //not necessary for now but i will keep it for future
-        if (!string.IsNullOrWhiteSpace(roleName))
-        {
-            if (await _roleManager.RoleExistsAsync(roleName))
-            {
-                await _userManager.AddToRoleAsync(user, roleName);
-            }
-        }
+        // Not necessary for now but kept for future role support
+        if (!string.IsNullOrWhiteSpace(RoleName) && await _roleManager.RoleExistsAsync(RoleName))
+            await _userManager.AddToRoleAsync(user, RoleName);
 
         var authResponse = _mapper.Map<AuthResponse>(user);
-        
-        var token = _jwtService.GenerateJwtToken(user, roleName);
-        
-        // Set the token that was ignored by the mapper
+        var token = _jwtService.GenerateJwtToken(user, RoleName);
+
         return authResponse with
         {
-            Token = token,
-            Role = roleName,
+            Token   = token,
+            Role    = RoleName,
             Success = true,
             Message = "Registration successful."
         };

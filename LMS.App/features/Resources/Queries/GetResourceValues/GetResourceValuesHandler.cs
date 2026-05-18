@@ -19,6 +19,6 @@ public class GetResourceValuesHandler : IRequestHandler<GetResourceValuesQuery, 
     public async Task<List<ResourceValueDto>> Handle(GetResourceValuesQuery request, CancellationToken cancellationToken)
     {
         var result = await _unitOfWork.Resources.GetResourceValuesAsync(request.ResourceId);
-        return _mapper.Map<List<ResourceValueDto>>(result);
+        return _mapper.Map<List<ResourceValueDto>>(result) ?? new List<ResourceValueDto>();
     }
 }

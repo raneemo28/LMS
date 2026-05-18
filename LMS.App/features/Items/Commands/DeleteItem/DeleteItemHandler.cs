@@ -18,8 +18,7 @@ public class DeleteItemHandler : IRequestHandler<DeleteItemCommand, bool>
         
         if (item == null) return false;
 
-        bool isOwner = await _unitOfWork.Items.IsOwnerAsync(request.Id, request.UserId);
-        if (!isOwner)
+        if (item.OwnerId != request.UserId)
         {
             throw new UnauthorizedAccessException("Don't have permission to delete this item.");
         }

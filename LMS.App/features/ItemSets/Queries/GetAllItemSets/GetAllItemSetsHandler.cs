@@ -13,12 +13,12 @@ public class GetAllItemSetsHandler : IRequestHandler<GetAllItemSetsQuery, IEnume
     public GetAllItemSetsHandler(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
     public async Task<IEnumerable<ItemSetDto>> Handle(GetAllItemSetsQuery request, CancellationToken cancellationToken)
     {
         var result = await _unitOfWork.ItemSets.GetAllAsync();
         var itemSets = result.Cast<ItemSet>();
-        if (itemSets == null) return null!;
-        return _mapper.Map<IEnumerable<ItemSetDto>>(itemSets);
+        return _mapper.Map<IEnumerable<ItemSetDto>>(itemSets) ?? Enumerable.Empty<ItemSetDto>();
     }
 }

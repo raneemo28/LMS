@@ -1,5 +1,6 @@
 using FluentValidation;
 using LMS.App.Features.Items.Commands.UpdateItem;
+using LMS.Domain.Constants;
 
 namespace LMS.App.Validators.Items;
 
@@ -27,7 +28,9 @@ public class UpdateItemCommandValidator : AbstractValidator<UpdateItemCommand>
                 .GreaterThan(0).WithMessage("PropertyId must be a valid ID.");
 
             value.RuleFor(v => v.Type)
-                .NotEmpty().WithMessage("Value Type is required (e.g., Text, Image, etc.).");
+                .NotEmpty().WithMessage("Value Type is required (e.g., Text, Image, etc.).")
+                .Must(t => new[] { SystemConstants.TypeText, SystemConstants.TypeUri, SystemConstants.TypeResource }.Contains(t))
+                .WithMessage("Type must be 'text', 'uri', or 'resource'.");
 
             value.RuleFor(v => v)
                 .Must(v => !string.IsNullOrEmpty(v.ValueText) || 
