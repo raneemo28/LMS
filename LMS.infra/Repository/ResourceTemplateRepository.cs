@@ -34,6 +34,11 @@ namespace LMS.Infra.Repository
             if (template == null) return null;
             var property = await _context.Properties.FindAsync(propertyId);
             if (property == null) return null;
+
+            var exists = await _context.TemplateProperties
+                .AnyAsync(tp => tp.TemplateId == templateId && tp.PropertyId == propertyId);
+            if (exists) return null;
+
             var link = new TemplateProperty
             {
                 TemplateId = templateId,
