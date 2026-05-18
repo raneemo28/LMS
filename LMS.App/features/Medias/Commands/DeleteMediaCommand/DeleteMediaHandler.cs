@@ -1,6 +1,9 @@
 using LMS.Domain.Interfaces;
 using LMS.App.Interface;
 using MediatR;
+using System.Threading;
+using System.Threading.Tasks;
+using System.IO;
 
 namespace LMS.App.Features.Media.Commands.DeleteMediaCommand;
 
@@ -19,9 +22,10 @@ public class DeleteMediaCommandHandler : IRequestHandler<DeleteMediaCommand, boo
     {
         var resource = await _unitOfWork.Media.GetByIdAsync(request.MediaId);
         var media = resource as Domain.Entities.Media;
+        
         if (media == null) return false;
 
-        if (media.OwnerId != request.CurrentUserId)
+        if (media.OwnerId != request.CurrentUserId && !request.IsAdmin)
         {
             throw new UnauthorizedAccessException("You don't have permission to delete this file.");
         }

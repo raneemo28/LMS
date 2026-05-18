@@ -52,20 +52,25 @@ public class MediaController : ControllerBase
         return Ok(new { path = storagePath });
     }
 
-    [HttpDelete("{mediaId:int}")]
-    public async Task<IActionResult> DeleteMedia(int mediaId)
-    {
-        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    // 🎯 التأكد من وجود هذا السطر صراحةً لتحديد نوع الـ HTTP Method والمسار لـ Swagger
+[HttpDelete("{mediaId}")]
+public async Task<IActionResult> DeleteMedia([FromRoute] int mediaId)
+{
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(currentUserId))
-            return Unauthorized("User identity could not be verified.");
+    if (string.IsNullOrEmpty(currentUserId))
+        return Unauthorized("User identity could not be verified.");
 
-        bool result = await _mediator.Send(new DeleteMediaCommand(mediaId, currentUserId));
+    bool isAdmin = User.IsInRole("Admin");
 
-        return result
-            ? Ok(new { message = "Media deleted successfully." })
-            : BadRequest("Failed to delete media.");
-    }
+    var command = new DeleteMediaCommand(mediaId, currentUserId, isAdmin);
+
+    bool result = await _mediator.Send(command);
+
+    return result
+        ? Ok(new { message = "Media deleted successfully." })
+        : BadRequest("Failed to delete media.");
+}
 
     [HttpPost("createMedia")]
     public async Task<IActionResult> CreateMedia([FromBody] CreateMediaDto dto)
