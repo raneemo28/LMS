@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LMS.API.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ItemsController : ControllerBase
