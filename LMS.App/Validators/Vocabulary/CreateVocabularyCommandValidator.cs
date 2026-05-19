@@ -7,18 +7,17 @@ public class CreateVocabularyCommandValidator : AbstractValidator<CreateVocabula
 {
     public CreateVocabularyCommandValidator()
     {
-        RuleFor(x => x.Prefix)
+        RuleFor(x => x.Dto.Prefix)
             .NotEmpty().WithMessage("Prefix is required.")
-            .MaximumLength(10).WithMessage("Prefix should be short (e.g., 'dc', 'schema').")
-            .Matches(@"^[a-z]+$").WithMessage("Prefix must be lowercase alphabetic characters only.");
+            .MaximumLength(20).WithMessage("Prefix cannot exceed 20 characters.");
 
-        RuleFor(x => x.NamespaceUri)
+        RuleFor(x => x.Dto.NamespaceUri)
             .NotEmpty().WithMessage("NamespaceUri is required.")
             .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
-            .WithMessage("NamespaceUri must be a valid absolute URL.");
+            .WithMessage("NamespaceUri must be a valid absolute URI.");
 
-        RuleFor(x => x.Label)
+        RuleFor(x => x.Dto.Label)
             .NotEmpty().WithMessage("Label is required.")
-            .MaximumLength(100).WithMessage("Label is too long.");
+            .MaximumLength(100).WithMessage("Label cannot exceed 100 characters.");
     }
 }
