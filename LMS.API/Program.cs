@@ -48,8 +48,12 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Safe, Scoped DB Initialization
-using var scope = app.Services.CreateScope();
-await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+// Skipped during integration tests — TestDatabaseInitializer handles seeding instead
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -133,3 +137,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
+public partial class Program { }
