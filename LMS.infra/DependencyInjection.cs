@@ -25,7 +25,10 @@ public static class DependencyInjection
             options.UseSqlServer(
                 configuration.GetConnectionString("LibraryConnection"),
                 b => b.MigrationsAssembly("LMS.Infra")));
-
+         services.AddDbContext<LoggingDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("LoggingConection"),
+                b => b.MigrationsAssembly("LMS.Infra")));
         services.AddDbContext<AppIdentityDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("IdentityConnection"),
@@ -88,6 +91,7 @@ public static class DependencyInjection
         services.AddScoped<IVocabularyRepository, VocabularyRepository>();
         services.AddScoped<IResourceTemplateRepository, ResourceTemplateRepository>();
         services.AddScoped<IMediaRepository, MediaRepository>();
+        services.AddScoped<ILogRepository,LogRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<DatabaseInitializer>();
 
