@@ -3,7 +3,7 @@ using LMS.App;
 using LMS.Infra.ServiceStorage;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Logging;
-
+using LMS.API.middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -132,6 +132,7 @@ app.UseExceptionHandler(errorApp =>
 // Add it back when deploying to production with HTTPS.
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseStaticFiles();
+app.UseMiddleware<LoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
