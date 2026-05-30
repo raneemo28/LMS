@@ -6,6 +6,7 @@ using LMS.App.Features.Register.Commands;
 using LMS.App.Features.Logout.Command;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace LMS.API.Controllers;
 
@@ -18,16 +19,23 @@ public class AuthController : ControllerBase
     public AuthController(IMediator mediator) => _mediator = mediator;
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest req)
+    public async Task<IActionResult> Register([FromBody] CustomRegisterRequest req)
     {
-        var result = await _mediator.Send(new RegisterCommand(req));
+        var result = await _mediator.Send(new RegisterCommand(req.FirstName,
+        req.LastName,
+        req.MiddleName,
+        req.Email,
+        req.Password,
+        req.ConfirmPassword,
+        req.PhoneNumber
+        ));
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LogInRequest req)
     {
-        var result = await _mediator.Send(new LoginCommand(req));
+        var result = await _mediator.Send(new LoginCommand(req.Email,req.Password));
         return result.Success ? Ok(result) : Unauthorized(result);
     }
 
