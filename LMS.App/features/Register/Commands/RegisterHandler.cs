@@ -33,17 +33,17 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
 
     public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var user = _mapper.Map<ApplicationUser>(request.Data)
+        var user = _mapper.Map<ApplicationUser>(request)
             ?? throw new InvalidOperationException("Failed to map application user.");
 
-        var result = await _userManager.CreateAsync(user, request.Data.Password);
+        var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             return new AuthResponse
             {
-                Email   = request.Data.Email,
+                Email   = request.Email,
                 Success = false,
                 Message = $"Registration failed: {errors}"
             };

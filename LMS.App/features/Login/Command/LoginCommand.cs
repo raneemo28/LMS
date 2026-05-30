@@ -3,4 +3,4 @@ using MediatR;
 
 namespace LMS.App.Features.Login.Command;
 
-public record LoginCommand(LogInRequest Data) : IRequest<AuthResponse>;
+public record LoginCommand(string Email ,string Password) : IRequest<AuthResponse>;
