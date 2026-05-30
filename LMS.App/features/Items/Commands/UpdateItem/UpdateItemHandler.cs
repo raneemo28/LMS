@@ -29,9 +29,10 @@ public class UpdateItemHandler : IRequestHandler<UpdateItemCommand, bool>
         item.TemplateId = request.TemplateId;
         item.ModifiedAt = DateTime.UtcNow;
         item.ModifiedBy = request.OwnerId;
-
         
-        item.Values = request.Values.Select(v => new Value
+        item.Values.Clear(); 
+        
+        var newValues = request.Values.Select(v => new Value
         {
             PropertyId = v.PropertyId,
             ValueText = v.ValueText,
@@ -40,6 +41,11 @@ public class UpdateItemHandler : IRequestHandler<UpdateItemCommand, bool>
             Type = v.Type,
             Language = v.Language
         }).ToList();
+
+        foreach (var val in newValues)
+        {
+            item.Values.Add(val);
+        }
 
         _unitOfWork.Items.Update(item);
         var result = await _unitOfWork.CommitAsync();
