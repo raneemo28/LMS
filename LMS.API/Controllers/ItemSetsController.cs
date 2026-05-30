@@ -111,7 +111,7 @@ public class ItemSetsController : ControllerBase
     [HttpGet("public")]
     public async Task<IActionResult> GetPublicSets()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "Anonymous";
         var result = await _mediator.Send(new GetPublicSetsAsyncQuery(userId));
         return Ok(result);
     }
