@@ -1,0 +1,741 @@
+﻿======================================================================
+  PROJECT SNAPSHOT
+  Root : C:\Users\DELL\Desktop\Projects\LMS\LMS.Tests
+  Date : 2026-05-23 22:28:05
+======================================================================
+
+### DIRECTORY STRUCTURE ###
+
++-- LMS.Tests.csproj
++-- UnitTests/
+|   +-- AutoMapper/
+|   |   +-- AutoMapperTestsBase.cs
+|   |   +-- MappingTests.cs
+|   +-- Behaviors/
+|   |   +-- ValidationBehaviorTests.cs
+|   +-- Handlers/
+|   |   +-- AuthHandlerTests.cs
+|   |   +-- ItemSetsHandlerTests.cs
+|   |   +-- ItemsHandlerTests.cs
+|   |   +-- MediasHandlerTests.cs
+|   |   +-- ResourcesHandlerTests.cs
+|   |   +-- TemplatesHandlerTests.cs
+|   |   +-- VocabulariesHandlerTests.cs
+|   +-- Validators/
+|   |   +-- AuthValidatorsTests.cs
+|   |   +-- ItemSetValidatorsTests.cs
+|   |   +-- ItemValidatorsTests.cs
+|   |   +-- MediaValidatorsTests.cs
+
+======================================================================
+### FILE CONTENTS ###
+
+----------------------------------------------------------------------
+FILE: LMS.Tests.csproj
+----------------------------------------------------------------------
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.1.3" />
+
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="FluentAssertions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LMS.App\LMS.App.csproj" />
+    <ProjectReference Include="..\LMS.Domain\LMS.Domain.csproj" />
+    <ProjectReference Include="..\LMS.Infra\LMS.Infra.csproj" />
+  </ItemGroup>
+</Project>
+
+----------------------------------------------------------------------
+FILE: UnitTests\AutoMapper\AutoMapperTestsBase.cs
+----------------------------------------------------------------------
+using AutoMapper;
+using LMS.App.Profiles;
+using Microsoft.Extensions.Logging;
+
+namespace LMS.Tests.UnitTests.AutoMapper;
+
+public abstract class AutoMapperTestsBase
+{
+    protected readonly IMapper Mapper;
+
+    protected AutoMapperTestsBase()
+    {
+        var loggerFactory = LoggerFactory.Create(_ => { });
+
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<ApplicationUserMappingProfile>();
+            cfg.AddProfile<ItemMappingProfile>();
+            cfg.AddProfile<ItemSetMappingProfile>();
+            cfg.AddProfile<LoggingProfile>();
+            cfg.AddProfile<MediaMappingProfile>();
+            cfg.AddProfile<ResourceTemplateMappingProfile>();
+            cfg.AddProfile<ResourceValueMappingProfile>();
+            cfg.AddProfile<VocabularyMappingProfile>();
+        }, loggerFactory);
+
+        Mapper = config.CreateMapper();
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\AutoMapper\MappingTests.cs
+----------------------------------------------------------------------
+using FluentAssertions;
+using LMS.App.DTOs.Auth;
+using LMS.App.DTOs.Item;
+using LMS.App.DTOs.Logging;
+using LMS.App.DTOs.Media;
+using LMS.App.DTOs.Value;
+using LMS.App.DTOs.Vocabulary;
+using LMS.Domain.Entities;
+using Xunit;
+using System.Collections.Generic;
+
+namespace LMS.Tests.UnitTests.AutoMapper;
+
+public class MappingTests : AutoMapperTestsBase
+{
+    [Fact] public void Should_Map_RegisterRequest_To_ApplicationUser()
+    {
+        var req = new RegisterRequest("F", "L", "M", "u@t.com", "P1!", "P1!", "123");
+        var user = Mapper.Map<ApplicationUser>(req);
+        user.Email.Should().Be("u@t.com");
+        user.FirstName.Should().Be("F");
+        user.CreatedAt.Should().BeCloseTo(System.DateTime.UtcNow, System.TimeSpan.FromSeconds(5));
+    }
+
+    [Fact] public void Should_Map_Item_To_ItemDto()
+    {
+        var entity = new Item { Id = 1, TemplateId = 5, Values = new List<Value> { new() { ValueText = "T" } } };
+        var dto = Mapper.Map<ItemDto>(entity);
+        dto.Id.Should().Be(1);
+        dto.Values.Should().ContainSingle(v => v.ValueText == "T");
+    }
+
+    [Fact] public void Should_Map_CreateItemDto_To_Item_IgnoringAuditFields()
+    {
+        var dto = new CreateItemDto(1, new List<CreateResourceValueDto> { new(1, "v", null, null, "text", "en") });
+        var entity = Mapper.Map<Item>(dto);
+        entity.Id.Should().Be(0);                                                                   // Id is not mapped from DTO (assigned by DB)
+        entity.CreatedAt.Should().BeCloseTo(System.DateTime.UtcNow, System.TimeSpan.FromSeconds(5)); // Set by mapping profile, not ignored
+    }
+
+    [Fact] public void Should_Map_Media_To_MediaDto()
+    {
+        var media = new Media { Id = 2, FileName = "img.png", Values = new List<Value>() };
+        var dto = Mapper.Map<MediaDto>(media);
+        dto.FileName.Should().Be("img.png");
+    }
+
+    [Fact] public void Should_Map_LogDTO_To_LogEntry()
+    {
+        var log = new LogDTO("GET", "/api", 200, 10.5, "127.0.0.1");
+        var entry = Mapper.Map<LogEntry>(log);
+        entry.Method.Should().Be("GET");
+        entry.StatusCode.Should().Be(200);
+        entry.Id.Should().Be(0);
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Behaviors\ValidationBehaviorTests.cs
+----------------------------------------------------------------------
+using FluentValidation;
+using FluentValidation.Results;
+using LMS.App.Behaviors;
+using LMS.App.Features.Items.Commands.CreateItem;
+using MediatR;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LMS.Tests.UnitTests.Behaviors;
+
+public class ValidationBehaviorTests
+{
+    private readonly Mock<IValidator<CreateItemCommand>> _mockValidator;
+    private readonly ValidationBehavior<CreateItemCommand, int> _behavior;
+
+    public ValidationBehaviorTests()
+    {
+        _mockValidator = new Mock<IValidator<CreateItemCommand>>();
+        _behavior = new ValidationBehavior<CreateItemCommand, int>(new[] { _mockValidator.Object });
+    }
+
+    [Fact]
+    public async Task Handle_Should_Call_Next_When_Validation_Passes()
+    {
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CreateItemCommand>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
+        bool nextCalled = false;
+        // ✅ Correct delegate signature: Func<CancellationToken, Task<TResponse>>
+        RequestHandlerDelegate<int> next = (ct) => { nextCalled = true; return Task.FromResult(42); };
+
+        await _behavior.Handle(new CreateItemCommand(1, "u", new()), next, CancellationToken.None);
+        nextCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_Should_Throw_ValidationException_When_Fails()
+    {
+        var failures = new List<ValidationFailure> { new("TemplateId", "Invalid") };
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CreateItemCommand>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(failures));
+
+        RequestHandlerDelegate<int> next = (ct) => Task.FromResult(42);
+
+        await Assert.ThrowsAsync<ValidationException>(() =>
+            _behavior.Handle(new CreateItemCommand(1, "u", new()), next, CancellationToken.None));
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\AuthHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.DTOs.Auth;
+using LMS.App.Features.Login.Command;
+using LMS.App.Features.Logout.Command;
+using LMS.App.Features.Register.Commands;
+using LMS.App.Interface;
+using LMS.Domain.Entities;
+using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class AuthHandlerTests
+{
+    private readonly Mock<UserManager<ApplicationUser>> _mockUserManager;
+    private readonly Mock<IConfiguration> _mockConfig = new();
+    private readonly Mock<IJwtService> _mockJwt = new();
+    private readonly Mock<IMapper> _mockMapper = new();
+
+    public AuthHandlerTests()
+    {
+        var mockStore = new Mock<IUserStore<ApplicationUser>>();
+        _mockUserManager = new Mock<UserManager<ApplicationUser>>(
+            mockStore.Object,
+            Mock.Of<IOptions<IdentityOptions>>(),
+            new Mock<IPasswordHasher<ApplicationUser>>().Object,
+            Array.Empty<IUserValidator<ApplicationUser>>(),
+            Array.Empty<IPasswordValidator<ApplicationUser>>(),
+            Mock.Of<ILookupNormalizer>(),
+            new IdentityErrorDescriber(),
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<ILogger<UserManager<ApplicationUser>>>()
+        );
+    }
+
+    [Fact] public async Task Register_Should_Fail_If_Create_Fails()
+    {
+        // The handler calls _mapper.Map<ApplicationUser> first — set it up to return a valid user
+        // otherwise the handler throws before even reaching CreateAsync
+        var mappedUser = new ApplicationUser { Email = "u@t.com", FirstName = "F", LastName = "L" };
+        _mockMapper.Setup(m => m.Map<ApplicationUser>(It.IsAny<RegisterRequest>())).Returns(mappedUser);
+
+        _mockUserManager.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Error" }));
+
+        var cmd = new RegisterCommand(new RegisterRequest("F", "L", null, "u@t.com", "P1!", "P1!", null));
+
+        var mockRoleStore = new Mock<IRoleStore<IdentityRole>>();
+        var roleManager = new RoleManager<IdentityRole>(
+            mockRoleStore.Object,
+            Array.Empty<IRoleValidator<IdentityRole>>(),
+            Mock.Of<ILookupNormalizer>(),
+            new IdentityErrorDescriber(),
+            Mock.Of<ILogger<RoleManager<IdentityRole>>>()
+        );
+
+        var handler = new RegisterHandler(
+            _mockUserManager.Object,
+            roleManager,
+            _mockConfig.Object,
+            _mockMapper.Object,
+            _mockJwt.Object
+        );
+
+        var result = await handler.Handle(cmd, CancellationToken.None);
+        result.Success.Should().BeFalse();
+    }
+
+    [Fact] public async Task Login_Should_Fail_If_Creds_Invalid()
+    {
+        var user = new ApplicationUser { Email = "u@t.com" };
+        _mockUserManager.Setup(u => u.FindByEmailAsync("u@t.com")).ReturnsAsync(user);
+        _mockUserManager.Setup(u => u.CheckPasswordAsync(user, "Wrong")).ReturnsAsync(false);
+
+        var cmd = new LoginCommand(new LogInRequest { Email = "u@t.com", Password = "Wrong" });
+
+        var handler = new LoginHandler(
+            _mockUserManager.Object,
+            _mockConfig.Object,
+            _mockMapper.Object,
+            _mockJwt.Object
+        );
+
+        var result = await handler.Handle(cmd, CancellationToken.None);
+        result.Success.Should().BeFalse();
+    }
+
+    [Fact] public async Task Logout_Should_Always_Return_True()
+    {
+        var result = await new LogoutHandler().Handle(new LogoutCommand("u"), CancellationToken.None);
+        result.Should().BeTrue();
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\ItemSetsHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.Features.ItemSets.Commands.CreateItemSets;
+using LMS.App.Features.ItemSets.Commands.DeleteItemSets;
+using LMS.Domain.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Threading;
+using System.Threading.Tasks;
+using LMS.Domain.Entities;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class ItemSetsHandlerTests
+{
+    private readonly Mock<IUnitOfWork> _mockUoW = new();
+    private readonly Mock<IItemSetRepository> _mockSetRepo = new();
+
+    public ItemSetsHandlerTests() => _mockUoW.Setup(u => u.ItemSets).Returns(_mockSetRepo.Object);
+
+    [Fact] public async Task CreateItemSet_Should_Save_And_Return_Id()
+    {
+        _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+        var cmd = new CreateItemSetCommand("Set", "desc", true, "u", "u", null);
+        await new CreateItemSetHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+
+        // No real DB in unit tests so entity.Id stays 0 — verify commit happened instead
+        _mockUoW.Verify(u => u.CommitAsync(), Times.Once);
+    }
+
+    [Fact] public async Task DeleteItemSet_Should_Throw_If_Not_Owner()
+    {
+        _mockSetRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new ItemSet { OwnerId = "owner" });
+        _mockSetRepo.Setup(r => r.IsOwnerAsync(1, "attacker")).ReturnsAsync(false);
+
+        var cmd = new DeleteItemSetCommand(1, "attacker", new());
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            new DeleteItemSetHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\ItemsHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.DTOs.Value;
+using LMS.App.Features.Items.Commands.CreateItem;
+using LMS.App.Features.Items.Commands.DeleteItem;
+using LMS.App.Features.Items.Commands.UpdateItem;
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class ItemsHandlerTests
+{
+    private readonly Mock<IUnitOfWork> _mockUoW = new();
+    private readonly Mock<IItemRepository> _mockItemRepo = new();
+
+    public ItemsHandlerTests() => _mockUoW.Setup(u => u.Items).Returns(_mockItemRepo.Object);
+
+    [Fact] public async Task CreateItem_Should_Save_And_Return_Id()
+    {
+        LMS.Domain.Entities.Item? captured = null;
+        _mockItemRepo.Setup(r => r.AddAsync(It.IsAny<LMS.Domain.Entities.Item>()))
+            .Callback<LMS.Domain.Entities.Item>(i => captured = i).Returns(Task.CompletedTask);
+        _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+
+        var cmd = new CreateItemCommand(1, "owner", new List<CreateResourceValueDto> { new(1, "v", null, null, "text", "en") });
+        await new CreateItemHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+
+        // In unit tests there is no real DB, so entity.Id stays 0 — verify the handler
+        // committed and built the entity correctly instead
+        _mockUoW.Verify(u => u.CommitAsync(), Times.Once);
+        captured!.OwnerId.Should().Be("owner");
+        captured.TemplateId.Should().Be(1);
+    }
+
+    [Fact] public async Task UpdateItem_Should_Throw_If_Not_Owner()
+    {
+        _mockItemRepo.Setup(r => r.GetItemWithFullDataForUpdateAsync(1))
+            .ReturnsAsync(new LMS.Domain.Entities.Item { OwnerId = "other" });
+
+        var cmd = new UpdateItemCommand(1, 1, "attacker", new List<ResourceValueDto>());
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            new UpdateItemHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+    }
+
+    [Fact] public async Task DeleteItem_Should_Fail_If_Not_Found()
+    {
+        _mockItemRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync((LMS.Domain.Entities.Item?)null);
+        var cmd = new DeleteItemCommand(1, "u");
+        var result = await new DeleteItemHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+        result.Should().BeFalse();
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\MediasHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.DTOs.Media;
+using LMS.App.Features.Media.Commands.CreateMediaCommand;
+using LMS.App.Features.Media.Commands.DeleteMediaCommand;
+using LMS.App.Interface;
+using LMS.Domain.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class MediasHandlerTests
+{
+    private readonly Mock<IUnitOfWork> _mockUoW = new();
+    private readonly Mock<IMediaRepository> _mockMediaRepo = new();
+    private readonly Mock<IMediaStorageService> _mockStorage = new();
+
+    public MediasHandlerTests()
+    {
+        _mockUoW.Setup(u => u.Media).Returns(_mockMediaRepo.Object);
+    }
+
+    [Fact] public async Task CreateMedia_Should_Save_And_Return_Id()
+    {
+        _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+        var dto = new CreateMediaDto(null, "f.png", "alt", "u", new List<LMS.App.DTOs.Value.ResourceValueDto>());
+        var cmd = new CreateMediaCommand(dto);
+        await new CreateMediaHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+
+        // No real DB in unit tests so entity.Id stays 0 — verify commit happened instead
+        _mockUoW.Verify(u => u.CommitAsync(), Times.Once);
+    }
+
+    [Fact] public async Task DeleteMedia_Should_Delete_If_Admin()
+    {
+        var media = new LMS.Domain.Entities.Media { Id = 1, StoragePath = "path", OwnerId = "other" };
+        _mockMediaRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(media);
+        _mockStorage.Setup(s => s.DeleteAsync("path")).Returns(Task.CompletedTask);
+        _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+
+        var cmd = new DeleteMediaCommand(1, "admin", true);
+        var result = await new DeleteMediaCommandHandler(_mockUoW.Object, _mockStorage.Object)
+            .Handle(cmd, CancellationToken.None);
+
+        result.Should().BeTrue();
+        _mockStorage.Verify(s => s.DeleteAsync("path"), Times.Once);
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\ResourcesHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.DTOs.Value;
+using LMS.App.Features.Resources.Commands.AddValues;
+using LMS.Domain.Entities;
+using LMS.Domain.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class ResourcesHandlerTests
+{
+    private readonly Mock<IUnitOfWork> _mockUoW = new();
+    private readonly Mock<IResourceRepository<Resource>> _mockResRepo = new();
+    private readonly Mock<IVocabularyRepository> _mockVocabRepo = new();
+
+    public ResourcesHandlerTests()
+    {
+        _mockUoW.Setup(u => u.Resources).Returns(_mockResRepo.Object);
+        _mockUoW.Setup(u => u.Vocabularies).Returns(_mockVocabRepo.Object);
+    }
+
+    [Fact] public async Task AddValues_Should_Succeed_If_Property_Found()
+    {
+        _mockVocabRepo.Setup(v => v.GetPropertyByIdAsync(1)).ReturnsAsync(new Property());
+        _mockResRepo.Setup(r => r.AddValueAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new Value());
+        _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+
+        var cmd = new AddValuesCommand(1, new List<CreateResourceValueDto> { new(1, "v", null, null, "text", "en") });
+        var result = await new AddValuesHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Fact] public async Task AddValues_Should_Throw_If_Property_Not_Found()
+    {
+        _mockVocabRepo.Setup(v => v.GetPropertyByIdAsync(1)).ReturnsAsync((Property?)null);
+        var cmd = new AddValuesCommand(1, new List<CreateResourceValueDto> { new(1, "v", null, null, "text", "en") });
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => new AddValuesHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\TemplatesHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
+using LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+using LMS.Domain.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Threading;
+using System.Threading.Tasks;
+using LMS.Domain.Entities;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class TemplatesHandlerTests
+{
+    private readonly Mock<IUnitOfWork> _mockUoW = new();
+    private readonly Mock<IResourceTemplateRepository> _mockTplRepo = new();
+
+    public TemplatesHandlerTests() => _mockUoW.Setup(u => u.ResourceTemplates).Returns(_mockTplRepo.Object);
+
+    [Fact] public async Task CreateTemplate_Should_Throw_If_Label_Exists()
+    {
+        _mockTplRepo.Setup(r => r.IsLabelUniqueAsync("Dup")).ReturnsAsync(false);
+        var cmd = new CreateResourceTemplateCommand("Dup", "desc");
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new CreateResourceTemplateCommandHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+    }
+
+    [Fact] public async Task CreateTemplate_Should_Save_If_Unique()
+    {
+        _mockTplRepo.Setup(r => r.IsLabelUniqueAsync("New")).ReturnsAsync(true);
+        _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+        var cmd = new CreateResourceTemplateCommand("New", "desc");
+        await new CreateResourceTemplateCommandHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+
+        // No real DB in unit tests so entity.Id stays 0 — verify commit happened instead
+        _mockUoW.Verify(u => u.CommitAsync(), Times.Once);
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Handlers\VocabulariesHandlerTests.cs
+----------------------------------------------------------------------
+using LMS.App.DTOs.Vocabulary;
+using LMS.App.Features.Vocabularies.Commands.CreateProperty;
+using LMS.App.Features.Vocabularies.Commands.DeleteProperty;
+using LMS.Domain.Interfaces;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using System.Threading;
+using System.Threading.Tasks;
+using LMS.Domain.Entities;
+
+namespace LMS.Tests.UnitTests.Handlers;
+
+public class VocabulariesHandlerTests
+{
+    private readonly Mock<IUnitOfWork> _mockUoW = new();
+    private readonly Mock<IVocabularyRepository> _mockVocabRepo = new();
+
+    public VocabulariesHandlerTests() => _mockUoW.Setup(u => u.Vocabularies).Returns(_mockVocabRepo.Object);
+
+    [Fact] public async Task CreateProperty_Should_Throw_If_Vocab_Not_Found()
+    {
+        _mockVocabRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync((Vocabulary?)null);
+        var cmd = new CreatePropertyCommand(1, "name", "Label", "http://u");
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            new CreatePropertyHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+    }
+
+    [Fact] public async Task DeleteProperty_Should_Throw_If_Linked_Values()
+    {
+        _mockVocabRepo.Setup(r => r.HasLinkedValuesAsync(1)).ReturnsAsync(true);
+        var cmd = new DeletePropertyCommand(1);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new DeletePropertyHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Validators\AuthValidatorsTests.cs
+----------------------------------------------------------------------
+using FluentValidation.TestHelper;
+using LMS.App.DTOs.Auth;
+using LMS.App.Features.Login.Command;
+using LMS.App.Features.Logout.Command;
+using LMS.App.Validators.Login;
+using LMS.App.Validators.Logout;
+using Xunit;
+
+namespace LMS.Tests.UnitTests.Validators;
+
+public class AuthValidatorsTests
+{
+    [Fact] public void Login_Should_Fail_When_Email_Invalid()
+    {
+        var cmd = new LoginCommand(new LogInRequest { Email = "bad", Password = "Pass1!" });
+        new LoginCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor(x => x.Data.Email);
+    }
+
+    [Fact] public void Login_Should_Pass_When_Valid()
+    {
+        // Password "Valid1!X" is 8 chars — meets the minimum length requirement
+        var cmd = new LoginCommand(new LogInRequest { Email = "u@t.com", Password = "Valid1!X" });
+        new LoginCommandValidator().TestValidate(cmd).ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact] public void Login_Should_Fail_When_Password_Too_Short()
+    {
+        // "Valid1!" is only 7 chars — validator should reject it, which is the correct behavior
+        var cmd = new LoginCommand(new LogInRequest { Email = "u@t.com", Password = "Valid1!" });
+        new LoginCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor(x => x.Data.Password);
+    }
+
+    [Fact] public void Logout_Should_Fail_When_UserId_Empty()
+    {
+        var cmd = new LogoutCommand("");
+        new LogoutCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor(x => x.UserId);
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Validators\ItemSetValidatorsTests.cs
+----------------------------------------------------------------------
+using FluentValidation.TestHelper;
+using LMS.App.Features.ItemSets.Commands.CreateItemSets;
+using LMS.App.Validators.ItemSets;  // ✅ Fixed: ItemSets (plural)
+using Xunit;
+using System.Collections.Generic;
+
+namespace LMS.Tests.UnitTests.Validators;
+
+public class ItemSetValidatorsTests
+{
+    [Fact]
+    public void CreateItemSet_Should_Fail_When_Title_Empty()
+    {
+        var cmd = new CreateItemSetCommand("", "", false, "u", "u", new());
+        new CreateItemSetCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor(x => x.Title);
+    }
+
+    [Fact]
+    public void CreateItemSet_Should_Pass_When_Valid()
+    {
+        var cmd = new CreateItemSetCommand("Valid Set", "desc", true, "u", "u", new());
+        new CreateItemSetCommandValidator().TestValidate(cmd).ShouldNotHaveAnyValidationErrors();
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Validators\ItemValidatorsTests.cs
+----------------------------------------------------------------------
+using FluentValidation.TestHelper;
+using LMS.App.DTOs.Value;
+using LMS.App.Features.Items.Commands.CreateItem;
+using LMS.App.Features.Items.Commands.UpdateItem;
+using LMS.App.Validators.Items;
+using LMS.Domain.Constants;
+using Xunit;
+using System.Collections.Generic;
+
+namespace LMS.Tests.UnitTests.Validators;
+
+public class ItemValidatorsTests
+{
+    [Fact] public void CreateItem_Should_Pass_When_Valid()
+    {
+        var cmd = new CreateItemCommand(1, "u", new List<CreateResourceValueDto> { new(1, "v", null, null, SystemConstants.TypeText, "en") });
+        new CreateItemCommandValidator().TestValidate(cmd).ShouldNotHaveAnyValidationErrors();
+    }
+    [Fact] public void CreateItem_Should_Fail_When_TemplateId_Zero()
+    {
+        var cmd = new CreateItemCommand(0, "u", new List<CreateResourceValueDto>());
+        new CreateItemCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor(x => x.TemplateId);
+    }
+    [Fact] public void UpdateItem_Should_Fail_When_Values_Empty()
+    {
+        var cmd = new UpdateItemCommand(1, 1, "u", new List<ResourceValueDto>());
+        new UpdateItemCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor(x => x.Values);
+    }
+}
+
+----------------------------------------------------------------------
+FILE: UnitTests\Validators\MediaValidatorsTests.cs
+----------------------------------------------------------------------
+using FluentValidation.TestHelper;
+using LMS.App.DTOs.Media;
+using LMS.App.DTOs.Value;
+using LMS.App.Features.Media.Commands.CreateMediaCommand;
+using LMS.App.Validators.Media;
+using Xunit;
+using System.Collections.Generic;
+
+namespace LMS.Tests.UnitTests.Validators;
+
+public class MediaValidatorsTests
+{
+    [Fact] public void CreateMedia_Should_Fail_When_FileName_Empty()
+    {
+        var cmd = new CreateMediaCommand(new CreateMediaDto(null, "", "", "u", new List<ResourceValueDto>()));
+        new CreateMediaCommandValidator().TestValidate(cmd).ShouldHaveValidationErrorFor("Dto.FileName");
+    }
+    [Fact] public void CreateMedia_Should_Pass_When_Valid()
+    {
+        var cmd = new CreateMediaCommand(new CreateMediaDto(1, "file.jpg", "alt", "u", new List<ResourceValueDto>()));
+        new CreateMediaCommandValidator().TestValidate(cmd).ShouldNotHaveAnyValidationErrors();
+    }
+}
+
+======================================================================
+END OF SNAPSHOT  |  15 files captured
+======================================================================
+
