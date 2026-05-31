@@ -1,6 +1,10 @@
+using System.Collections.Generic;
+using LMS.App.DTOs.Value;
+
 namespace LMS.App.DTOs.Auth;
 
-public record RegisterRequest(
+public record CustomRegisterRequest
+(
     string FirstName,
     string LastName,
     string? MiddleName,

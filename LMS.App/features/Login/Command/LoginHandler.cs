@@ -29,12 +29,12 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
 
     public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByEmailAsync(request.Data.Email);
+        var user = await _userManager.FindByEmailAsync(request.Email);
 
-        if (user is null || !await _userManager.CheckPasswordAsync(user, request.Data.Password))
+        if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
             return new AuthResponse
             {
-                Email   = request.Data.Email,
+                Email   = request.Email,
                 Success = false,
                 Message = "Invalid email or password."
             };
