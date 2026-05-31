@@ -7,16 +7,17 @@ using LMS.App.DTOs.Value;
 using LMS.App.DTOs.Vocabulary;
 using LMS.Domain.Entities;
 using Xunit;
+using LMS.App.Features.Register.Commands;
 using System.Collections.Generic;
 
 namespace LMS.Tests.UnitTests.AutoMapper;
 
 public class MappingTests : AutoMapperTestsBase
 {
-    [Fact] public void Should_Map_RegisterRequest_To_ApplicationUser()
+    [Fact] public void Should_Map_RegisterCommand_To_ApplicationUser()
     {
-        var req = new RegisterRequest("F", "L", "M", "u@t.com", "P1!", "P1!", "123");
-        var user = Mapper.Map<ApplicationUser>(req);
+        var cmd = new RegisterCommand("F", "L", "M", "u@t.com", "P1!", "P1!", "123");
+        var user = Mapper.Map<ApplicationUser>(cmd);
         user.Email.Should().Be("u@t.com");
         user.FirstName.Should().Be("F");
         user.CreatedAt.Should().BeCloseTo(System.DateTime.UtcNow, System.TimeSpan.FromSeconds(5));

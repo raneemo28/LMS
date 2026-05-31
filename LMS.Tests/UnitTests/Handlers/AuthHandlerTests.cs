@@ -42,15 +42,15 @@ public class AuthHandlerTests
 
     [Fact] public async Task Register_Should_Fail_If_Create_Fails()
     {
-        // The handler calls _mapper.Map<ApplicationUser> first — set it up to return a valid user
+        // The handler calls _mapper.Map<ApplicationUser>(RegisterCommand) — set it up to return a valid user
         // otherwise the handler throws before even reaching CreateAsync
         var mappedUser = new ApplicationUser { Email = "u@t.com", FirstName = "F", LastName = "L" };
-        _mockMapper.Setup(m => m.Map<ApplicationUser>(It.IsAny<RegisterRequest>())).Returns(mappedUser);
+        _mockMapper.Setup(m => m.Map<ApplicationUser>(It.IsAny<RegisterCommand>())).Returns(mappedUser);
 
         _mockUserManager.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Error" }));
 
-        var cmd = new RegisterCommand(new RegisterRequest("F", "L", null, "u@t.com", "P1!", "P1!", null));
+        var cmd = new RegisterCommand("F", "L", null, "u@t.com", "P1!", "P1!", null);
 
         var mockRoleStore = new Mock<IRoleStore<IdentityRole>>();
         var roleManager = new RoleManager<IdentityRole>(
@@ -79,7 +79,7 @@ public class AuthHandlerTests
         _mockUserManager.Setup(u => u.FindByEmailAsync("u@t.com")).ReturnsAsync(user);
         _mockUserManager.Setup(u => u.CheckPasswordAsync(user, "Wrong")).ReturnsAsync(false);
 
-        var cmd = new LoginCommand(new LogInRequest { Email = "u@t.com", Password = "Wrong" });
+        var cmd = new LoginCommand("u@t.com", "Wrong");
 
         var handler = new LoginHandler(
             _mockUserManager.Object,
