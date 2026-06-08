@@ -1,41 +1,29 @@
 using MediatR;
 using LMS.Domain.Interfaces;
 using LMS.Domain.Entities;
+using AutoMapper;
 
 namespace LMS.App.Features.ItemSets.Commands.CreateItemSets;
 
 public class CreateItemSetHandler : IRequestHandler<CreateItemSetCommand, int>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public CreateItemSetHandler(IUnitOfWork unitOfWork)
+    public CreateItemSetHandler(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
 
     public async Task<int> Handle(CreateItemSetCommand request, CancellationToken cancellationToken)
     {
-        var itemSet = new ItemSet
-        {
-            Title = request.Title,
-            Description = request.Description,
-            IsPublic = request.IsPublic,
-
-            Type = "ItemSet", 
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = request.CreatedBy,
-            OwnerId = request.OwnerId,
-            Values = request.Values?.Select(v => new Value
-            {
-                PropertyId = v.PropertyId,
-                ValueText = v.ValueText,
-                ValueUri = v.ValueUri,
-                ValueResourceId = v.ValueResourceId,
-                Type = v.Type,
-                Language = v.Language
-            }).ToList() ?? new List<Value>()
-        };
+        var itemSet = _mapper.Map<ItemSet>(request.Dto);
+        itemSet.Type = "ItemSet";
+        itemSet.CreatedAt = DateTime.UtcNow;
+        itemSet.CreatedBy = request.OwnerId;
+        itemSet.OwnerId = request.OwnerId;
 
         await _unitOfWork.ItemSets.AddAsync(itemSet);
 

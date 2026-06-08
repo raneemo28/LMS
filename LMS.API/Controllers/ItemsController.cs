@@ -32,9 +32,7 @@ public class ItemsController : ControllerBase
         if (string.IsNullOrEmpty(ownerId))
             return Unauthorized("User ID not found in token.");
 
-        var command = new CreateItemCommand(dto.TemplateId, ownerId, dto.Values);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new CreateItemCommand(dto, ownerId));
         return CreatedAtAction(nameof(GetById), new { id = result }, result);
     }
 
@@ -48,9 +46,7 @@ public class ItemsController : ControllerBase
         if (string.IsNullOrEmpty(ownerId))
             return Unauthorized("User ID not found in token.");
 
-        var command = new UpdateItemCommand(dto.Id, dto.TemplateId, ownerId, dto.Values);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new UpdateItemCommand(dto, ownerId));
         return result ? NoContent() : NotFound();
     }
 
@@ -61,9 +57,7 @@ public class ItemsController : ControllerBase
         if (string.IsNullOrEmpty(ownerId))
             return Unauthorized("User ID not found in token.");
 
-        var command = new DeleteItemCommand(id, ownerId);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new DeleteItemCommand(id, ownerId));
         return result ? NoContent() : NotFound();
     }
 
@@ -71,8 +65,7 @@ public class ItemsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var query = new GetItemWithFullDataAsyncQuery(id);
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetItemWithFullDataAsyncQuery(id));
         return result != null ? Ok(result) : NotFound();
     }
 
@@ -81,14 +74,10 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] int? templateId = null)
     {
         Expression<Func<Item, bool>> filter = x => true;
-        
         if (templateId.HasValue)
-        {
             filter = x => x.TemplateId == templateId.Value;
-        }
 
-        var query = new GetItemsWithFullDataWithConditionQuery(filter);
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetItemsWithFullDataWithConditionQuery(filter));
         return Ok(result);
     }
 }

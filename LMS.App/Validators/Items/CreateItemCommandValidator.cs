@@ -8,16 +8,19 @@ public class CreateItemCommandValidator : AbstractValidator<CreateItemCommand>
 {
     public CreateItemCommandValidator()
     {
-        RuleFor(x => x.TemplateId)
-                    .NotEmpty().WithMessage("TemplateId is required.")
-                    .GreaterThan(0).WithMessage("TemplateId must be greater than 0.");
         RuleFor(x => x.OwnerId)
-                    .NotEmpty().WithMessage("OwnerId is required.")
-                    .NotNull().WithMessage("OwnerId cannot be null.");
-        RuleFor(x => x.Values)
+            .NotEmpty().WithMessage("OwnerId is required.");
+
+        RuleFor(x => x.Dto).NotNull().WithMessage("Item data is required.");
+
+        RuleFor(x => x.Dto.TemplateId)
+            .GreaterThan(0).WithMessage("TemplateId must be greater than 0.");
+
+        RuleFor(x => x.Dto.Values)
             .NotNull().WithMessage("Values list cannot be null.")
             .Must(v => v != null && v.Any()).WithMessage("At least one value is required.");
-        RuleForEach(x => x.Values).ChildRules(value =>
+
+        RuleForEach(x => x.Dto.Values).ChildRules(value =>
         {
             value.RuleFor(v => v.PropertyId)
                 .GreaterThan(0).WithMessage("PropertyId must be a valid ID.");
@@ -28,10 +31,10 @@ public class CreateItemCommandValidator : AbstractValidator<CreateItemCommand>
                 .WithMessage("Type must be 'text', 'uri', or 'resource'.");
 
             value.RuleFor(v => v)
-                .Must(v => !string.IsNullOrEmpty(v.ValueText) || 
-                           !string.IsNullOrEmpty(v.ValueUri) || 
+                .Must(v => !string.IsNullOrEmpty(v.ValueText) ||
+                           !string.IsNullOrEmpty(v.ValueUri) ||
                            v.ValueResourceId.HasValue)
-                .WithMessage("Value must contain either Text, Uri, or a Resource ID.");
+                .WithMessage("Each value must have at least one of: ValueText, ValueUri, or ValueResourceId.");
         });
     }
 }

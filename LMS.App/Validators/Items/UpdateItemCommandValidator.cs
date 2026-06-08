@@ -8,35 +8,30 @@ public class UpdateItemCommandValidator : AbstractValidator<UpdateItemCommand>
 {
     public UpdateItemCommandValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("Item ID is required for update.")
-            .GreaterThan(0).WithMessage("Item ID must be valid.");
-
-        RuleFor(x => x.TemplateId)
-            .GreaterThan(0).WithMessage("TemplateId must be a positive number.");
-
         RuleFor(x => x.OwnerId)
-            .NotEmpty().WithMessage("OwnerId is required for security checks.");
+            .NotEmpty().WithMessage("OwnerId is required.");
 
-        RuleFor(x => x.Values)
+        RuleFor(x => x.Dto).NotNull().WithMessage("Item data is required.");
+
+        RuleFor(x => x.Dto.Id)
+            .GreaterThan(0).WithMessage("Item ID must be greater than 0.");
+
+        RuleFor(x => x.Dto.TemplateId)
+            .GreaterThan(0).WithMessage("TemplateId must be greater than 0.");
+
+        RuleFor(x => x.Dto.Values)
             .NotNull().WithMessage("Values list cannot be null.")
-            .Must(v => v.Any()).WithMessage("You must provide at least one value for the item.");
+            .Must(v => v != null && v.Any()).WithMessage("At least one value is required.");
 
-        RuleForEach(x => x.Values).ChildRules(value =>
+        RuleForEach(x => x.Dto.Values).ChildRules(value =>
         {
             value.RuleFor(v => v.PropertyId)
                 .GreaterThan(0).WithMessage("PropertyId must be a valid ID.");
 
             value.RuleFor(v => v.Type)
-                .NotEmpty().WithMessage("Value Type is required (e.g., Text, Image, etc.).")
+                .NotEmpty().WithMessage("Type is required.")
                 .Must(t => new[] { SystemConstants.TypeText, SystemConstants.TypeUri, SystemConstants.TypeResource }.Contains(t))
                 .WithMessage("Type must be 'text', 'uri', or 'resource'.");
-
-            value.RuleFor(v => v)
-                .Must(v => !string.IsNullOrEmpty(v.ValueText) || 
-                           !string.IsNullOrEmpty(v.ValueUri) || 
-                           v.ValueResourceId.HasValue)
-                .WithMessage("Each entry must have at least a ValueText, ValueUri, or a ResourceId.");
         });
     }
 }

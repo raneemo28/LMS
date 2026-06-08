@@ -2,16 +2,19 @@ using FluentValidation;
 using LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
 
 namespace LMS.App.Validators.ResourceTemplates;
-    
+
 public class CreateResourceTemplateCommandValidator : AbstractValidator<CreateResourceTemplateCommand>
 {
     public CreateResourceTemplateCommandValidator()
     {
-        RuleFor(x => x.Label)
-            .NotEmpty().WithMessage("Template label is required.")
-            .MaximumLength(100).WithMessage("Label cannot exceed 100 characters.");
+        RuleFor(x => x.Dto).NotNull().WithMessage("Template data is required.");
 
-        RuleFor(x => x.Description)
-            .MaximumLength(500).WithMessage("Description is too long.");
+        RuleFor(x => x.Dto.Label)
+            .NotEmpty().WithMessage("Label is required.")
+            .MaximumLength(255).WithMessage("Label must not exceed 255 characters.");
+
+        RuleFor(x => x.Dto.Description)
+            .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
+            .When(x => x.Dto.Description != null);
     }
 }

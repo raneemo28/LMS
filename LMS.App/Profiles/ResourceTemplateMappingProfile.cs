@@ -9,20 +9,32 @@ public class ResourceTemplateMappingProfile : Profile
 {
     public ResourceTemplateMappingProfile()
     {
-        CreateMap<TemplateProperty, ResourcePropertyDto>()
-            .ForMember(d => d.LocalName, opt => opt.MapFrom(src => src.Property != null ? src.Property.LocalName : string.Empty))
-            .ForMember(d => d.Label, opt => opt.MapFrom(src => src.Property != null ? src.Property.Label : string.Empty))
-            .ForMember(d => d.TermUri, opt => opt.MapFrom(src => src.Property != null ? src.Property.TermUri : string.Empty));
-
+        // Entity → DTO
         CreateMap<ResourceTemplate, ResourceTemplateDto>()
-            .ForMember(d => d.Properties, opt => opt.MapFrom(s => s.TemplateProperties)); 
+            .ForMember(d => d.Properties, opt => opt.MapFrom(s => s.TemplateProperties));
+
+        CreateMap<TemplateProperty, ResourcePropertyDto>()
+            .ForMember(d => d.LocalName,
+                opt => opt.MapFrom(src => src.Property != null ? src.Property.LocalName : string.Empty))
+            .ForMember(d => d.Label,
+                opt => opt.MapFrom(src => src.Property != null ? src.Property.Label : string.Empty))
+            .ForMember(d => d.TermUri,
+                opt => opt.MapFrom(src => src.Property != null ? src.Property.TermUri : string.Empty));
+
+        // DTO → Entity (create template)
+        CreateMap<CreateResourceTemplateDto, ResourceTemplate>()
+            .ForMember(d => d.Id,                 opt => opt.Ignore())
+            .ForMember(d => d.TemplateProperties, opt => opt.Ignore());
+
+        // DTO → Entity (update template — maps onto existing tracked entity)
+        CreateMap<UpdateResourceTemplateDto, ResourceTemplate>()
+            .ForMember(d => d.Id,                 opt => opt.Ignore())
+            .ForMember(d => d.TemplateProperties, opt => opt.Ignore());
+
+        // DTO → Entity (template property link)
         CreateMap<ResourcePropertyDto, TemplateProperty>()
-            .ForMember(dest => dest.TemplateId,     opt => opt.Ignore())   // set by handler
-            .ForMember(dest => dest.PropertyId,     opt => opt.MapFrom(src => src.PropertyId))
-            .ForMember(dest => dest.IsRequired,     opt => opt.MapFrom(src => src.IsRequired))
-            .ForMember(dest => dest.DisplayOrder,   opt => opt.MapFrom(src => src.DisplayOrder))
-            .ForMember(dest => dest.AlternateLabel, opt => opt.MapFrom(src => src.AlternateLabel))
-            .ForMember(dest => dest.Template,       opt => opt.Ignore())
-            .ForMember(dest => dest.Property,       opt => opt.Ignore());
+            .ForMember(d => d.TemplateId,     opt => opt.Ignore())
+            .ForMember(d => d.Template,       opt => opt.Ignore())
+            .ForMember(d => d.Property,       opt => opt.Ignore());
     }
 }

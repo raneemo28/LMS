@@ -20,16 +20,12 @@ namespace LMS.API.Controllers;
 public class VocabulariesController : ControllerBase
 {
     private readonly IMediator _mediator;
-
     public VocabulariesController(IMediator mediator) => _mediator = mediator;
 
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetAll()
-    {
-        var result = await _mediator.Send(new GetAllVocabulariesQuery());
-        return Ok(result);
-    }
+        => Ok(await _mediator.Send(new GetAllVocabulariesQuery()));
 
     [AllowAnonymous]
     [HttpGet("{id:int}")]
@@ -42,16 +38,12 @@ public class VocabulariesController : ControllerBase
     [AllowAnonymous]
     [HttpGet("by-prefix")]
     public async Task<IActionResult> GetByPrefix([FromQuery] string prefix)
-    {
-        var result = await _mediator.Send(new GetVocabularyByPrefixQuery(prefix));
-        return Ok(result);
-    }
+        => Ok(await _mediator.Send(new GetVocabularyByPrefixQuery(prefix)));
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateVocabularyDto dto)
     {
-        // ✅ DTO goes into the command whole — no unpacking
         var id = await _mediator.Send(new CreateVocabularyCommand(dto));
         return CreatedAtAction(nameof(GetById), new { id }, new { Id = id, Success = true });
     }
@@ -60,7 +52,6 @@ public class VocabulariesController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateVocabularyDto dto)
     {
-        // ✅ DTO goes into the command whole — id comes from route separately
         var result = await _mediator.Send(new UpdateVocabularyCommand(id, dto));
         return result
             ? Ok(new { Success = true, Message = "Vocabulary updated successfully." })
@@ -77,12 +68,11 @@ public class VocabulariesController : ControllerBase
             : NotFound(new { Success = false, Message = $"Vocabulary {id} not found." });
     }
 
-    // Property endpoints stay Pattern B — no orphan profiles exist for them
     [Authorize(Roles = "Admin")]
     [HttpPost("{vocabularyId:int}/properties")]
     public async Task<IActionResult> CreateProperty(int vocabularyId, [FromBody] CreatePropertyDto dto)
     {
-        var id = await _mediator.Send(new CreatePropertyCommand(vocabularyId, dto.LocalName, dto.Label, dto.TermUri));
+        var id = await _mediator.Send(new CreatePropertyCommand(vocabularyId, dto));
         return CreatedAtAction(nameof(GetById), new { id = vocabularyId },
             new { PropertyId = id, Success = true, Message = "Property created successfully." });
     }
@@ -91,7 +81,7 @@ public class VocabulariesController : ControllerBase
     [HttpPut("properties/{propertyId:int}")]
     public async Task<IActionResult> UpdateProperty(int propertyId, [FromBody] UpdatePropertyDto dto)
     {
-        var result = await _mediator.Send(new UpdatePropertyCommand(propertyId, dto.LocalName, dto.Label, dto.TermUri));
+        var result = await _mediator.Send(new UpdatePropertyCommand(propertyId, dto));
         return result
             ? Ok(new { Success = true, Message = "Property updated successfully." })
             : NotFound(new { Success = false, Message = $"Property {propertyId} not found." });

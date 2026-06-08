@@ -130,18 +130,7 @@ public class ResourceRepository<T> : GenericRepository<T>, IResourceRepository<T
                 .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
         }
 
-        public async Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language)
-        {
-            var value = await _context.Values
-                .FirstOrDefaultAsync(v => v.Id == valueId && v.ResourceId == resourceId);
-            if (value == null) return false;
-            value.ValueText = valueText;
-            value.ValueUri = valueUri;
-            value.ValueResourceId = valueResourceId;
-            value.Type = type;
-            value.Language = language;
-            return true;
-        }
+        public void UpdateValue(Value value) => _context.Values.Update(value);
 
         public async Task<bool> RemoveValueAsync(int resourceId, int valueId)
         {

@@ -1,10 +1,9 @@
-using LMS.App.DTOs.Value;
+using LMS.App.DTOs.Item;
 using MediatR;
 
 namespace LMS.App.Features.Items.Commands.CreateItem;
 
 public record CreateItemCommand(
-    int TemplateId, 
-    string OwnerId,
-    List<CreateResourceValueDto> Values
+    CreateItemDto Dto, 
+    string OwnerId
 ) : IRequest<int>;

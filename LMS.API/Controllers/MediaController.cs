@@ -21,18 +21,16 @@ namespace LMS.API.Controllers;
 public class MediaController : ControllerBase
 {
     private readonly IMediator _mediator;
-
     public MediaController(IMediator mediator) => _mediator = mediator;
 
-
-    [HttpPost("createMedia")]
+    [HttpPost]
     public async Task<IActionResult> CreateMedia([FromBody] CreateMediaDto dto)
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found in token.");
 
-        var updatedDto = userId != null ? dto with { OwnerId = userId } : dto;
-
-        var result = await _mediator.Send(new CreateMediaCommand(updatedDto));
+        var result = await _mediator.Send(new CreateMediaCommand(dto, userId));
         return CreatedAtAction(nameof(GetMediaWithMetadata), new { mediaId = result }, result);
     }
 
@@ -44,50 +42,37 @@ public class MediaController : ControllerBase
             return BadRequest("No file uploaded.");
 
         using var fileStream = file.OpenReadStream();
-
         var storagePath = await _mediator.Send(new UploadMediaFileCommand(
-            mediaId,
-            fileStream,
-            file.ContentType,
-            file.Length,
-            file.FileName
-        ));
+            mediaId, fileStream, file.ContentType, file.Length, file.FileName));
 
         return Ok(new { path = storagePath });
     }
 
-    [HttpPut("EditMedia/{id}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> EditMedia(int id, [FromBody] UpdateMediaDto dto)
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        if (id != dto.Id)
+            return BadRequest("Media ID in URL does not match ID in body.");
 
-        var updatedDto = dto with { CurrentUserId = userId };
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User ID not found in token.");
 
-        if (id != updatedDto.Id)
-        {
-            return BadRequest("media ID in URL does not match ID in body.");
-        }
-
-        var command = new UpdateMediaCommand(updatedDto);
-
-        var result = await _mediator.Send(command);
-        return Ok(new { message = "Media updated successfully." });
+        var result = await _mediator.Send(new UpdateMediaCommand(dto, userId));
+        return result
+            ? Ok(new { message = "Media updated successfully." })
+            : NotFound();
     }
 
     [HttpDelete("{mediaId}")]
     public async Task<IActionResult> DeleteMedia([FromRoute] int mediaId)
     {
-        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(currentUserId))
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
             return Unauthorized("User identity could not be verified.");
 
         bool isAdmin = User.IsInRole("Admin");
-
-        var command = new DeleteMediaCommand(mediaId, currentUserId, isAdmin);
-
-        bool result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new DeleteMediaCommand(mediaId, userId, isAdmin));
         return result
             ? Ok(new { message = "Media deleted successfully." })
             : BadRequest("Failed to delete media.");
@@ -100,25 +85,23 @@ public class MediaController : ControllerBase
         return result != null ? Ok(result) : NotFound($"No media found for item {itemId}.");
     }
 
-    [HttpGet("/DownloadMedia/{mediaId:int}")]
+    [HttpGet("download/{mediaId:int}")]
     public async Task<IActionResult> DownloadMedia(int mediaId)
     {
         var result = await _mediator.Send(new DownloadMediaCommand(mediaId));
-
         if (result?.Stream == null)
             return NotFound($"Media with ID {mediaId} was not found.");
-
         return File(result.Stream, result.ContentType, result.FileName);
     }
 
-    [HttpGet("/GetMediaByMimeType")]
+    [HttpGet("by-mimetype")]
     public async Task<IActionResult> GetMediaByMimeType([FromQuery] string mimetype)
     {
         var result = await _mediator.Send(new GetMediaByMimeTypeQuery(mimetype));
         return result != null ? Ok(result) : NotFound();
     }
 
-    [HttpGet("/GetMediaByOwner/{ownerId}")]
+    [HttpGet("by-owner/{ownerId}")]
     public async Task<IActionResult> GetMediaByOwner(string ownerId)
     {
         var result = await _mediator.Send(new GetMediaByOwnerQuery(ownerId));
@@ -128,18 +111,7 @@ public class MediaController : ControllerBase
     [HttpGet("metadata/{mediaId:int}")]
     public async Task<IActionResult> GetMediaWithMetadata(int mediaId)
     {
-        try
-        {
-            var result = await _mediator.Send(new GetMediaWithMetadataQuery(mediaId));
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return UnprocessableEntity(new { message = ex.Message });
-        }
+        var result = await _mediator.Send(new GetMediaWithMetadataQuery(mediaId));
+        return Ok(result);
     }
 }

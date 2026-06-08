@@ -1,16 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using System.Threading.Tasks;
 using LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
 using LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
 using LMS.App.Features.ResourceTemplates.Commands.DeleteResourceTemplete;
 using LMS.App.Features.ResourceTemplates.Commands.AddPropertiesToTemplate;
-using System.Collections.Generic;
-using System.Linq;
 using LMS.App.Features.ResourceTemplates.Commands.UpdatePropertyInTemplate;
 using LMS.App.Features.ResourceTemplates.Commands.RemovePropertyFromTemplate;
 using LMS.App.Features.ResourceTemplates.Queries.GetTemplateWithProperties;
 using LMS.App.DTOs.ResourceTemplate;
+using LMS.App.DTOs.ResourceProperty;
 using Microsoft.AspNetCore.Authorization;
 
 namespace LMS.API.Controllers;
@@ -26,83 +24,72 @@ public class ResourceTemplateController : ControllerBase
     {
         _mediator = mediator;
     }
+
     [HttpPost]
-    public async Task<IActionResult> CreateTemplate([FromBody] CreateResourceTemplateRequest req)
+    public async Task<IActionResult> CreateTemplate([FromBody] CreateResourceTemplateDto dto)
     {
-        var command = new CreateResourceTemplateCommand(req.Label, req.Description);
-        var id = await _mediator.Send(command);
+        var id = await _mediator.Send(new CreateResourceTemplateCommand(dto));
         return CreatedAtAction(nameof(GetTemplate), new { id }, new { Id = id, Success = true });
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTemplate([FromRoute] int id)
     {
-        var query = new GetTemplateWithPropertiesQuery(id);
-        var result = await _mediator.Send(query);
-        if (result == null) return NotFound(new { Success = false, Message = "Resource template not found." });
-        return Ok(result);
+        var result = await _mediator.Send(new GetTemplateWithPropertiesQuery(id));
+        return result == null
+            ? NotFound(new { Success = false, Message = "Resource template not found." })
+            : Ok(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTemplate([FromRoute] int id, [FromBody] UpdateResourceTemplateRequest req)
+    public async Task<IActionResult> UpdateTemplate([FromRoute] int id, [FromBody] UpdateResourceTemplateDto dto)
     {
-        var command = new UpdateResourceTemplateCommand(id, req.Label, req.Description);
-        var result = await _mediator.Send(command);
-        return result ? Ok(new { Success = true, Message = "Template updated successfully." }) : BadRequest(new { Success = false, Message = "Failed to update template." });
+        var result = await _mediator.Send(new UpdateResourceTemplateCommand(id, dto));
+        return result
+            ? Ok(new { Success = true, Message = "Template updated successfully." })
+            : BadRequest(new { Success = false, Message = "Failed to update template." });
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTemplate([FromRoute] int id)
     {
-        var command = new DeleteResourceTemplateCommand(id);
-        var result = await _mediator.Send(command);
-        return result ? Ok(new { Success = true, Message = "Template deleted successfully." }) : BadRequest(new { Success = false, Message = "Failed to delete template." });
+        var result = await _mediator.Send(new DeleteResourceTemplateCommand(id));
+        return result
+            ? Ok(new { Success = true, Message = "Template deleted successfully." })
+            : BadRequest(new { Success = false, Message = "Failed to delete template." });
     }
 
     [HttpPost("{templateId}/properties")]
-    public async Task<IActionResult> AddPropertiesToTemplate([FromRoute] int templateId, [FromBody] AddPropertiesToTemplateRequest req)
+    public async Task<IActionResult> AddPropertiesToTemplate(
+        [FromRoute] int templateId,
+        [FromBody] List<PropertyToTemplateInput> properties)
     {
-        var command = new AddPropertiesToTemplateCommand(
-            templateId,
-            req.Properties.Select(p => new PropertyToTemplateInput(
-                p.PropertyId,
-                p.IsRequired,
-                p.DisplayOrder,
-                p.AlternateLabel
-            )).ToList()
-        );
-        var result = await _mediator.Send(command);
-        return result ? Ok(new { Success = true, Message = "Properties added to template successfully." }) : BadRequest(new { Success = false, Message = "Failed to add properties to template." });
+        var result = await _mediator.Send(new AddPropertiesToTemplateCommand(templateId, properties));
+        return result
+            ? Ok(new { Success = true, Message = "Properties added to template successfully." })
+            : BadRequest(new { Success = false, Message = "Failed to add properties to template." });
     }
 
     [HttpPut("{templateId}/properties/{propertyId}")]
     public async Task<IActionResult> UpdatePropertyInTemplate(
         [FromRoute] int templateId,
         [FromRoute] int propertyId,
-        [FromBody] UpdatePropertyInTemplateRequest req)
+        [FromBody] UpdatePropertyInTemplateDto dto)
     {
-        var command = new UpdatePropertyInTemplateCommand(
-            templateId,
-            propertyId,
-            req.IsRequired,
-            req.DisplayOrder,
-            req.AlternateLabel
-        );
-        var result = await _mediator.Send(command);
-        return result ? Ok(new { Success = true, Message = "Template property updated successfully." }) : BadRequest(new { Success = false, Message = "Failed to update template property." });
+        var result = await _mediator.Send(
+            new UpdatePropertyInTemplateCommand(templateId, propertyId, dto.IsRequired, dto.DisplayOrder, dto.AlternateLabel));
+        return result
+            ? Ok(new { Success = true, Message = "Template property updated successfully." })
+            : BadRequest(new { Success = false, Message = "Failed to update template property." });
     }
 
     [HttpDelete("{templateId}/properties/{propertyId}")]
     public async Task<IActionResult> RemovePropertyFromTemplate([FromRoute] int templateId, [FromRoute] int propertyId)
     {
-        var command = new RemovePropertyFromTemplateCommand(templateId, propertyId);
-        var result = await _mediator.Send(command);
-        return result ? Ok(new { Success = true, Message = "Property removed from template successfully." }) : BadRequest(new { Success = false, Message = "Failed to remove property from template." });
+        var result = await _mediator.Send(new RemovePropertyFromTemplateCommand(templateId, propertyId));
+        return result
+            ? Ok(new { Success = true, Message = "Property removed from template successfully." })
+            : BadRequest(new { Success = false, Message = "Failed to remove property from template." });
     }
 }
-
-public record CreateResourceTemplateRequest(string Label, string? Description);
-public record UpdateResourceTemplateRequest(string Label, string? Description);
-public record PropertyToTemplateRequest(int PropertyId, bool IsRequired, int DisplayOrder, string? AlternateLabel);
-public record AddPropertiesToTemplateRequest(List<PropertyToTemplateRequest> Properties);
-public record UpdatePropertyInTemplateRequest(bool IsRequired, int DisplayOrder, string? AlternateLabel);

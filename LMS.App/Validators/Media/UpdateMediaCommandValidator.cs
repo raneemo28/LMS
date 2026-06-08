@@ -14,8 +14,8 @@ public class UpdateMediaCommandValidator : AbstractValidator<UpdateMediaCommand>
             .NotEmpty().WithMessage("FileName cannot be empty.")
             .MaximumLength(255).WithMessage("FileName cannot exceed 255 characters.");
 
-        RuleFor(x => x.Dto.CurrentUserId)
-            .NotEmpty().WithMessage("Current user identity is required.");
+        /*RuleFor(x => x.Dto.CurrentUserId)
+            .NotEmpty().WithMessage("Current user identity is required.");*/
 
         RuleForEach(x => x.Dto.Values).ChildRules(value =>
         {

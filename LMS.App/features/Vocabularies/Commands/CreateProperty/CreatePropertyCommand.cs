@@ -1,3 +1,9 @@
+using LMS.App.DTOs.Property;
 using MediatR;
+
 namespace LMS.App.Features.Vocabularies.Commands.CreateProperty;
-public record CreatePropertyCommand(int VocabularyId, string LocalName, string Label, string TermUri) : IRequest<int>;
+
+public record CreatePropertyCommand(
+    int VocabularyId,
+    CreatePropertyDto Dto
+) : IRequest<int>;
