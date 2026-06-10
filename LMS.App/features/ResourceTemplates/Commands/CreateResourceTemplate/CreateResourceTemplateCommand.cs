@@ -1,8 +1,9 @@
 using MediatR;
+using LMS.App.DTOs.ResourceTemplate;
 
 namespace LMS.App.Features.ResourceTemplates.Commands.CreateResourceTemplate;
 
 public record CreateResourceTemplateCommand(
-    string Label,
-    string? Description
+    CreateResourceTemplateDto Dto
 ) : IRequest<int>;
+

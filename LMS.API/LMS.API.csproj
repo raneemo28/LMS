@@ -25,5 +25,10 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
   </ItemGroup>
-
+<ItemGroup>
+  <Content Remove="appsettings.Testing.json" />
+  <Content Include="appsettings.Testing.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
 </Project>

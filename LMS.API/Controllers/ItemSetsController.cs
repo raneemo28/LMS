@@ -34,9 +34,7 @@ public class ItemSetsController : ControllerBase
         if (string.IsNullOrEmpty(ownerId))
             return Unauthorized("User ID not found in token.");
 
-        var command = new CreateItemSetCommand(dto.Title, dto.Description, dto.IsPublic, ownerId, ownerId, dto.Values);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new CreateItemSetCommand(dto, ownerId));
         return CreatedAtAction(nameof(GetById), new { id = result }, result);
     }
 
@@ -51,10 +49,7 @@ public class ItemSetsController : ControllerBase
             return Unauthorized("User ID not found in token.");
 
         var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-
-        var command = new UpdateItemSetCommand(dto.Id, dto.Title, dto.Description ?? string.Empty, dto.IsPublic, userId, userRoles, dto.Values);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new UpdateItemSetCommand(dto, userId, userRoles));
         return result ? NoContent() : NotFound();
     }
 
@@ -66,10 +61,7 @@ public class ItemSetsController : ControllerBase
             return Unauthorized("User ID not found in token.");
 
         var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-
-        var command = new DeleteItemSetCommand(id, userId, userRoles);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new DeleteItemSetCommand(id, userId, userRoles));
         return result ? NoContent() : NotFound();
     }
 
@@ -80,9 +72,7 @@ public class ItemSetsController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("User ID not found in token.");
 
-        var command = new AddItemToSetCommand(setId, itemId, userId);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new AddItemToSetCommand(setId, itemId, userId));
         return result ? Ok() : NotFound();
     }
 
@@ -93,9 +83,7 @@ public class ItemSetsController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("User ID not found in token.");
 
-        var command = new RemoveItemFromSetCommand(setId, itemId, userId);
-        var result = await _mediator.Send(command);
-
+        var result = await _mediator.Send(new RemoveItemFromSetCommand(setId, itemId, userId));
         return result ? NoContent() : NotFound();
     }
 

@@ -5,7 +5,7 @@ namespace LMS.Domain.Interfaces
 public interface IResourceRepository<T> : IGenericRepository<T> where T : Resource
     {
 
-        Task<bool> UpdateValueAsync(int resourceId, int valueId, string? valueText, string? valueUri, int? valueResourceId, string type, string? language);
+        void UpdateValue(Value value);
         Task<bool> RemoveValueAsync(int resourceId, int valueId);
         Task<IEnumerable<Value>> GetResourceValuesAsync(int resourceId);
         Task<string> GetResourceTypeAsync(int resourceId);

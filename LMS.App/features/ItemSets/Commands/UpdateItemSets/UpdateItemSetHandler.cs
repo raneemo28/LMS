@@ -1,59 +1,34 @@
 using MediatR;
 using LMS.Domain.Interfaces;
-using LMS.Domain.Entities;
-
+using AutoMapper;
+using LMS.Domain.Constants;
 namespace LMS.App.Features.ItemSets.Commands.UpdateItemSets;
  
 public class UpdateItemSetHandler : IRequestHandler<UpdateItemSetCommand, bool>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public UpdateItemSetHandler(IUnitOfWork unitOfWork)
+    public UpdateItemSetHandler(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<bool> Handle(UpdateItemSetCommand request, CancellationToken cancellationToken)
     {
-        var resource = await _unitOfWork.ItemSets.GetByIdAsync(request.Id);
-        var itemSet = resource as ItemSet;
+        var itemSet = await _unitOfWork.ItemSets.GetByIdAsync(request.Dto.Id);
         if (itemSet == null) return false;
 
-        bool isOwner = itemSet.OwnerId == request.UserId;
-
-        if (!isOwner)
-        {
+        bool isAdmin = request.UserRoles.Contains(Roles.Admin);
+        if (!isAdmin && itemSet.OwnerId != request.UserId)
             throw new UnauthorizedAccessException("You are not authorized to update this item set.");
-        }
 
-        itemSet.Title = request.Title;
-        itemSet.Description = request.Description;
-        itemSet.IsPublic = request.IsPublic;
-
-        if (request.Values != null)
-        {
-            itemSet.Values.Clear();
-            foreach (var v in request.Values)
-            {
-                itemSet.Values.Add(new Value
-                {
-                    ResourceId = itemSet.Id,
-                    PropertyId = v.PropertyId,
-                    ValueText = v.ValueText,
-                    ValueUri = v.ValueUri,
-                    ValueResourceId = v.ValueResourceId,
-                    Type = v.Type,
-                    Language = v.Language
-                });
-            }
-        }
-
+         _mapper.Map(request.Dto, itemSet);
         itemSet.ModifiedAt = DateTime.UtcNow;
         itemSet.ModifiedBy = request.UserId;
 
         _unitOfWork.ItemSets.Update(itemSet);
-        var result = await _unitOfWork.CommitAsync();
-
-        return result > 0;
+        return await _unitOfWork.CommitAsync() > 0;
     }
 }

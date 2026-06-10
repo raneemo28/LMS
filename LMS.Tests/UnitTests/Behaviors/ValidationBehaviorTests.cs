@@ -1,6 +1,8 @@
 using FluentValidation;
 using FluentValidation.Results;
 using LMS.App.Behaviors;
+using LMS.App.DTOs.Item;
+using LMS.App.DTOs.Value;
 using LMS.App.Features.Items.Commands.CreateItem;
 using MediatR;
 using Moq;
@@ -26,27 +28,49 @@ public class ValidationBehaviorTests
     [Fact]
     public async Task Handle_Should_Call_Next_When_Validation_Passes()
     {
-        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CreateItemCommand>>(), It.IsAny<CancellationToken>()))
+        _mockValidator
+            .Setup(v => v.ValidateAsync(
+                It.IsAny<ValidationContext<CreateItemCommand>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
         bool nextCalled = false;
-        // ✅ Correct delegate signature: Func<CancellationToken, Task<TResponse>>
-        RequestHandlerDelegate<int> next = (ct) => { nextCalled = true; return Task.FromResult(42); };
+        RequestHandlerDelegate<int> next = (ct) =>
+        {
+            nextCalled = true;
+            return Task.FromResult(42);
+        };
 
-        await _behavior.Handle(new CreateItemCommand(1, "u", new()), next, CancellationToken.None);
+        var cmd = new CreateItemCommand(
+            new CreateItemDto(1, new List<CreateResourceValueDto>()),
+            "user-1");
+
+        await _behavior.Handle(cmd, next, CancellationToken.None);
+
         nextCalled.Should().BeTrue();
     }
 
     [Fact]
     public async Task Handle_Should_Throw_ValidationException_When_Fails()
     {
-        var failures = new List<ValidationFailure> { new("TemplateId", "Invalid") };
-        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CreateItemCommand>>(), It.IsAny<CancellationToken>()))
+        var failures = new List<ValidationFailure>
+        {
+            new("Dto.TemplateId", "TemplateId must be greater than 0.")
+        };
+
+        _mockValidator
+            .Setup(v => v.ValidateAsync(
+                It.IsAny<ValidationContext<CreateItemCommand>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult(failures));
 
         RequestHandlerDelegate<int> next = (ct) => Task.FromResult(42);
 
+        var cmd = new CreateItemCommand(
+            new CreateItemDto(0, new List<CreateResourceValueDto>()),
+            "user-1");
+
         await Assert.ThrowsAsync<ValidationException>(() =>
-            _behavior.Handle(new CreateItemCommand(1, "u", new()), next, CancellationToken.None));
+            _behavior.Handle(cmd, next, CancellationToken.None));
     }
 }

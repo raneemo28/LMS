@@ -10,15 +10,17 @@ public class UpdatePropertyCommandValidator : AbstractValidator<UpdatePropertyCo
         RuleFor(x => x.Id)
             .GreaterThan(0).WithMessage("Property ID must be valid.");
 
-        RuleFor(x => x.LocalName)
+        RuleFor(x => x.Dto).NotNull().WithMessage("Property data is required.");
+
+        RuleFor(x => x.Dto.LocalName)
             .NotEmpty().WithMessage("LocalName is required.")
             .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("LocalName must be alphanumeric.");
 
-        RuleFor(x => x.Label)
+        RuleFor(x => x.Dto.Label)
             .NotEmpty().WithMessage("Label is required.")
             .MaximumLength(100);
 
-        RuleFor(x => x.TermUri)
+        RuleFor(x => x.Dto.TermUri)
             .NotEmpty().WithMessage("TermUri is required.")
             .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
             .WithMessage("TermUri must be a valid absolute URL.");

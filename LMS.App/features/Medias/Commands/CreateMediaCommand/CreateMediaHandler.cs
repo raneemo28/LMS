@@ -1,43 +1,33 @@
-using MediatR;
-using LMS.Domain.Entities;
+using AutoMapper;
+using LMS.Domain.Entities;  // This brings Media entity into scope
 using LMS.Domain.Interfaces;
+using MediatR;
 
 namespace LMS.App.Features.Media.Commands.CreateMediaCommand;
 
 public class CreateMediaHandler : IRequestHandler<CreateMediaCommand, int>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
-    public CreateMediaHandler(IUnitOfWork unitOfWork)
+    public CreateMediaHandler(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
-
-public async Task<int> Handle(CreateMediaCommand request, CancellationToken cancellationToken)
-{
-    var media = new Domain.Entities.Media
+    public async Task<int> Handle(CreateMediaCommand request, CancellationToken cancellationToken)
     {
-        Type = "Media",
-        CreatedBy = request.Dto.OwnerId,
-        OwnerId = request.Dto.OwnerId,
-        CreatedAt = DateTime.UtcNow,
-        
-        ItemId = request.Dto.ItemId,
-        FileName = request.Dto.FileName,
-        AltText = request.Dto.AltText,
-        Values = request.Dto.Values.Select(v => new Value
-        {
-            PropertyId = v.PropertyId,
-            ValueText = v.ValueText,
-            ValueUri = v.ValueUri,
-            Type = v.Type,
-            Language = v.Language
-        }).ToList()
-    };
+        // Use fully qualified name to avoid namespace conflict
+        var media = _mapper.Map<LMS.Domain.Entities.Media>(request.Dto);
+        media.Type = "Media";
+        media.OwnerId = request.OwnerId;
+        media.CreatedAt = DateTime.UtcNow;
+        media.CreatedBy = request.OwnerId;
 
-    await _unitOfWork.Media.AddAsync(media);
-    await _unitOfWork.CommitAsync();
-    return media.Id;
-}
+        await _unitOfWork.Media.AddAsync(media);
+        await _unitOfWork.CommitAsync();
+
+        return media.Id;
+    }
 }
