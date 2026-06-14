@@ -1,25 +1,21 @@
-using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection; 
-using AutoMapper;
-using LMS.App.DTOs.Logging;
-using LMS.Domain.Entities; 
-using LMS.Domain.Interfaces;
+using System.Text;
+using System.Text.Json;
 
 namespace LMS.API.middlewares
 {
     public class LoggingMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public LoggingMiddleware(RequestDelegate next)
+        public LoggingMiddleware(RequestDelegate next, IHttpClientFactory httpClientFactory)
         {
             _next = next;
+            _httpClientFactory = httpClientFactory;
         }
 
-        public async Task InvokeAsync(HttpContext context, IMapper mapper, ILogRepository logRepository)
+        public async Task InvokeAsync(HttpContext context)
         {
             var stopwatch = Stopwatch.StartNew();
 
@@ -27,32 +23,30 @@ namespace LMS.API.middlewares
 
             stopwatch.Stop();
 
-            var logDTO = new LogDTO(
-                Method: context.Request.Method,
-                Path: context.Request.Path,
-                StatusCode: context.Response.StatusCode,
-                ElapsedMilliseconds: stopwatch.Elapsed.TotalMilliseconds,
-                IpAddress: context.Connection.RemoteIpAddress?.ToString()
-            );
-
-            var serviceProvider = context.RequestServices;
-
+            // Fire-and-forget: send the log to the isolated logging microservice
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    using (var scope = serviceProvider.CreateScope())
-                    {
-                        var backgroundMapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-                        var backgroundRepo = scope.ServiceProvider.GetRequiredService<ILogRepository>();
+                    var client = _httpClientFactory.CreateClient("LoggingService");
 
-                        LogEntry logEntry = backgroundMapper.Map<LogEntry>(logDTO);
-                        await backgroundRepo.SaveLogAsync(logEntry);
-                    }
+                    var payload = new
+                    {
+                        Method              = context.Request.Method,
+                        Path                = context.Request.Path.ToString(),
+                        StatusCode          = context.Response.StatusCode,
+                        ElapsedMilliseconds = stopwatch.Elapsed.TotalMilliseconds,
+                        IpAddress           = context.Connection.RemoteIpAddress?.ToString()
+                    };
+
+                    var json    = JsonSerializer.Serialize(payload);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    await client.PostAsync("/api/logs", content);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Logging DB background write failed: {ex.Message}");
+                    Console.WriteLine($"Logging microservice call failed: {ex.Message}");
                 }
             });
         }

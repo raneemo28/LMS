@@ -17,7 +17,6 @@ public abstract class AutoMapperTestsBase
             cfg.AddProfile<ApplicationUserMappingProfile>();
             cfg.AddProfile<ItemMappingProfile>();
             cfg.AddProfile<ItemSetMappingProfile>();
-            cfg.AddProfile<LoggingProfile>();
             cfg.AddProfile<MediaMappingProfile>();
             cfg.AddProfile<ResourceTemplateMappingProfile>();
             cfg.AddProfile<ResourceValueMappingProfile>();

@@ -1,7 +1,6 @@
 using FluentAssertions;
 using LMS.App.DTOs.Auth;
 using LMS.App.DTOs.Item;
-using LMS.App.DTOs.Logging;
 using LMS.App.DTOs.Media;
 using LMS.App.DTOs.Value;
 using LMS.App.DTOs.Vocabulary;
@@ -46,12 +45,4 @@ public class MappingTests : AutoMapperTestsBase
         dto.FileName.Should().Be("img.png");
     }
 
-    [Fact] public void Should_Map_LogDTO_To_LogEntry()
-    {
-        var log = new LogDTO("GET", "/api", 200, 10.5, "127.0.0.1");
-        var entry = Mapper.Map<LogEntry>(log);
-        entry.Method.Should().Be("GET");
-        entry.StatusCode.Should().Be(200);
-        entry.Id.Should().Be(0);
-    }
 }

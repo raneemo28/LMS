@@ -15,6 +15,11 @@ builder.Services.AddControllers()
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
+builder.Services.AddHttpClient("LoggingService", client =>
+{
+    var baseUrl = builder.Configuration["LoggingService:BaseUrl"] ?? "http://localhost:5050";
+    client.BaseAddress = new Uri(baseUrl);
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
