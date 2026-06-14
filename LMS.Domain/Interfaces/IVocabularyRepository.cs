@@ -14,6 +14,7 @@ public interface IVocabularyRepository : IGenericRepository<Vocabulary>
     
     // Queries
     Task<IEnumerable<Property>> GetPropertiesByVocabularyIdAsync(int vocabularyId);
+    Task<IEnumerable<Property>> GetAllPropertiesAsync();
     
     // Validations
     Task<bool> HasLinkedValuesAsync(int propertyId);

@@ -40,7 +40,8 @@ public class VocabularyRepository : GenericRepository<Vocabulary>, IVocabularyRe
             .Where(p => p.VocabularyId == vocabularyId)
             .AsNoTracking()
             .ToListAsync();
-
+public async Task<IEnumerable<Property>> GetAllPropertiesAsync() =>
+    await _context.Properties.AsNoTracking().ToListAsync();
     // --- Validations ---
     public async Task<bool> HasLinkedValuesAsync(int propertyId) =>
         await _context.Values.AnyAsync(v => v.PropertyId == propertyId);
