@@ -1,4 +1,4 @@
-namespace LMS.Domain.Entities;
+namespace LMS.Logging.Microservice.Models;
 
 public class LogEntry
 {

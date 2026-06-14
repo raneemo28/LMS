@@ -1,10 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <!-- Exclude the self-contained logging microservice subfolder from this project -->
+  <ItemGroup>
+    <Compile Remove="microservice\**" />
+    <EmbeddedResource Remove="microservice\**" />
+    <None Remove="microservice\**" />
+    <Content Remove="microservice\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.1.3" />

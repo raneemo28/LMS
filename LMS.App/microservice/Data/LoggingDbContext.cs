@@ -1,7 +1,7 @@
-using LMS.Domain.Entities;
+using LMS.Logging.Microservice.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Infra.Database;
+namespace LMS.Logging.Microservice.Data;
 
 public class LoggingDbContext : DbContext
 {

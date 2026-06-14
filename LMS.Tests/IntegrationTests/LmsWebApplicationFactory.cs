@@ -31,7 +31,6 @@ public class LmsWebApplicationFactory : WebApplicationFactory<Program>
 
                 scoped.GetRequiredService<LibraryDbContext>().Database.Migrate();
                 scoped.GetRequiredService<AppIdentityDbContext>().Database.Migrate();
-                scoped.GetRequiredService<LoggingDbContext>().Database.Migrate();
 
                 var roleManager = scoped.GetRequiredService<RoleManager<IdentityRole>>();
                 foreach (var role in new[] { "Member", "Librarian", "Admin" })
