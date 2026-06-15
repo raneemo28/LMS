@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="ValidEmailRequired"><value>A valid email address is required.</value></data>
+  <data name="ValidVocabularyIdRequired"><value>A valid Vocabulary ID is required.</value></data>
+  <data name="AlternateLabelTooLong"><value>Alternate label is too long.</value></data>
+  <data name="PropertySpecifiedRequired"><value>At least one property must be specified.</value></data>
+  <data name="ValueTextOrResourceRequired"><value>At least one value (Text or ResourceId) must be provided.</value></data>
+  <data name="ValueRequired"><value>At least one value is required.</value></data>
+  <data name="CannotDeleteLinkedProperty"><value>Cannot delete property because it has linked values.</value></data>
+  <data name="UserIdentityRequired"><value>Current user identity is required.</value></data>
+  <data name="DescriptionMaxLength"><value>Description must not exceed 1000 characters.</value></data>
+  <data name="DisplayOrderNotNegative"><value>DisplayOrder cannot be negative.</value></data>
+  <data name="DisplayOrderGreaterEqualZero"><value>DisplayOrder must be 0 or greater.</value></data>
+  <data name="NoPermissionDeleteSet"><value>Do not have permission to delete this item set.</value></data>
+  <data name="NoPermissionDeleteItem"><value>Don't have permission to delete this item.</value></data>
+  <data name="NoPermissionModifySet"><value>Don't have permission to modify this set.</value></data>
+  <data name="ValueMustHaveData"><value>Each value must have at least one of: ValueText, ValueUri, or ValueResourceId.</value></data>
+  <data name="EmailRequired"><value>Email is required.</value></data>
+  <data name="FailedToDeleteMedia"><value>Failed to delete media.</value></data>
+  <data name="FailedToMapUser"><value>Failed to map application user.</value></data>
+  <data name="FailedToMapAuth"><value>Failed to map auth response.</value></data>
+  <data name="FileContentEmpty"><value>File content cannot be empty.</value></data>
+  <data name="FileSizeExceedsLimit"><value>File size exceeds the 10MB limit.</value></data>
+  <data name="FileNameEmpty"><value>FileName cannot be empty.</value></data>
+  <data name="FileNameMaxLength"><value>FileName cannot exceed 255 characters.</value></data>
+  <data name="FileNameRequired"><value>FileName is required.</value></data>
+  <data name="FileNameExceedsLength"><value>FileName must not exceed 255 characters.</value></data>
+  <data name="FilterExpressionRequired"><value>Filter expression is required.</value></data>
+  <data name="FirstNameRequired"><value>First Name is required.</value></data>
+  <data name="FirstNameMaxLength"><value>First Name must not exceed 50 characters.</value></data>
+  <data name="IdMismatch"><value>ID mismatch.</value></data>
+  <data name="InvalidMimeType"><value>Invalid MimeType format.</value></data>
+  <data name="InvalidUserIdFormat"><value>Invalid User ID format.</value></data>
+  <data name="ItemDataRequired"><value>Item data is required.</value></data>
+  <data name="ItemIdRequired"><value>Item ID is required.</value></data>
+  <data name="ItemIdPositiveInteger"><value>Item ID must be a valid positive integer.</value></data>
+  <data name="ItemIdPositiveNumber"><value>Item ID must be a valid positive number.</value></data>
+  <data name="ItemIdGreaterThanZero"><value>Item ID must be greater than 0.</value></data>
+  <data name="ItemSetDataRequired"><value>ItemSet data is required.</value></data>
+  <data name="ItemSetIdRequired"><value>ItemSet ID is required.</value></data>
+  <data name="ItemSetIdPositiveNumber"><value>ItemSet ID must be a valid positive number.</value></data>
+  <data name="ItemSetIdGreaterThanZero"><value>ItemSet ID must be greater than 0.</value></data>
+  <data name="JwtKeyMissing"><value>JWT Key missing</value></data>
+  <data name="JwtKeyConfigurationInvalid"><value>JWT Key must be set in configuration and must be at least 32 characters long.</value></data>
+  <data name="LabelAlreadyExists"><value>Label already exists.</value></data>
+  <data name="LabelCannotExceed100"><value>Label cannot exceed 100 characters.</value></data>
+  <data name="LabelRequired"><value>Label is required.</value></data>
+  <data name="LabelMaxLength"><value>Label must not exceed 255 characters.</value></data>
+  <data name="LastNameRequired"><value>Last Name is required.</value></data>
+  <data name="LastNameMaxLength"><value>Last Name must not exceed 50 characters.</value></data>
+  <data name="LocalNameRequired"><value>LocalName is required.</value></data>
+  <data name="LocalNameAlphanumeric"><value>LocalName must be alphanumeric.</value></data>
+  <data name="MappingResourceTemplateFailed"><value>mapping Recource Tamplate failed</value></data>
+  <data name="MediaDataRequired"><value>Media data is required.</value></data>
+  <data name="MediaIdMismatch"><value>Media ID in URL does not match ID in body.</value></data>
+  <data name="MediaIdPositiveNumber"><value>Media ID must be a valid positive number.</value></data>
+  <data name="MediaNotFound"><value>Media not found.</value></data>
+  <data name="MediaStoragePathNotSet"><value>Media storage path is not set.</value></data>
+  <data name="MediaIdValid"><value>MediaId must be valid.</value></data>
+  <data name="MimeTypeRequired"><value>MimeType is required (e.g., image/jpeg).</value></data>
+  <data name="MustProvideValueTextOrResource"><value>Must provide either ValueText or ValueResourceId.</value></data>
+  <data name="NamespaceUriRequired"><value>NamespaceUri is required.</value></data>
+  <data name="NamespaceUriAbsolute"><value>NamespaceUri must be a valid absolute URI.</value></data>
+  <data name="NoFileUploaded"><value>No file uploaded.</value></data>
+  <data name="OwnerIdRequired"><value>OwnerId is required.</value></data>
+  <data name="PasswordRequired"><value>Password is required.</value></data>
+  <data name="PasswordMinLength"><value>Password must be at least 8 characters long.</value></data>
+  <data name="PasswordRequireDigit"><value>Password must contain at least one digit.</value></data>
+  <data name="PasswordRequireLowercase"><value>Password must contain at least one lowercase letter.</value></data>
+  <data name="PasswordRequireNonAlphanumeric"><value>Password must contain at least one non-alphanumeric character.</value></data>
+  <data name="PasswordRequireUppercase"><value>Password must contain at least one uppercase letter.</value></data>
+  <data name="PasswordsDoNotMatch"><value>Passwords do not match.</value></data>
+  <data name="PrefixMaxLength"><value>Prefix cannot exceed 20 characters.</value></data>
+  <data name="PrefixRequiredForSearch"><value>Prefix is required for searching.</value></data>
+  <data name="PrefixRequired"><value>Prefix is required.</value></data>
+  <data name="PrefixLowercaseAlpha"><value>Prefix must be lowercase alphabetic characters only.</value></data>
+  <data name="PropertyDataRequired"><value>Property data is required.</value></data>
+  <data name="PropertyIdValid"><value>Property ID must be valid.</value></data>
+  <data name="PropertyIsMemberOfNotDefined"><value>Property 'IsMemberOf' not defined in vocabularies.</value></data>
+  <data name="PropertyIdRequired"><value>PropertyId is required.</value></data>
+  <data name="ResourceIdRequired"><value>Resource ID is required.</value></data>
+  <data name="ResourceIdPositiveInteger"><value>Resource ID must be a valid positive integer.</value></data>
+  <data name="ResourceNotFound"><value>Resource not found</value></data>
+  <data name="ResourceIdGreaterThanZero"><value>ResourceId must be greater than 0.</value></data>
+  <data name="SetIdPositiveNumber"><value>Set ID must be a valid positive number.</value></data>
+  <data name="TemplateDataRequired"><value>Template data is required.</value></data>
+  <data name="TemplateIdPositiveInteger"><value>Template ID must be a valid positive integer.</value></data>
+  <data name="TemplateIdGreaterThanZero"><value>Template ID must be greater than 0.</value></data>
+  <data name="TemplateIdRequired"><value>TemplateId is required.</value></data>
+  <data name="TermUriRequired"><value>TermUri is required.</value></data>
+  <data name="TermUriAbsolute"><value>TermUri must be a valid absolute URL.</value></data>
+  <data name="TitleRequired"><value>Title is required.</value></data>
+  <data name="TitleMaxLength"><value>Title must not exceed 255 characters.</value></data>
+  <data name="TypeMaxLength"><value>Type cannot exceed 10 characters.</value></data>
+  <data name="TypeRequired"><value>Type is required.</value></data>
+  <data name="TypeMustBeTextUriResource"><value>Type must be 'text', 'uri', or 'resource'.</value></data>
+  <data name="UnableToMapItemSet"><value>Unable to map item set info.</value></data>
+  <data name="UserIdNotEmpty"><value>User ID cannot be empty.</value></data>
+  <data name="UserIdRequiredMedia"><value>User ID is required to fetch media.</value></data>
+  <data name="UserIdRequiredOwnership"><value>User ID is required to verify ownership.</value></data>
+  <data name="UserIdRequiredAuthority"><value>User ID is required to verify your authority.</value></data>
+  <data name="UserIdNotFoundToken"><value>User ID not found in token.</value></data>
+  <data name="UserIdentityNotVerified"><value>User identity could not be verified.</value></data>
+  <data name="UserIdRequiredLogout"><value>UserId is required for logout.</value></data>
+  <data name="UserIdRequiredPublicSets"><value>UserId is required to fetch relevant public sets.</value></data>
+  <data name="UserIdRequired"><value>UserId is required.</value></data>
+  <data name="ValidMediaIdDownload"><value>Valid Media ID is required to download the file.</value></data>
+  <data name="ValidMediaIdRequired"><value>Valid Media ID is required.</value></data>
+  <data name="ValueDataRequired"><value>Value data is required.</value></data>
+  <data name="ValidationFailedPropertyNotValid"><value>Value validation failed: Property is not valid for this item.</value></data>
+  <data name="ValidationFailedPropertyRequired"><value>Value validation failed: Property is required for this item.</value></data>
+  <data name="ValidationFailedRefPropertyNotExist"><value>Value validation failed: Referenced Property does not exist.</value></data>
+  <data name="ValidationFailedTargetResourceNotExist"><value>Value validation failed: Target Resource does not exist.</value></data>
+  <data name="ValidationFailedValueAlreadyExists"><value>Value validation failed: This specific value already exists for this property on the target resource.</value></data>
+  <data name="ValueIdGreaterThanZero"><value>ValueId must be greater than 0.</value></data>
+  <data name="ValuesListNotEmpty"><value>Values list cannot be empty.</value></data>
+  <data name="ValuesListNotNull"><value>Values list cannot be null.</value></data>
+  <data name="VocabularyIdRequired"><value>Vocabulary ID is required.</value></data>
+  <data name="VocabularyIdPositiveInteger"><value>Vocabulary ID must be a valid positive integer.</value></data>
+  <data name="VocabularyIdValid"><value>VocabularyId must be valid.</value></data>
+  <data name="NotAuthorizedUpdateItemSet"><value>You are not authorized to update this item set.</value></data>
+  <data name="NotAuthorizedUpdateItem"><value>You are not authorized to update this item.</value></data>
+  <data name="NotAuthorizedUpdateMedia"><value>You are not authorized to update this media.</value></data>
+  <data name="NoPermissionDeleteFile"><value>You don't have permission to delete this file.</value></data>
+</root>

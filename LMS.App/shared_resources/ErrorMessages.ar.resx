@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ValidEmailRequired" xml:space="preserve">
+    <value>مطلوب عنوان بريد إلكتروني صالح.</value>
+  </data>
+  <data name="ValidVocabularyIdRequired" xml:space="preserve">
+    <value>مطلوب معرف مفردات صالح.</value>
+  </data>
+  <data name="AlternateLabelTooLong" xml:space="preserve">
+    <value>التسمية البديلة طويلة جداً.</value>
+  </data>
+  <data name="PropertySpecifiedRequired" xml:space="preserve">
+    <value>يجب تحديد خاصية واحدة على الأقل.</value>
+  </data>
+  <data name="ValueTextOrResourceRequired" xml:space="preserve">
+    <value>يجب تقديم قيمة واحدة على الأقل (نص أو معرف مورد).</value>
+  </data>
+  <data name="ValueRequired" xml:space="preserve">
+    <value>مطلوب قيمة واحدة على الأقل.</value>
+  </data>
+  <data name="CannotDeleteLinkedProperty" xml:space="preserve">
+    <value>لا يمكن حذف الخاصية لأن لها قيماً مرتبطة.</value>
+  </data>
+  <data name="UserIdentityRequired" xml:space="preserve">
+    <value>هوية المستخدم الحالي مطلوبة.</value>
+  </data>
+  <data name="DescriptionMaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الوصف 1000 حرف.</value>
+  </data>
+  <data name="DisplayOrderNotNegative" xml:space="preserve">
+    <value>لا يمكن أن يكون ترتيب العرض سالباً.</value>
+  </data>
+  <data name="DisplayOrderGreaterEqualZero" xml:space="preserve">
+    <value>يجب أن يكون ترتيب العرض 0 أو أكبر.</value>
+  </data>
+  <data name="NoPermissionDeleteSet" xml:space="preserve">
+    <value>ليس لديك إذن لحذف مجموعة العناصر هذه.</value>
+  </data>
+  <data name="NoPermissionDeleteItem" xml:space="preserve">
+    <value>ليس لديك إذن لحذف هذا العنصر.</value>
+  </data>
+  <data name="NoPermissionModifySet" xml:space="preserve">
+    <value>ليس لديك إذن لتعديل هذه المجموعة.</value>
+  </data>
+  <data name="ValueMustHaveData" xml:space="preserve">
+    <value>يجب أن تحتوي كل قيمة على الأقل على واحد من: قيمة نصية أو رابط أو مورد متعلق.</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>البريد الإلكتروني مطلوب.</value>
+  </data>
+  <data name="FailedToDeleteMedia" xml:space="preserve">
+    <value>فشل حذف الوسائط.</value>
+  </data>
+  <data name="FailedToMapUser" xml:space="preserve">
+    <value>فشل تعيين مستخدم التطبيق.</value>
+  </data>
+  <data name="FailedToMapAuth" xml:space="preserve">
+    <value>فشلت المصادقة.</value>
+  </data>
+  <data name="FileContentEmpty" xml:space="preserve">
+    <value>لا يمكن أن يكون محتوى الملف فارغاً.</value>
+  </data>
+  <data name="FileSizeExceedsLimit" xml:space="preserve">
+    <value>حجم الملف يتجاوز الحد المسموح به 10 ميغابايت.</value>
+  </data>
+  <data name="FileNameEmpty" xml:space="preserve">
+    <value>لا يمكن أن يكون اسم الملف فارغاً.</value>
+  </data>
+  <data name="FileNameMaxLength" xml:space="preserve">
+    <value>لا يمكن أن يتجاوز اسم الملف 255 حرفاً.</value>
+  </data>
+  <data name="FileNameRequired" xml:space="preserve">
+    <value>اسم الملف مطلوب.</value>
+  </data>
+  <data name="FileNameExceedsLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز اسم الملف 255 حرفاً.</value>
+  </data>
+  <data name="FilterExpressionRequired" xml:space="preserve">
+    <value>تعبير التصفية مطلوب.</value>
+  </data>
+  <data name="FirstNameRequired" xml:space="preserve">
+    <value>الاسم الأول مطلوب.</value>
+  </data>
+  <data name="FirstNameMaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز الاسم الأول 50 حرفاً.</value>
+  </data>
+  <data name="IdMismatch" xml:space="preserve">
+    <value>عدم تطابق المعرف.</value>
+  </data>
+  <data name="InvalidMimeType" xml:space="preserve">
+    <value>تنسيق غير صالح.</value>
+  </data>
+  <data name="InvalidUserIdFormat" xml:space="preserve">
+    <value>معرف المستخدم غير صالح.</value>
+  </data>
+  <data name="ItemDataRequired" xml:space="preserve">
+    <value>بيانات العنصر مطلوبة.</value>
+  </data>
+  <data name="ItemIdRequired" xml:space="preserve">
+    <value>معرف العنصر مطلوب.</value>
+  </data>
+  <data name="ItemIdPositiveInteger" xml:space="preserve">
+    <value>يجب أن يكون معرف العنصر عدداً صحيحاً موجباً صالحاً.</value>
+  </data>
+  <data name="ItemIdPositiveNumber" xml:space="preserve">
+    <value>يجب أن يكون معرف العنصر رقماً موجباً صالحاً.</value>
+  </data>
+  <data name="ItemIdGreaterThanZero" xml:space="preserve">
+    <value>يجب أن يكون معرف العنصر أكبر من 0.</value>
+  </data>
+  <data name="ItemSetDataRequired" xml:space="preserve">
+    <value>بيانات مجموعة العناصر مطلوبة.</value>
+  </data>
+  <data name="ItemSetIdRequired" xml:space="preserve">
+    <value>معرف مجموعة العناصر مطلوب.</value>
+  </data>
+  <data name="ItemSetIdPositiveNumber" xml:space="preserve">
+    <value>يجب أن يكون معرف مجموعة العناصر رقماً موجباً صالحاً.</value>
+  </data>
+  <data name="ItemSetIdGreaterThanZero" xml:space="preserve">
+    <value>يجب أن يكون معرف مجموعة العناصر أكبر من 0.</value>
+  </data>
+  <data name="JwtKeyMissing" xml:space="preserve">
+    <value>المفتاح مفقود</value>
+  </data>
+  <data name="JwtKeyConfigurationInvalid" xml:space="preserve">
+    <value>يجب تعيين مفتاح ويجب ألا يقل طوله عن 32 حرفاً.</value>
+  </data>
+  <data name="LabelAlreadyExists" xml:space="preserve">
+    <value>التسمية موجودة بالفعل.</value>
+  </data>
+  <data name="LabelCannotExceed100" xml:space="preserve">
+    <value>لا يمكن أن تتجاوز التسمية 100 حرف.</value>
+  </data>
+  <data name="LabelRequired" xml:space="preserve">
+    <value>التسمية مطلوبة.</value>
+  </data>
+  <data name="LabelMaxLength" xml:space="preserve">
+    <value>يجب ألا تتجاوز التسمية 255 حرفاً.</value>
+  </data>
+  <data name="LastNameRequired" xml:space="preserve">
+    <value>اسم العائلة مطلوب.</value>
+  </data>
+  <data name="LastNameMaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز اسم العائلة 50 حرفاً.</value>
+  </data>
+  <data name="LocalNameRequired" xml:space="preserve">
+    <value>الاسم المحلي مطلوب.</value>
+  </data>
+  <data name="LocalNameAlphanumeric" xml:space="preserve">
+    <value>يجب أن يتكون الاسم المحلي من أحرف وأرقام فقط.</value>
+  </data>
+  <data name="MappingResourceTemplateFailed" xml:space="preserve">
+    <value>فشل تعيين قالب المورد.</value>
+  </data>
+  <data name="MediaDataRequired" xml:space="preserve">
+    <value>بيانات الوسائط مطلوبة.</value>
+  </data>
+  <data name="MediaIdMismatch" xml:space="preserve">
+    <value>معرف الوسائط في الرابط لا يتطابق مع المعرف في النص.</value>
+  </data>
+  <data name="MediaIdPositiveNumber" xml:space="preserve">
+    <value>يجب أن يكون معرف الوسائط رقماً موجباً صالحاً.</value>
+  </data>
+  <data name="MediaNotFound" xml:space="preserve">
+    <value>الوسائط غير موجودة.</value>
+  </data>
+  <data name="MediaStoragePathNotSet" xml:space="preserve">
+    <value>مسار تخزين الوسائط غير معين.</value>
+  </data>
+  <data name="MediaIdValid" xml:space="preserve">
+    <value>يجب أن يكون معرف الوسائط صالحاً.</value>
+  </data>
+  <data name="MimeTypeRequired" xml:space="preserve">
+    <value>النوع مطلوب.</value>
+  </data>
+  <data name="MustProvideValueTextOrResource" xml:space="preserve">
+    <value>يجب تقديم قيمة نصية أو معرف المورد المتعلق .</value>
+  </data>
+  <data name="NamespaceUriRequired" xml:space="preserve">
+    <value>مساحة الاسم  مطلوبة.</value>
+  </data>
+  <data name="NamespaceUriAbsolute" xml:space="preserve">
+    <value>يجب أن تكون مساحة الاسم صالحة ومطلقة.</value>
+  </data>
+  <data name="NoFileUploaded" xml:space="preserve">
+    <value>لم يتم تحميل أي ملف.</value>
+  </data>
+  <data name="OwnerIdRequired" xml:space="preserve">
+    <value>معرف المالك مطلوب.</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>كلمة المرور مطلوبة.</value>
+  </data>
+  <data name="PasswordMinLength" xml:space="preserve">
+    <value>يجب ألا يقل طول كلمة المرور عن 8 أحرف.</value>
+  </data>
+  <data name="PasswordRequireDigit" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.</value>
+  </data>
+  <data name="PasswordRequireLowercase" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.</value>
+  </data>
+  <data name="PasswordRequireNonAlphanumeric" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على حرف غير أبجدي رقمي واحد على الأقل.</value>
+  </data>
+  <data name="PasswordRequireUppercase" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>كلمتا المرور غير متطابقتين.</value>
+  </data>
+  <data name="PrefixMaxLength" xml:space="preserve">
+    <value>لا يمكن أن يتجاوز البادئة 20 حرفاً.</value>
+  </data>
+  <data name="PrefixRequiredForSearch" xml:space="preserve">
+    <value>البادئة مطلوبة للبحث.</value>
+  </data>
+  <data name="PrefixRequired" xml:space="preserve">
+    <value>البادئة مطلوبة.</value>
+  </data>
+  <data name="PrefixLowercaseAlpha" xml:space="preserve">
+    <value>يجب أن تكون البادئة أحرفاً أبجدية صغيرة فقط.</value>
+  </data>
+  <data name="PropertyDataRequired" xml:space="preserve">
+    <value>بيانات الخاصية مطلوبة.</value>
+  </data>
+  <data name="PropertyIdValid" xml:space="preserve">
+    <value>يجب أن يكون معرف الخاصية صالحاً.</value>
+  </data>
+  <data name="PropertyIsMemberOfNotDefined" xml:space="preserve">
+    <value>الخاصية 'عضو في' غير محددة في المفردات.</value>
+  </data>
+  <data name="PropertyIdRequired" xml:space="preserve">
+    <value>معرف الخاصية مطلوب.</value>
+  </data>
+  <data name="ResourceIdRequired" xml:space="preserve">
+    <value>معرف المورد مطلوب.</value>
+  </data>
+  <data name="ResourceIdPositiveInteger" xml:space="preserve">
+    <value>يجب أن يكون معرف المورد عدداً صحيحاً موجباً صالحاً.</value>
+  </data>
+  <data name="ResourceNotFound" xml:space="preserve">
+    <value>المورد غير موجود.</value>
+  </data>
+  <data name="ResourceIdGreaterThanZero" xml:space="preserve">
+    <value>يجب أن يكون معرف المورد أكبر من 0.</value>
+  </data>
+  <data name="SetIdPositiveNumber" xml:space="preserve">
+    <value>يجب أن يكون معرف المجموعة رقماً موجباً صالحاً.</value>
+  </data>
+  <data name="TemplateDataRequired" xml:space="preserve">
+    <value>بيانات القالب مطلوبة.</value>
+  </data>
+  <data name="TemplateIdPositiveInteger" xml:space="preserve">
+    <value>يجب أن يكون معرف القالب عدداً صحيحاً موجباً صالحاً.</value>
+  </data>
+  <data name="TemplateIdGreaterThanZero" xml:space="preserve">
+    <value>يجب أن يكون معرف القالب أكبر من 0.</value>
+  </data>
+  <data name="TemplateIdRequired" xml:space="preserve">
+    <value>معرف القالب مطلوب.</value>
+  </data>
+  <data name="TermUriRequired" xml:space="preserve">
+    <value>رابط المصطلح مطلوب.</value>
+  </data>
+  <data name="TermUriAbsolute" xml:space="preserve">
+    <value>يجب أن يكون رابط المصطلح رابطاً صالحاً ومطلقاً.</value>
+  </data>
+  <data name="TitleRequired" xml:space="preserve">
+    <value>العنوان مطلوب.</value>
+  </data>
+  <data name="TitleMaxLength" xml:space="preserve">
+    <value>يجب ألا يتجاوز العنوان 255 حرفاً.</value>
+  </data>
+  <data name="TypeMaxLength" xml:space="preserve">
+    <value>لا يمكن أن يتجاوز النوع 10 أحرف.</value>
+  </data>
+  <data name="TypeRequired" xml:space="preserve">
+    <value>النوع مطلوب.</value>
+  </data>
+  <data name="TypeMustBeTextUriResource" xml:space="preserve">
+    <value>يجب أن يكون النوع 'نص' أو 'رابط' أو 'مورد' 
+.</value>
+  </data>
+  <data name="UnableToMapItemSet" xml:space="preserve">
+    <value>غير قادر على تعيين معلومات مجموعة العناصر.</value>
+  </data>
+  <data name="UserIdNotEmpty" xml:space="preserve">
+    <value>لا يمكن أن يكون معرف المستخدم فارغاً.</value>
+  </data>
+  <data name="UserIdRequiredMedia" xml:space="preserve">
+    <value>معرف المستخدم مطلوب لجلب الوسائط.</value>
+  </data>
+  <data name="UserIdRequiredOwnership" xml:space="preserve">
+    <value>معرف المستخدم مطلوب للتحقق من الملكية.</value>
+  </data>
+  <data name="UserIdRequiredAuthority" xml:space="preserve">
+    <value>معرف المستخدم مطلوب للتحقق من صلاحيتك.</value>
+  </data>
+  <data name="UserIdNotFoundToken" xml:space="preserve">
+    <value>لم يتم العثور على معرف المستخدم في المفتاح.</value>
+  </data>
+  <data name="UserIdentityNotVerified" xml:space="preserve">
+    <value>تعذر التحقق من هوية المستخدم.</value>
+  </data>
+  <data name="UserIdRequiredLogout" xml:space="preserve">
+    <value>معرف المستخدم مطلوب لتسجيل الخروج.</value>
+  </data>
+  <data name="UserIdRequiredPublicSets" xml:space="preserve">
+    <value>معرف المستخدم مطلوب لجلب المجموعات العامة ذات الصلة.</value>
+  </data>
+  <data name="UserIdRequired" xml:space="preserve">
+    <value>معرف المستخدم مطلوب.</value>
+  </data>
+  <data name="ValidMediaIdDownload" xml:space="preserve">
+    <value>مطلوب معرف وسائط صالح لتنزيل الملف.</value>
+  </data>
+  <data name="ValidMediaIdRequired" xml:space="preserve">
+    <value>مطلوب معرف وسائط صالح.</value>
+  </data>
+  <data name="ValueDataRequired" xml:space="preserve">
+    <value>بيانات القيمة مطلوبة.</value>
+  </data>
+  <data name="ValidationFailedPropertyNotValid" xml:space="preserve">
+    <value>فشل التحقق من القيمة: الخاصية غير صالحة لهذا العنصر.</value>
+  </data>
+  <data name="ValidationFailedPropertyRequired" xml:space="preserve">
+    <value>فشل التحقق من القيمة: الخاصية مطلوبة لهذا العنصر.</value>
+  </data>
+  <data name="ValidationFailedRefPropertyNotExist" xml:space="preserve">
+    <value>فشل التحقق من القيمة: الخاصية المشار إليها غير موجودة.</value>
+  </data>
+  <data name="ValidationFailedTargetResourceNotExist" xml:space="preserve">
+    <value>فشل التحقق من القيمة: المورد المستهدف غير موجود.</value>
+  </data>
+  <data name="ValidationFailedValueAlreadyExists" xml:space="preserve">
+    <value>فشل التحقق من القيمة: هذه القيمة المحددة موجودة بالفعل لهذه الخاصية في المورد المستهدف.</value>
+  </data>
+  <data name="ValueIdGreaterThanZero" xml:space="preserve">
+    <value>يجب أن يكون معرف القيمة أكبر من 0.</value>
+  </data>
+  <data name="ValuesListNotEmpty" xml:space="preserve">
+    <value>لا يمكن أن تكون قائمة القيم فارغة.</value>
+  </data>
+  <data name="ValuesListNotNull" xml:space="preserve">
+    <value>لا يمكن أن تكون قائمة القيم فارغة.</value>
+  </data>
+  <data name="VocabularyIdRequired" xml:space="preserve">
+    <value>معرف المفردات مطلوب.</value>
+  </data>
+  <data name="VocabularyIdPositiveInteger" xml:space="preserve">
+    <value>يجب أن يكون معرف المفردات عدداً صحيحاً موجباً صالحاً.</value>
+  </data>
+  <data name="VocabularyIdValid" xml:space="preserve">
+    <value>يجب أن يكون معرف المفردات صالحاً.</value>
+  </data>
+  <data name="NotAuthorizedUpdateItemSet" xml:space="preserve">
+    <value>أنت غير مصرح لك بتحديث مجموعة العناصر هذه.</value>
+  </data>
+  <data name="NotAuthorizedUpdateItem" xml:space="preserve">
+    <value>أنت غير مصرح لك بتحديث هذا العنصر.</value>
+  </data>
+  <data name="NotAuthorizedUpdateMedia" xml:space="preserve">
+    <value>أنت غير مصرح لك بتحديث هذه الوسائط.</value>
+  </data>
+  <data name="NoPermissionDeleteFile" xml:space="preserve">
+    <value>ليس لديك إذن لحذف هذا الملف.</value>
+  </data>
+</root>
