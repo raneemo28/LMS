@@ -10,6 +10,8 @@ using LMS.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.API.Controllers;
 
@@ -19,19 +21,20 @@ namespace LMS.API.Controllers;
 public class ItemsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IStringLocalizer<ErrorMessages> _localizer;
 
-    public ItemsController(IMediator mediator)
+    public ItemsController(IMediator mediator, IStringLocalizer<ErrorMessages> localizer)
     {
         _mediator = mediator;
+        _localizer = localizer;
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateItemDto dto)
     {
         var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(ownerId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(ownerId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new CreateItemCommand(dto, ownerId));
         return CreatedAtAction(nameof(GetById), new { id = result }, result);
     }
@@ -39,13 +42,11 @@ public class ItemsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateItemDto dto)
     {
-        if (id != dto.Id)
-            return BadRequest("ID mismatch.");
-
+        if (id != dto.Id) return BadRequest(_localizer["IdMismatch"]);
+        
         var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(ownerId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(ownerId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new UpdateItemCommand(dto, ownerId));
         return result ? NoContent() : NotFound();
     }
@@ -54,9 +55,8 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(ownerId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(ownerId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new DeleteItemCommand(id, ownerId));
         return result ? NoContent() : NotFound();
     }
@@ -74,9 +74,8 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] int? templateId = null)
     {
         Expression<Func<Item, bool>> filter = x => true;
-        if (templateId.HasValue)
-            filter = x => x.TemplateId == templateId.Value;
-
+        if (templateId.HasValue) filter = x => x.TemplateId == templateId.Value;
+        
         var result = await _mediator.Send(new GetItemsWithFullDataWithConditionQuery(filter));
         return Ok(result);
     }

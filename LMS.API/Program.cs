@@ -4,10 +4,30 @@ using LMS.Infra.ServiceStorage;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using LMS.API.middlewares;
+// --- ADDED FOR LOCALIZATION ---
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
+// --------------------------------
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- ADDED FOR LOCALIZATION ---
+// 1. Tell ASP.NET Core where to find the .resx files
+// FIX: Removed options.ResourcesPath = "shared_resources"
+builder.Services.AddLocalization();
+// --------------------------------
+
 builder.Services.AddControllers()
+    // --- ADDED FOR LOCALIZATION ---
+    // 2. Enable localization for DataAnnotations (if you use them in DTOs)
+    .AddDataAnnotationsLocalization(options =>
+    {
+        options.DataAnnotationLocalizerProvider = (type, factory) =>
+            factory.Create(typeof(ErrorMessages));
+    })
+    // --------------------------------
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
@@ -49,8 +69,35 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// --- ADDED FOR LOCALIZATION ---
+// 3. Configure supported languages and how to detect them
+var supportedCultures = new[] { "en-US", "ar-SA" };
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"), // Fallback language
+    SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
+    SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList()
+};
+
+// Allow testing via URL query string (e.g., ?lang=ar-SA) in addition to HTTP Headers
+localizationOptions.RequestCultureProviders.Insert(0, 
+    new QueryStringRequestCultureProvider() 
+    { 
+        QueryStringKey = "lang", 
+        UIQueryStringKey = "lang" 
+    });
+
+builder.Services.AddSingleton(localizationOptions);
+// --------------------------------
 
 var app = builder.Build();
+
+// --- ADDED FOR LOCALIZATION ---
+// 4. Apply the localization middleware. 
+// MUST be placed BEFORE UseExceptionHandler so exceptions can be localized if needed.
+var localizeOptions = app.Services.GetRequiredService<RequestLocalizationOptions>();
+app.UseRequestLocalization(localizeOptions);
+// --------------------------------
 
 // Safe, Scoped DB Initialization
 // Skipped during integration tests — TestDatabaseInitializer handles seeding instead
@@ -80,11 +127,11 @@ app.UseExceptionHandler(errorApp =>
             {
                 title = "Validation Error",
                 status = 400,
-                message = exception?.Message,
+                message = exception?.Message, // This will already be localized!
                 detail = exception?.StackTrace,
                 errors = vex.Errors
                             .GroupBy(e => e.PropertyName)
-                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
+                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()) // These will already be localized!
             });
             return;
         }
@@ -92,28 +139,28 @@ app.UseExceptionHandler(errorApp =>
         if (exception is UnauthorizedAccessException)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new { title = "Forbidden", status = 403, message = "Access denied." });
+            await context.Response.WriteAsJsonAsync(new { title = "Forbidden", status = 403, message = exception.Message }); // Localized
             return;
         }
 
         if (exception is KeyNotFoundException)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message });
+            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message }); // Localized
             return;
         }
 
         if (exception is FileNotFoundException)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message });
+            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message }); // Localized
             return;
         }
 
         if (exception is InvalidOperationException)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new { title = "Bad Request", status = 400, message = exception.Message });
+            await context.Response.WriteAsJsonAsync(new { title = "Bad Request", status = 400, message = exception.Message }); // Localized
             return;
         }
 
@@ -143,4 +190,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
+
 public partial class Program { }

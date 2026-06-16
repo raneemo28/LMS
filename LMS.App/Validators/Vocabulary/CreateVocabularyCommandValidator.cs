@@ -1,23 +1,25 @@
 using FluentValidation;
 using LMS.App.Features.Vocabularies.Commands.CreateVocabulary;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.Vocabulary;
 
 public class CreateVocabularyCommandValidator : AbstractValidator<CreateVocabularyCommand>
 {
-    public CreateVocabularyCommandValidator()
+    public CreateVocabularyCommandValidator(IStringLocalizer<ErrorMessages> localizer)
     {
         RuleFor(x => x.Dto.Prefix)
-            .NotEmpty().WithMessage("Prefix is required.")
-            .MaximumLength(20).WithMessage("Prefix cannot exceed 20 characters.");
+            .NotEmpty().WithMessage(localizer["PrefixRequired"])
+            .MaximumLength(20).WithMessage(localizer["PrefixMaxLength"]);
 
         RuleFor(x => x.Dto.NamespaceUri)
-            .NotEmpty().WithMessage("NamespaceUri is required.")
+            .NotEmpty().WithMessage(localizer["NamespaceUriRequired"])
             .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
-            .WithMessage("NamespaceUri must be a valid absolute URI.");
+            .WithMessage(localizer["NamespaceUriAbsolute"]);
 
         RuleFor(x => x.Dto.Label)
-            .NotEmpty().WithMessage("Label is required.")
-            .MaximumLength(100).WithMessage("Label cannot exceed 100 characters.");
+            .NotEmpty().WithMessage(localizer["LabelRequired"])
+            .MaximumLength(100).WithMessage(localizer["LabelCannotExceed100"]);
     }
 }

@@ -1,14 +1,16 @@
 using FluentValidation;
 using LMS.App.features.Medias.Queries.GetMediaByOwner;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.Media;
 
 public class GetMediaByOwnerQueryValidator : AbstractValidator<GetMediaByOwnerQuery>
 {
-    public GetMediaByOwnerQueryValidator()
+    public GetMediaByOwnerQueryValidator(IStringLocalizer<ErrorMessages> localizer)
     {
         RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage("User ID is required to fetch media.")
-            .MinimumLength(5).WithMessage("Invalid User ID format.");
+            .NotEmpty().WithMessage(localizer["UserIdRequiredMedia"])
+            .MinimumLength(5).WithMessage(localizer["InvalidUserIdFormat"]);
     }
 }
