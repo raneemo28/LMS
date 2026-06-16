@@ -12,6 +12,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.API.Controllers;
 
@@ -21,15 +23,24 @@ namespace LMS.API.Controllers;
 public class MediaController : ControllerBase
 {
     private readonly IMediator _mediator;
-    public MediaController(IMediator mediator) => _mediator = mediator;
+    private readonly IStringLocalizer<ErrorMessages> _localizer;
+    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; // ADDED
+
+    public MediaController(
+        IMediator mediator, 
+        IStringLocalizer<ErrorMessages> localizer,
+        IStringLocalizer<SharedResource> sharedLocalizer) // ADDED
+    {
+        _mediator = mediator;
+        _localizer = localizer;
+        _sharedLocalizer = sharedLocalizer; // ADDED
+    }
 
     [HttpPost]
     public async Task<IActionResult> CreateMedia([FromBody] CreateMediaDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
         var result = await _mediator.Send(new CreateMediaCommand(dto, userId));
         return CreatedAtAction(nameof(GetMediaWithMetadata), new { mediaId = result }, result);
     }
@@ -38,59 +49,44 @@ public class MediaController : ControllerBase
     [RequestSizeLimit(52428800)]
     public async Task<IActionResult> UploadMedia([FromForm] int mediaId, IFormFile file)
     {
-        if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded.");
-
+        if (file == null || file.Length == 0) return BadRequest(_localizer["NoFileUploaded"]);
         using var fileStream = file.OpenReadStream();
-        var storagePath = await _mediator.Send(new UploadMediaFileCommand(
-            mediaId, fileStream, file.ContentType, file.Length, file.FileName));
-
+        var storagePath = await _mediator.Send(new UploadMediaFileCommand(mediaId, fileStream, file.ContentType, file.Length, file.FileName));
         return Ok(new { path = storagePath });
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> EditMedia(int id, [FromBody] UpdateMediaDto dto)
     {
-        if (id != dto.Id)
-            return BadRequest("Media ID in URL does not match ID in body.");
-
+        if (id != dto.Id) return BadRequest(_localizer["MediaIdMismatch"]);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
         var result = await _mediator.Send(new UpdateMediaCommand(dto, userId));
-        return result
-            ? Ok(new { message = "Media updated successfully." })
-            : NotFound();
+        return result ? Ok(new { message = _sharedLocalizer["Success"] }) : NotFound(); // CHANGED
     }
 
     [HttpDelete("{mediaId}")]
     public async Task<IActionResult> DeleteMedia([FromRoute] int mediaId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User identity could not be verified.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdentityNotVerified"]);
         bool isAdmin = User.IsInRole("Admin");
         var result = await _mediator.Send(new DeleteMediaCommand(mediaId, userId, isAdmin));
-        return result
-            ? Ok(new { message = "Media deleted successfully." })
-            : BadRequest("Failed to delete media.");
+        return result ? Ok(new { message = _sharedLocalizer["Success"] }) : BadRequest(_localizer["FailedToDeleteMedia"]); // CHANGED
     }
 
     [HttpGet("item/{itemId:int}")]
     public async Task<IActionResult> GetMediaByItemId(int itemId)
     {
         var result = await _mediator.Send(new GetMediaByItemIdQuery(itemId));
-        return result != null ? Ok(result) : NotFound($"No media found for item {itemId}.");
+        return result != null ? Ok(result) : NotFound(_localizer["MediaNotFound"]);
     }
 
     [HttpGet("download/{mediaId:int}")]
     public async Task<IActionResult> DownloadMedia(int mediaId)
     {
         var result = await _mediator.Send(new DownloadMediaCommand(mediaId));
-        if (result?.Stream == null)
-            return NotFound($"Media with ID {mediaId} was not found.");
+        if (result?.Stream == null) return NotFound(_localizer["MediaNotFound"]);
         return File(result.Stream, result.ContentType, result.FileName);
     }
 

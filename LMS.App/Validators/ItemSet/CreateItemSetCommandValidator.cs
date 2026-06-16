@@ -1,23 +1,21 @@
 using FluentValidation;
 using LMS.App.Features.ItemSets.Commands.CreateItemSets;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.ItemSet;
 
 public class CreateItemSetCommandValidator : AbstractValidator<CreateItemSetCommand>
 {
-    public CreateItemSetCommandValidator()
+    public CreateItemSetCommandValidator(IStringLocalizer<ErrorMessages> localizer)
     {
-        RuleFor(x => x.OwnerId)
-            .NotEmpty().WithMessage("OwnerId is required.");
-
-        RuleFor(x => x.Dto).NotNull().WithMessage("ItemSet data is required.");
-
+        RuleFor(x => x.OwnerId).NotEmpty().WithMessage(localizer["OwnerIdRequired"]);
+        RuleFor(x => x.Dto).NotNull().WithMessage(localizer["ItemSetDataRequired"]);
         RuleFor(x => x.Dto.Title)
-            .NotEmpty().WithMessage("Title is required.")
-            .MaximumLength(255).WithMessage("Title must not exceed 255 characters.");
-
+            .NotEmpty().WithMessage(localizer["TitleRequired"])
+            .MaximumLength(255).WithMessage(localizer["TitleMaxLength"]);
         RuleFor(x => x.Dto.Description)
-            .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
+            .MaximumLength(1000).WithMessage(localizer["DescriptionMaxLength"])
             .When(x => x.Dto.Description != null);
     }
 }

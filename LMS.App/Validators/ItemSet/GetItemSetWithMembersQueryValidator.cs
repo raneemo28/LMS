@@ -1,12 +1,15 @@
 using FluentValidation;
 using LMS.App.Features.ItemSets.Queries.GetItemSetWithMembers;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.ItemSets;
+
 public class GetItemSetWithMembersQueryValidator : AbstractValidator<GetItemSetWithMembersQuery>
 {
-    public GetItemSetWithMembersQueryValidator()
+    public GetItemSetWithMembersQueryValidator(IStringLocalizer<ErrorMessages> localizer)
     {
-        RuleFor(x => x.Id).NotEmpty().WithMessage("ItemSet ID is required.")
-            .GreaterThan(0).WithMessage("ItemSet ID must be a valid positive number.");
+        RuleFor(x => x.Id).NotEmpty().WithMessage(localizer["ItemSetIdRequired"])
+            .GreaterThan(0).WithMessage(localizer["ItemSetIdPositiveNumber"]);
     }
 }

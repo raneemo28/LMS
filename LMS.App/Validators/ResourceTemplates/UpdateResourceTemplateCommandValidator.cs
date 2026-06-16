@@ -1,19 +1,16 @@
 using FluentValidation;
 using LMS.App.Features.ResourceTemplates.Commands.UpdateResourceTemplate;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.ResourceTemplates;
 
 public class UpdateResourceTemplateCommandValidator : AbstractValidator<UpdateResourceTemplateCommand>
 {
-    public UpdateResourceTemplateCommandValidator()
+    public UpdateResourceTemplateCommandValidator(IStringLocalizer<ErrorMessages> localizer)
     {
-        RuleFor(x => x.Id)
-            .GreaterThan(0).WithMessage("Template ID must be greater than 0.");
-
-        RuleFor(x => x.Dto).NotNull().WithMessage("Template data is required.");
-
-        RuleFor(x => x.Dto.Label)
-            .NotEmpty().WithMessage("Label is required.")
-            .MaximumLength(255).WithMessage("Label must not exceed 255 characters.");
+        RuleFor(x => x.Id).GreaterThan(0).WithMessage(localizer["TemplateIdGreaterThanZero"]);
+        RuleFor(x => x.Dto).NotNull().WithMessage(localizer["TemplateDataRequired"]);
+        RuleFor(x => x.Dto.Label).NotEmpty().WithMessage(localizer["LabelRequired"]).MaximumLength(255).WithMessage(localizer["LabelMaxLength"]);
     }
 }

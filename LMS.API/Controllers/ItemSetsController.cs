@@ -12,6 +12,8 @@ using LMS.App.Features.Queries.ItemSets.CheckItemSetOwnership;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.API.Controllers;
 
@@ -21,19 +23,20 @@ namespace LMS.API.Controllers;
 public class ItemSetsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IStringLocalizer<ErrorMessages> _localizer;
 
-    public ItemSetsController(IMediator mediator)
+    public ItemSetsController(IMediator mediator, IStringLocalizer<ErrorMessages> localizer)
     {
         _mediator = mediator;
+        _localizer = localizer;
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateItemSetDto dto)
     {
         var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(ownerId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(ownerId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new CreateItemSetCommand(dto, ownerId));
         return CreatedAtAction(nameof(GetById), new { id = result }, result);
     }
@@ -41,13 +44,11 @@ public class ItemSetsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateItemSetDto dto)
     {
-        if (id != dto.Id)
-            return BadRequest("ID mismatch.");
-
+        if (id != dto.Id) return BadRequest(_localizer["IdMismatch"]);
+        
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
         var result = await _mediator.Send(new UpdateItemSetCommand(dto, userId, userRoles));
         return result ? NoContent() : NotFound();
@@ -57,9 +58,8 @@ public class ItemSetsController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
         var result = await _mediator.Send(new DeleteItemSetCommand(id, userId, userRoles));
         return result ? NoContent() : NotFound();
@@ -69,9 +69,8 @@ public class ItemSetsController : ControllerBase
     public async Task<IActionResult> AddItemToSet(int setId, int itemId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new AddItemToSetCommand(setId, itemId, userId));
         return result ? Ok() : NotFound();
     }
@@ -80,28 +79,22 @@ public class ItemSetsController : ControllerBase
     public async Task<IActionResult> RemoveItemFromSet(int setId, int itemId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new RemoveItemFromSetCommand(setId, itemId, userId));
         return result ? NoContent() : NotFound();
     }
 
     [AllowAnonymous]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var result = await _mediator.Send(new GetAllItemSetsQuery());
-        return Ok(result);
-    }
+    public async Task<IActionResult> GetAll() => Ok(await _mediator.Send(new GetAllItemSetsQuery()));
 
     [AllowAnonymous]
     [HttpGet("public")]
     public async Task<IActionResult> GetPublicSets()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "Anonymous";
-        var result = await _mediator.Send(new GetPublicSetsAsyncQuery(userId));
-        return Ok(result);
+        return Ok(await _mediator.Send(new GetPublicSetsAsyncQuery(userId)));
     }
 
     [AllowAnonymous]
@@ -116,9 +109,8 @@ public class ItemSetsController : ControllerBase
     public async Task<IActionResult> CheckOwnership(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User ID not found in token.");
-
+        if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
+        
         var result = await _mediator.Send(new CheckItemSetOwnershipQuery(id, userId));
         return Ok(result);
     }

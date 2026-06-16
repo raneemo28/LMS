@@ -1,19 +1,18 @@
 using FluentValidation;
 using LMS.App.Features.Media.Commands.CreateMediaCommand;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.Media;
 
 public class CreateMediaCommandValidator : AbstractValidator<CreateMediaCommand>
 {
-    public CreateMediaCommandValidator()
+    public CreateMediaCommandValidator(IStringLocalizer<ErrorMessages> localizer)
     {
-        RuleFor(x => x.OwnerId)
-            .NotEmpty().WithMessage("OwnerId is required.");
-
-        RuleFor(x => x.Dto).NotNull().WithMessage("Media data is required.");
-
+        RuleFor(x => x.OwnerId).NotEmpty().WithMessage(localizer["OwnerIdRequired"]);
+        RuleFor(x => x.Dto).NotNull().WithMessage(localizer["MediaDataRequired"]);
         RuleFor(x => x.Dto.FileName)
-            .NotEmpty().WithMessage("FileName is required.")
-            .MaximumLength(255).WithMessage("FileName must not exceed 255 characters.");
+            .NotEmpty().WithMessage(localizer["FileNameRequired"])
+            .MaximumLength(255).WithMessage(localizer["FileNameMaxLength"]);
     }
 }

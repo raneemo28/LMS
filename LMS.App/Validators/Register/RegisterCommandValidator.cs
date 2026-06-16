@@ -1,33 +1,35 @@
 using FluentValidation;
 using LMS.App.Features.Register.Commands;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.Register;
 
 public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
-    public RegisterCommandValidator()
+    public RegisterCommandValidator(IStringLocalizer<ErrorMessages> localizer)
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("A valid email address is required.");
+            .NotEmpty().WithMessage(localizer["EmailRequired"])
+            .EmailAddress().WithMessage(localizer["ValidEmailRequired"]);
 
         RuleFor(x => x.FirstName)
-            .NotEmpty().WithMessage("First Name is required.")
-            .MaximumLength(50).WithMessage("First Name must not exceed 50 characters.");
+            .NotEmpty().WithMessage(localizer["FirstNameRequired"])
+            .MaximumLength(50).WithMessage(localizer["FirstNameMaxLength"]);
 
         RuleFor(x => x.LastName)
-            .NotEmpty().WithMessage("Last Name is required.")
-            .MaximumLength(50).WithMessage("Last Name must not exceed 50 characters.");
+            .NotEmpty().WithMessage(localizer["LastNameRequired"])
+            .MaximumLength(50).WithMessage(localizer["LastNameMaxLength"]);
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is required.")
-            .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
-            .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
-            .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
-            .Matches("[0-9]").WithMessage("Password must contain at least one digit.")
-            .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one non-alphanumeric character.");
+            .NotEmpty().WithMessage(localizer["PasswordRequired"])
+            .MinimumLength(8).WithMessage(localizer["PasswordMinLength"])
+            .Matches("[A-Z]").WithMessage(localizer["PasswordRequireUppercase"])
+            .Matches("[a-z]").WithMessage(localizer["PasswordRequireLowercase"])
+            .Matches("[0-9]").WithMessage(localizer["PasswordRequireDigit"])
+            .Matches("[^a-zA-Z0-9]").WithMessage(localizer["PasswordRequireNonAlphanumeric"]);
 
         RuleFor(x => x.ConfirmPassword)
-            .Equal(x => x.Password).WithMessage("Passwords do not match.");
+            .Equal(x => x.Password).WithMessage(localizer["PasswordsDoNotMatch"]);
     }
 }

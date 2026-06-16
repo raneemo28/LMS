@@ -1,21 +1,23 @@
 using FluentValidation;
 using LMS.App.Features.Login.Command;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Validators.Login;
 
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
-    public LoginCommandValidator()
+    public LoginCommandValidator(IStringLocalizer<ErrorMessages> localizer)
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("A valid email address is required.");
+            .NotEmpty().WithMessage(localizer["EmailRequired"])
+            .EmailAddress().WithMessage(localizer["ValidEmailRequired"]);
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is required.")
-            .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
-            .Matches(@"[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
-            .Matches(@"[a-z]").WithMessage("Password must contain at least one lowercase letter.")
-            .Matches(@"\d").WithMessage("Password must contain at least one digit.");
+            .NotEmpty().WithMessage(localizer["PasswordRequired"])
+            .MinimumLength(8).WithMessage(localizer["PasswordMinLength"])
+            .Matches(@"[A-Z]").WithMessage(localizer["PasswordRequireUppercase"])
+            .Matches(@"[a-z]").WithMessage(localizer["PasswordRequireLowercase"])
+            .Matches(@"\d").WithMessage(localizer["PasswordRequireDigit"]);
     }
 }
