@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.Extensions.Localization;
 using LMS.App.shared_resources;
-
+using LMS.App.Features.Medias.Queries.GetAllMedias;
 namespace LMS.API.Controllers;
 
 [ApiController]
@@ -34,6 +34,14 @@ public class MediaController : ControllerBase
         _mediator = mediator;
         _localizer = localizer;
         _sharedLocalizer = sharedLocalizer; // ADDED
+    }
+    
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _mediator.Send(new GetAllMediasQuery());
+        return Ok(result);
     }
 
     [HttpPost]

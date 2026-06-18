@@ -8,7 +8,7 @@ using LMS.App.DTOs.Value;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Localization;
 using LMS.App.shared_resources;
-
+using LMS.App.Features.Resources.Queries.GetAllResources;
 namespace LMS.API.Controllers;
 
 [Authorize]
@@ -29,7 +29,14 @@ public class ResourceController : ControllerBase
         _localizer = localizer;
         _sharedLocalizer = sharedLocalizer; // ADDED
     }
-
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _mediator.Send(new GetAllResourcesQuery());
+        return Ok(result);
+    }
+    
     [HttpPost("{resourceId}/values")]
     public async Task<IActionResult> AddValues([FromRoute] int resourceId, [FromBody] List<CreateResourceValueDto> values)
     {
