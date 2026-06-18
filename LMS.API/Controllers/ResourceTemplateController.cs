@@ -12,6 +12,7 @@ using LMS.App.DTOs.ResourceProperty;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Localization;
 using LMS.App.shared_resources;
+using LMS.App.Features.ResourceTemplates.Queries.GetAllResourceTemplates;
 
 namespace LMS.API.Controllers;
 
@@ -32,6 +33,14 @@ public class ResourceTemplateController : ControllerBase
         _mediator = mediator;
         _localizer = localizer;
         _sharedLocalizer = sharedLocalizer; // ADDED
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _mediator.Send(new GetAllResourceTemplatesQuery());
+        return Ok(result);
     }
 
     [HttpPost]
