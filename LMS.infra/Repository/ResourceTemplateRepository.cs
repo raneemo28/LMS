@@ -79,5 +79,14 @@ namespace LMS.Infra.Repository
 
             return template;
         }
+         public async Task<IEnumerable<ResourceTemplate>> GetAllWithPropertiesAsync()
+        {
+            return await _context.ResourceTemplates
+                .Include(t => t.TemplateProperties)
+                    .ThenInclude(tp => tp.Property)
+                        .ThenInclude(p => p.Vocabulary)
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }

@@ -9,5 +9,6 @@ namespace LMS.Domain.Interfaces
         Task<ResourceTemplate?> UpdatePropertyInTemplateAsync(int templateId, int propertyId, bool isRequired,int displayOrder,string? alternateLabel);
         Task<ResourceTemplate?> GetTemplateWithPropertiesAsync(int id);
         Task<bool> IsLabelUniqueAsync(string label);
+        Task<IEnumerable<ResourceTemplate>> GetAllWithPropertiesAsync();
     }
 }

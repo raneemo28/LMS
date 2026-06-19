@@ -18,7 +18,7 @@ public class GetAllResourceTemplatesHandler : IRequestHandler<GetAllResourceTemp
 
     public async Task<IEnumerable<ResourceTemplateDto>> Handle(GetAllResourceTemplatesQuery request, CancellationToken cancellationToken)
     {
-        var templates = await _unitOfWork.ResourceTemplates.GetAllAsync();
+        var templates = await _unitOfWork.ResourceTemplates.GetAllWithPropertiesAsync();
         return _mapper.Map<IEnumerable<ResourceTemplateDto>>(templates);
     }
 }
