@@ -23,16 +23,16 @@ public class ResourceTemplateController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IStringLocalizer<ErrorMessages> _localizer;
-    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; // ADDED
+    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; 
 
     public ResourceTemplateController(
         IMediator mediator, 
         IStringLocalizer<ErrorMessages> localizer,
-        IStringLocalizer<SharedResource> sharedLocalizer) // ADDED
+        IStringLocalizer<SharedResource> sharedLocalizer) 
     {
         _mediator = mediator;
         _localizer = localizer;
-        _sharedLocalizer = sharedLocalizer; // ADDED
+        _sharedLocalizer = sharedLocalizer; 
     }
 
     [AllowAnonymous]
@@ -62,34 +62,34 @@ public class ResourceTemplateController : ControllerBase
     public async Task<IActionResult> UpdateTemplate([FromRoute] int id, [FromBody] UpdateResourceTemplateDto dto)
     {
         var result = await _mediator.Send(new UpdateResourceTemplateCommand(id, dto));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); 
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTemplate([FromRoute] int id)
     {
         var result = await _mediator.Send(new DeleteResourceTemplateCommand(id));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); 
     }
 
     [HttpPost("{templateId}/properties")]
     public async Task<IActionResult> AddPropertiesToTemplate([FromRoute] int templateId, [FromBody] List<PropertyToTemplateInput> properties)
     {
         var result = await _mediator.Send(new AddPropertiesToTemplateCommand(templateId, properties));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); 
     }
 
     [HttpPut("{templateId}/properties/{propertyId}")]
     public async Task<IActionResult> UpdatePropertyInTemplate([FromRoute] int templateId, [FromRoute] int propertyId, [FromBody] UpdatePropertyInTemplateDto dto)
     {
         var result = await _mediator.Send(new UpdatePropertyInTemplateCommand(templateId, propertyId, dto.IsRequired, dto.DisplayOrder, dto.AlternateLabel));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); 
     }
 
     [HttpDelete("{templateId}/properties/{propertyId}")]
     public async Task<IActionResult> RemovePropertyFromTemplate([FromRoute] int templateId, [FromRoute] int propertyId)
     {
         var result = await _mediator.Send(new RemovePropertyFromTemplateCommand(templateId, propertyId));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : BadRequest(new { Success = false, Message = _sharedLocalizer["Error"] }); 
     }
 }

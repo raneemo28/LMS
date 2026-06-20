@@ -1,5 +1,5 @@
 using AutoMapper;
-using LMS.Domain.Entities;  // This brings Media entity into scope
+using LMS.Domain.Entities;  
 using LMS.Domain.Interfaces;
 using MediatR;
 
@@ -18,7 +18,6 @@ public class CreateMediaHandler : IRequestHandler<CreateMediaCommand, int>
 
     public async Task<int> Handle(CreateMediaCommand request, CancellationToken cancellationToken)
     {
-        // Use fully qualified name to avoid namespace conflict
         var media = _mapper.Map<LMS.Domain.Entities.Media>(request.Dto);
         media.Type = "Media";
         media.OwnerId = request.OwnerId;

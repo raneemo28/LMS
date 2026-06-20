@@ -23,16 +23,16 @@ public class VocabulariesController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IStringLocalizer<ErrorMessages> _localizer;
-    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; // ADDED
+    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; 
 
     public VocabulariesController(
         IMediator mediator, 
         IStringLocalizer<ErrorMessages> localizer,
-        IStringLocalizer<SharedResource> sharedLocalizer) // ADDED
+        IStringLocalizer<SharedResource> sharedLocalizer) 
     {
         _mediator = mediator;
         _localizer = localizer;
-        _sharedLocalizer = sharedLocalizer; // ADDED
+        _sharedLocalizer = sharedLocalizer; 
     }
 
     [AllowAnonymous]
@@ -64,7 +64,7 @@ public class VocabulariesController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpdateVocabularyDto dto)
     {
         var result = await _mediator.Send(new UpdateVocabularyCommand(id, dto));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["ResourceNotFound"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["ResourceNotFound"] }); 
     }
 
     [Authorize(Roles = "Admin")]
@@ -72,7 +72,7 @@ public class VocabulariesController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteVocabularyCommand(id));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["ResourceNotFound"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["ResourceNotFound"] }); 
     }
 
     [Authorize(Roles = "Admin")]
@@ -80,7 +80,7 @@ public class VocabulariesController : ControllerBase
     public async Task<IActionResult> CreateProperty(int vocabularyId, [FromBody] CreatePropertyDto dto)
     {
         var id = await _mediator.Send(new CreatePropertyCommand(vocabularyId, dto));
-        return CreatedAtAction(nameof(GetById), new { id = vocabularyId }, new { PropertyId = id, Success = true, Message = _sharedLocalizer["Success"] }); // CHANGED
+        return CreatedAtAction(nameof(GetById), new { id = vocabularyId }, new { PropertyId = id, Success = true, Message = _sharedLocalizer["Success"] }); 
     }
 
     [Authorize(Roles = "Admin")]
@@ -88,7 +88,7 @@ public class VocabulariesController : ControllerBase
     public async Task<IActionResult> UpdateProperty(int propertyId, [FromBody] UpdatePropertyDto dto)
     {
         var result = await _mediator.Send(new UpdatePropertyCommand(propertyId, dto));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["ResourceNotFound"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["ResourceNotFound"] }); 
     }
 
     [Authorize(Roles = "Admin")]
@@ -96,6 +96,6 @@ public class VocabulariesController : ControllerBase
     public async Task<IActionResult> DeleteProperty(int propertyId)
     {
         var result = await _mediator.Send(new DeletePropertyCommand(propertyId));
-        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["CannotDeleteLinkedProperty"] }); // CHANGED
+        return result ? Ok(new { Success = true, Message = _sharedLocalizer["Success"] }) : NotFound(new { Success = false, Message = _localizer["CannotDeleteLinkedProperty"] }); 
     }
 }
