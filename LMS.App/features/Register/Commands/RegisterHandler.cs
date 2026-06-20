@@ -5,6 +5,8 @@ using LMS.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
+using LMS.App.shared_resources;
 
 namespace LMS.App.Features.Register.Commands;
 
@@ -15,6 +17,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
     private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
     private readonly IJwtService _jwtService;
+    private readonly IStringLocalizer<ErrorMessages> _localizer;
     private const string RoleName = "Member";
 
     public RegisterHandler(
@@ -22,19 +25,21 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
         RoleManager<IdentityRole> roleManager,
         IConfiguration configuration,
         IMapper mapper,
-        IJwtService jwtService)
+        IJwtService jwtService,
+        IStringLocalizer<ErrorMessages> localizer)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
         _mapper = mapper;
         _jwtService = jwtService;
+        _localizer = localizer;
     }
 
     public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         var user = _mapper.Map<ApplicationUser>(request)
-            ?? throw new InvalidOperationException("Failed to map application user.");
+            ?? throw new InvalidOperationException(_localizer["FailedToMapApplicationUser"]);
 
         var result = await _userManager.CreateAsync(user, request.Password);
 
@@ -45,7 +50,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
             {
                 Email   = request.Email,
                 Success = false,
-                Message = $"Registration failed: {errors}"
+                Message = $"{_localizer["RegistrationFailed"]} {errors}"
             };
         }
 
@@ -61,7 +66,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
             Token   = token,
             Role    = RoleName,
             Success = true,
-            Message = "Registration successful."
+            Message = _localizer["RegistrationSuccessful"]
         };
     }
 }

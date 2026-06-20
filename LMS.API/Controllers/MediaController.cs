@@ -24,16 +24,16 @@ public class MediaController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IStringLocalizer<ErrorMessages> _localizer;
-    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; // ADDED
+    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; 
 
     public MediaController(
         IMediator mediator, 
         IStringLocalizer<ErrorMessages> localizer,
-        IStringLocalizer<SharedResource> sharedLocalizer) // ADDED
+        IStringLocalizer<SharedResource> sharedLocalizer) 
     {
         _mediator = mediator;
         _localizer = localizer;
-        _sharedLocalizer = sharedLocalizer; // ADDED
+        _sharedLocalizer = sharedLocalizer; 
     }
     
     [AllowAnonymous]
@@ -70,7 +70,7 @@ public class MediaController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdNotFoundToken"]);
         var result = await _mediator.Send(new UpdateMediaCommand(dto, userId));
-        return result ? Ok(new { message = _sharedLocalizer["Success"] }) : NotFound(); // CHANGED
+        return result ? Ok(new { message = _sharedLocalizer["Success"] }) : NotFound(); 
     }
 
     [HttpDelete("{mediaId}")]
@@ -80,7 +80,7 @@ public class MediaController : ControllerBase
         if (string.IsNullOrEmpty(userId)) return Unauthorized(_localizer["UserIdentityNotVerified"]);
         bool isAdmin = User.IsInRole("Admin");
         var result = await _mediator.Send(new DeleteMediaCommand(mediaId, userId, isAdmin));
-        return result ? Ok(new { message = _sharedLocalizer["Success"] }) : BadRequest(_localizer["FailedToDeleteMedia"]); // CHANGED
+        return result ? Ok(new { message = _sharedLocalizer["Success"] }) : BadRequest(_localizer["FailedToDeleteMedia"]); 
     }
 
     [HttpGet("item/{itemId:int}")]

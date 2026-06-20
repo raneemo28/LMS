@@ -18,16 +18,16 @@ public class ResourceController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IStringLocalizer<ErrorMessages> _localizer;
-    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; // ADDED
+    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; 
 
     public ResourceController(
         IMediator mediator, 
         IStringLocalizer<ErrorMessages> localizer,
-        IStringLocalizer<SharedResource> sharedLocalizer) // ADDED
+        IStringLocalizer<SharedResource> sharedLocalizer) 
     {
         _mediator = mediator;
         _localizer = localizer;
-        _sharedLocalizer = sharedLocalizer; // ADDED
+        _sharedLocalizer = sharedLocalizer; 
     }
     [AllowAnonymous]
     [HttpGet]

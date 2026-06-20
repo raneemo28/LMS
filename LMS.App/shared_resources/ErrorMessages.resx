@@ -162,4 +162,17 @@
   <data name="NotAuthorizedUpdateItem"><value>You are not authorized to update this item.</value></data>
   <data name="NotAuthorizedUpdateMedia"><value>You are not authorized to update this media.</value></data>
   <data name="NoPermissionDeleteFile"><value>You don't have permission to delete this file.</value></data>
+  <data name="RoleRequired"><value>Role is required.</value></data>
+  <data name="FailedToMapApplicationUser"><value>Failed to map application user.</value></data>
+  <data name="RegistrationFailed"><value>Registration failed:</value></data>
+  <data name="RegistrationSuccessful"><value>Registration successful.</value></data>
+  <data name="UnableToMapItemSetInfo"><value>Unable to map item set info.</value></data>
+  <data name="UserPromotedLibrarian"><value>{0} is now a Librarian.</value></data>
+  <data name="FailedToPromoteUser"><value>Failed to promote user.</value></data>
+  <data name="UserDemotedMember"><value>{0} has been demoted to Member.</value></data>
+  <data name="FailedToDemoteUser"><value>Failed to demote user.</value></data>
+  <data name="UserDeactivated"><value>{0} has been deactivated.</value></data>
+  <data name="FailedToDeactivateUser"><value>Failed to deactivate user.</value></data>
+  <data name="UserReactivated"><value>{0} has been reactivated.</value></data>
+  <data name="FailedToReactivateUser"><value>Failed to reactivate user.</value></data>
 </root>

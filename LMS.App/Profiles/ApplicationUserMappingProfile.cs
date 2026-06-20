@@ -14,7 +14,7 @@ public class ApplicationUserMappingProfile : Profile
             .ForMember(dest => dest.Token, opt => opt.Ignore())
             .ForMember(dest => dest.Success, opt => opt.Ignore())
             .ForMember(dest => dest.Message, opt => opt.Ignore())
-            .ForMember(dest => dest.Role, opt => opt.Ignore()); // Set in Handler
+            .ForMember(dest => dest.Role, opt => opt.Ignore()); 
 
         CreateMap<RegisterCommand, ApplicationUser>()
     .ForMember(dest => dest.UserName,             opt => opt.MapFrom(src => src.Email))

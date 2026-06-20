@@ -12,18 +12,18 @@ public class GetTemplateWithPropertiesHandler : IRequestHandler<GetTemplateWithP
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IStringLocalizer<ErrorMessages> _localizer;
-    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; // ADDED
+    private readonly IStringLocalizer<SharedResource> _sharedLocalizer; 
 
     public GetTemplateWithPropertiesHandler(
         IUnitOfWork unitOfWork, 
         IMapper mapper, 
         IStringLocalizer<ErrorMessages> localizer,
-        IStringLocalizer<SharedResource> sharedLocalizer) // ADDED
+        IStringLocalizer<SharedResource> sharedLocalizer) 
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _localizer = localizer;
-        _sharedLocalizer = sharedLocalizer; // ADDED
+        _sharedLocalizer = sharedLocalizer; 
     }
 
     public async Task<ResourceTemplateDto?> Handle(GetTemplateWithPropertiesQuery request, CancellationToken cancellationToken)
@@ -33,7 +33,6 @@ public class GetTemplateWithPropertiesHandler : IRequestHandler<GetTemplateWithP
         
         var dto = _mapper.Map<ResourceTemplateDto>(template);
         
-        // CHANGED: Use _sharedLocalizer for "Error"
         if (dto == null) throw new Exception(_sharedLocalizer["Error"]); 
         
         return dto;
