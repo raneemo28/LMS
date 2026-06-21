@@ -136,30 +136,6 @@ appsettings.json
 
 ---
 
-## ⚙️ Configuration
-
-Edit `LMS.API/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "LibraryConnection": "Server=.;Database=DLMS_Library_Metadata;Trusted_Connection=True;TrustServerCertificate=True",
-    "IdentityConnection": "Server=.;Database=DLMS_Identity_Security;Trusted_Connection=True;TrustServerCertificate=True"
-  },
-  "LoggingService": {
-    "BaseUrl": "http://localhost:5050"
-  },
-  "Jwt": {
-    "Key": "<your-secret-key-min-32-chars>",
-    "Issuer": "LMS.API",
-    "Audience": "LMS.Users"
-  },
-  "Storage": {
-    "BasePath": "wwwroot/uploads"
-  }
-}
-```
-
 ### Password Policy (ASP.NET Core Identity)
 - Minimum **8 characters**
 - At least one **digit**
