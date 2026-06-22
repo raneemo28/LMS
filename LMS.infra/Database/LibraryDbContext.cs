@@ -68,7 +68,15 @@ public class LibraryDbContext : DbContext
                     LocalName = "hasThumbnail",
                     TermUri = "http://schema.lms.com/system#hasThumbnail",
                     VocabularyId = 1
-                }
+                },
+                new Property
+               {
+            Id = 3,
+            Label = "Is Member Of",
+            LocalName = "isMemberOf",
+            TermUri = "http://schema.lms.com/system#isMemberOf",
+            VocabularyId = 1
+            }
             );
         });
 
