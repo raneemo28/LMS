@@ -30,6 +30,19 @@ public class ItemMappingProfile : Profile
             .ForMember(d => d.ModifiedAt, opt => opt.Ignore())
             .ForMember(d => d.ModifiedBy, opt => opt.Ignore())
             .ForMember(d => d.Template,   opt => opt.Ignore())
-            .ForMember(d => d.Values,     opt => opt.MapFrom(s => s.Values));
+            .ForMember(d => d.Values,     opt => opt.MapFrom(s => s.Values))
+            // =====================================================================
+            // THE EF CORE FIX: 
+            // Because AutoMapper clears the collection and adds new objects, 
+            // the new Value objects will have ResourceId = 0. This AfterMap 
+            // ensures they get the correct parent Item Id before EF Core saves.
+            // =====================================================================
+            .AfterMap((src, dest) =>
+            {
+                foreach (var value in dest.Values)
+                {
+                    value.ResourceId = dest.Id;
+                }
+            });
     }
 }
