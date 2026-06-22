@@ -9,5 +9,7 @@ public record MediaDto(
     int? ItemId,
     string FileName,
     string? AltText,
+    string? MimeType,   
+    long? FileSize,   
     List<ResourceValueDto> Values
 );
