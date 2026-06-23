@@ -4,6 +4,7 @@ using LMS.App.DTOs.Value;
 using LMS.App.Features.Media.Commands.CreateMediaCommand;
 using LMS.App.Validators.Media;
 using System.Collections.Generic;
+using LMS.Tests.TestHelpers;
 using Xunit;
 
 namespace LMS.Tests.UnitTests.Validators;
@@ -16,7 +17,7 @@ public class MediaValidatorsTests
         var cmd = new CreateMediaCommand(
             new CreateMediaDto(null, "", "alt", new List<ResourceValueDto>()),
             "user-1");
-        new CreateMediaCommandValidator().TestValidate(cmd)
+        new CreateMediaCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
             .ShouldHaveValidationErrorFor("Dto.FileName");
     }
 
@@ -26,7 +27,7 @@ public class MediaValidatorsTests
         var cmd = new CreateMediaCommand(
             new CreateMediaDto(1, "file.jpg", "alt", new List<ResourceValueDto>()),
             "user-1");
-        new CreateMediaCommandValidator().TestValidate(cmd)
+        new CreateMediaCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
             .ShouldNotHaveAnyValidationErrors();
     }
 }

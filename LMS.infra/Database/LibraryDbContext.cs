@@ -124,20 +124,28 @@ public class LibraryDbContext : DbContext
             entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Language).HasMaxLength(10);
 
-            entity.HasOne(d => d.Resource)
-                .WithMany(p => p.Values)
-                .HasForeignKey(d => d.ResourceId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Resource).WithMany(p => p.Values).HasForeignKey(d => d.ResourceId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(d => d.Property).WithMany().HasForeignKey(d => d.PropertyId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(d => d.ValueResource).WithMany().HasForeignKey(d => d.ValueResourceId).OnDelete(DeleteBehavior.NoAction);
 
-            entity.HasOne(d => d.Property)
-                .WithMany()
-                .HasForeignKey(d => d.PropertyId)
-                .OnDelete(DeleteBehavior.NoAction);
+           
 
-            entity.HasOne(d => d.ValueResource)
-                .WithMany()
-                .HasForeignKey(d => d.ValueResourceId)
-                .OnDelete(DeleteBehavior.NoAction);
+            // 1. Composite Index for Structural Relationships (e.g., isMemberOf)
+            // Speeds up: WHERE PropertyId = @id AND ValueText = @setId
+            entity.HasIndex(e => new { e.PropertyId, e.ValueText });
+
+            // 2. Composite Index for URI Relationships
+            // Speeds up: WHERE PropertyId = @id AND ValueUri = @uri
+            entity.HasIndex(e => new { e.PropertyId, e.ValueUri });
+
+            // 3. Standalone Indexes for General Searching
+            // Speeds up general searches by text or URI across all properties
+            entity.HasIndex(e => e.ValueText);
+            entity.HasIndex(e => e.ValueUri);
+
+            // 4. Composite Index for fetching all values of a specific resource & property
+            // Speeds up loading an Item/Media with all its specific property values
+            entity.HasIndex(e => new { e.ResourceId, e.PropertyId });
         });
     }
 }

@@ -3,6 +3,7 @@ using LMS.App.DTOs.ItemSet;
 using LMS.App.Features.ItemSets.Commands.CreateItemSets;
 using LMS.App.Validators.ItemSet;
 using Xunit;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Validators;
 
@@ -15,7 +16,7 @@ public class ItemSetValidatorsTests
             new CreateItemSetDto("", "desc", false, null),
             "owner");
 
-        new CreateItemSetCommandValidator().TestValidate(cmd)
+        new CreateItemSetCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
             .ShouldHaveValidationErrorFor(x => x.Dto.Title);
     }
 
@@ -26,7 +27,7 @@ public class ItemSetValidatorsTests
             new CreateItemSetDto("Valid Set", "desc", true, null),
             "owner");
 
-        new CreateItemSetCommandValidator().TestValidate(cmd)
+        new CreateItemSetCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
             .ShouldNotHaveAnyValidationErrors();
     }
 }
