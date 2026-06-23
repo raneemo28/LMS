@@ -7,6 +7,7 @@ using Moq;
 using Xunit;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -31,7 +32,7 @@ public class TemplatesHandlerTests
             new CreateResourceTemplateDto("Dup", "desc"));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new CreateResourceTemplateCommandHandler(_mockUoW.Object, _mapper)
+            new CreateResourceTemplateCommandHandler(_mockUoW.Object, _mapper, TestLocalizer.Localizer())
                 .Handle(cmd, CancellationToken.None));
     }
 
@@ -44,7 +45,7 @@ public class TemplatesHandlerTests
         var cmd = new CreateResourceTemplateCommand(
             new CreateResourceTemplateDto("New", "desc"));
 
-        await new CreateResourceTemplateCommandHandler(_mockUoW.Object, _mapper)
+        await new CreateResourceTemplateCommandHandler(_mockUoW.Object, _mapper, TestLocalizer.Localizer())
             .Handle(cmd, CancellationToken.None);
 
         _mockUoW.Verify(u => u.CommitAsync(), Times.Once);

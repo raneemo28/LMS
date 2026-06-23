@@ -9,6 +9,7 @@ using Moq;
 using Xunit;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -32,7 +33,7 @@ public class VocabulariesHandlerTests
         var cmd = new CreatePropertyCommand(1, new CreatePropertyDto(1, "name", "Label", "http://u"));
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-            new CreatePropertyHandler(_mockUoW.Object, _mapper).Handle(cmd, CancellationToken.None));
+            new CreatePropertyHandler(_mockUoW.Object, _mapper, TestLocalizer.Localizer()).Handle(cmd, CancellationToken.None));
     }
 
     [Fact]
@@ -43,6 +44,6 @@ public class VocabulariesHandlerTests
         var cmd = new DeletePropertyCommand(1);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new DeletePropertyHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+            new DeletePropertyHandler(_mockUoW.Object, TestLocalizer.Localizer()).Handle(cmd, CancellationToken.None));
     }
 }

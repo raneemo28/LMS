@@ -13,6 +13,7 @@ using FluentAssertions;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -67,7 +68,7 @@ public class ItemsHandlerTests
             "attacker");
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            new UpdateItemHandler(_mockUoW.Object, _mapper).Handle(cmd, CancellationToken.None));
+            new UpdateItemHandler(_mockUoW.Object, _mapper, TestLocalizer.Localizer()).Handle(cmd, CancellationToken.None));
     }
 
     [Fact]
@@ -75,7 +76,7 @@ public class ItemsHandlerTests
     {
         _mockItemRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync((Item?)null);
 
-        var result = await new DeleteItemHandler(_mockUoW.Object)
+        var result = await new DeleteItemHandler(_mockUoW.Object, TestLocalizer.Localizer())
             .Handle(new DeleteItemCommand(1, "u"), CancellationToken.None);
 
         result.Should().BeFalse();

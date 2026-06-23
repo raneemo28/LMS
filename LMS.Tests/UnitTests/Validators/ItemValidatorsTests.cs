@@ -5,6 +5,7 @@ using LMS.App.Features.Items.Commands.CreateItem;
 using LMS.App.Features.Items.Commands.UpdateItem;
 using LMS.App.Validators.Items;
 using System.Collections.Generic;
+using LMS.Tests.TestHelpers;
 using Xunit;
 
 namespace LMS.Tests.UnitTests.Validators;
@@ -18,7 +19,7 @@ public class ItemValidatorsTests
             new CreateItemDto(0, new List<CreateResourceValueDto>()),
             "user-1");
 
-        new CreateItemCommandValidator().TestValidate(cmd)
+        new CreateItemCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
             .ShouldHaveValidationErrorFor(x => x.Dto.TemplateId);
     }
 
@@ -29,7 +30,7 @@ public class ItemValidatorsTests
             new CreateItemDto(1, new List<CreateResourceValueDto>()),
             "");
 
-        new CreateItemCommandValidator().TestValidate(cmd)
+        new CreateItemCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
             .ShouldHaveValidationErrorFor(x => x.OwnerId);
     }
 
@@ -40,7 +41,7 @@ public void UpdateItem_Should_Fail_When_Values_Empty()
         new UpdateItemDto(1, 1, new List<ResourceValueDto>()),
         "user-1");
 
-    new UpdateItemCommandValidator().TestValidate(cmd)
+    new UpdateItemCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
         .ShouldHaveValidationErrorFor(x => x.Dto.Values);
 }
 
@@ -54,7 +55,7 @@ public void UpdateItem_Should_Fail_When_Id_Zero()
         }),
         "user-1");
 
-    new UpdateItemCommandValidator().TestValidate(cmd)
+    new UpdateItemCommandValidator(TestLocalizer.Localizer()).TestValidate(cmd)
         .ShouldHaveValidationErrorFor(x => x.Dto.Id);
 }
 }

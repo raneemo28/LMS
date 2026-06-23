@@ -14,6 +14,7 @@ using Xunit;
 using FluentAssertions;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -66,7 +67,8 @@ public class AuthHandlerTests
             roleManager,
             _mockConfig.Object,
             _mockMapper.Object,
-            _mockJwt.Object
+            _mockJwt.Object,
+            TestLocalizer.Localizer()
         );
 
         var result = await handler.Handle(cmd, CancellationToken.None);

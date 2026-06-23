@@ -4,55 +4,60 @@ using LMS.Infra.ServiceStorage;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using LMS.API.middlewares;
-// --- ADDED FOR LOCALIZATION ---
+using MassTransit;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Localization;
 using LMS.App.shared_resources;
-// --------------------------------
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- ADDED FOR LOCALIZATION ---
-// 1. Tell ASP.NET Core where to find the .resx files
-// FIX: Removed options.ResourcesPath = "shared_resources"
+// 1. Localization
 builder.Services.AddLocalization();
-// --------------------------------
 
 builder.Services.AddControllers()
-    // --- ADDED FOR LOCALIZATION ---
-    // 2. Enable localization for DataAnnotations (if you use them in DTOs)
     .AddDataAnnotationsLocalization(options =>
     {
         options.DataAnnotationLocalizerProvider = (type, factory) =>
             factory.Create(typeof(ErrorMessages));
     })
-    // --------------------------------
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+// 2. Infrastructure & Application Services
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
-builder.Services.AddHttpClient("LoggingService", client =>
+
+// 3. MassTransit — publisher only, no consumers on the LMS side
+builder.Services.AddMassTransit(x =>
 {
-    var baseUrl = builder.Configuration["LoggingService:BaseUrl"] ?? "http://localhost:5050";
-    client.BaseAddress = new Uri(baseUrl);
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var host = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+        cfg.Host(host, "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+    });
 });
+
+// 4. Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "Bearer",
+        Name        = "Authorization",
+        Type        = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme      = "Bearer",
         BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        In          = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Description = "Enter your JWT token. Example: eyJhbGci..."
     });
-
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -69,38 +74,26 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// --- ADDED FOR LOCALIZATION ---
-// 3. Configure supported languages and how to detect them
+// 5. Localization Options
 var supportedCultures = new[] { "en-US", "ar-SA" };
 var localizationOptions = new RequestLocalizationOptions
 {
-    DefaultRequestCulture = new RequestCulture("en-US"), // Fallback language
-    SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
-    SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList()
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures    = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
+    SupportedUICultures  = supportedCultures.Select(c => new CultureInfo(c)).ToList()
 };
-
-// Allow testing via URL query string (e.g., ?lang=ar-SA) in addition to HTTP Headers
-localizationOptions.RequestCultureProviders.Insert(0, 
-    new QueryStringRequestCultureProvider() 
-    { 
-        QueryStringKey = "lang", 
-        UIQueryStringKey = "lang" 
-    });
+localizationOptions.RequestCultureProviders.Insert(0,
+    new QueryStringRequestCultureProvider { QueryStringKey = "lang", UIQueryStringKey = "lang" });
 
 builder.Services.AddSingleton(localizationOptions);
-// --------------------------------
 
 var app = builder.Build();
 
-// --- ADDED FOR LOCALIZATION ---
-// 4. Apply the localization middleware. 
-// MUST be placed BEFORE UseExceptionHandler so exceptions can be localized if needed.
+// Apply Localization
 var localizeOptions = app.Services.GetRequiredService<RequestLocalizationOptions>();
 app.UseRequestLocalization(localizeOptions);
-// --------------------------------
 
-// Safe, Scoped DB Initialization
-// Skipped during integration tests — TestDatabaseInitializer handles seeding instead
+// DB Initialization (skipped in Testing environment)
 if (!app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
@@ -113,6 +106,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Global Exception Handler
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -125,70 +119,45 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsJsonAsync(new
             {
-                title = "Validation Error",
-                status = 400,
-                message = exception?.Message, // This will already be localized!
-                detail = exception?.StackTrace,
-                errors = vex.Errors
-                            .GroupBy(e => e.PropertyName)
-                            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()) // These will already be localized!
+                title   = "Validation Error",
+                status  = 400,
+                message = exception?.Message,
+                detail  = exception?.StackTrace,
+                errors  = vex.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
             });
             return;
         }
 
-        if (exception is UnauthorizedAccessException)
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new { title = "Forbidden", status = 403, message = exception.Message }); // Localized
-            return;
-        }
-
-        if (exception is KeyNotFoundException)
-        {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message }); // Localized
-            return;
-        }
-
-        if (exception is FileNotFoundException)
-        {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { title = "Not Found", status = 404, message = exception.Message }); // Localized
-            return;
-        }
-
-        if (exception is InvalidOperationException)
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new { title = "Bad Request", status = 400, message = exception.Message }); // Localized
-            return;
-        }
-
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(exception, "An unexpected error occurred during request processing.");
+        logger.LogError(exception, "An unexpected error occurred.");
 
-        var isDev = context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+        var isDev = context.RequestServices
+            .GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await context.Response.WriteAsJsonAsync(new
         {
-            title = "Internal Error",
-            status = 500,
-            message = isDev ? exception?.Message : "An unexpected error occurred.",
+            title         = "Internal Error",
+            status        = 500,
+            message       = isDev ? exception?.Message : "An unexpected error occurred.",
             exceptionType = isDev ? exception?.GetType().FullName : null,
-            innerMessage = isDev ? exception?.InnerException?.Message : null
+            innerMessage  = isDev ? exception?.InnerException?.Message : null
         });
     });
 });
 
-// ⚠️ UseHttpsRedirection intentionally removed — running on HTTP locally.
-// Add it back when deploying to production with HTTPS.
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseStaticFiles();
-app.UseMiddleware<LoggingMiddleware>();
+
+// FIX: Authentication BEFORE LoggingMiddleware so context.User is populated
+// when the middleware reads JWT claims to capture the real user identity.
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<LoggingMiddleware>();
 
 app.MapControllers();
 app.Run();
 
-public partial class Program { }
+public partial class Program { } // Enables integration testing via InternalsVisibleTo

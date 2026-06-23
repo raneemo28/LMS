@@ -11,6 +11,7 @@ using FluentAssertions;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -53,6 +54,6 @@ public class ItemSetsHandlerTests
         var cmd = new DeleteItemSetCommand(1, "attacker", new List<string>());
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            new DeleteItemSetHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+            new DeleteItemSetHandler(_mockUoW.Object, TestLocalizer.Localizer()).Handle(cmd, CancellationToken.None));
     }
 }

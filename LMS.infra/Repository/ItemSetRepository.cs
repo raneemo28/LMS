@@ -15,16 +15,30 @@ namespace LMS.Infra.Repository
         {
             var itemSet = await _context.ItemSets
                 .Include(s => s.Values)
-                    .ThenInclude(v => v.Property)
+                .ThenInclude(v => v.Property)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == setId);
 
             if (itemSet == null) return null;
 
+            // OPTIMIZATION: 
+            // Instead of joining Item -> Value -> Property to check TermUri,
+            // we query the Value table directly using our new composite index (PropertyId, ValueText).
+            // First, get the PropertyId for 'isMemberOf' (this hits the unique index on Property.TermUri)
+            var isMemberOfPropertyId = await _context.Properties
+                .Where(p => p.TermUri == SystemConstants.IsMemberOfUri)
+                .Select(p => p.Id)
+                .FirstOrDefaultAsync();
+
+            // Then, find the ResourceIds (Items) that have this PropertyId and ValueText
+            var memberResourceIds = await _context.Values
+                .Where(v => v.PropertyId == isMemberOfPropertyId && v.ValueText == setId.ToString())
+                .Select(v => v.ResourceId)
+                .ToListAsync();
+
+            // Finally, fetch the actual Items
             var members = await _context.Items
-                .Where(i => i.Values.Any(v =>
-                    v.Property.TermUri == SystemConstants.IsMemberOfUri &&
-                    v.ValueText == setId.ToString()))
+                .Where(i => memberResourceIds.Contains(i.Id))
                 .Include(i => i.Template)
                 .Include(i => i.Values)
                     .ThenInclude(v => v.Property)

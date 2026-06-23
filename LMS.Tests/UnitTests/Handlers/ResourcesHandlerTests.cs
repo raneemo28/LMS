@@ -8,6 +8,7 @@ using FluentAssertions;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -31,7 +32,7 @@ public class ResourcesHandlerTests
         _mockUoW.Setup(u => u.CommitAsync()).ReturnsAsync(1);
 
         var cmd = new AddValuesCommand(1, new List<CreateResourceValueDto> { new(1, "v", null, null, "text", "en") });
-        var result = await new AddValuesHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None);
+        var result = await new AddValuesHandler(_mockUoW.Object, TestLocalizer.Localizer()).Handle(cmd, CancellationToken.None);
         result.Should().BeTrue();
     }
 
@@ -39,6 +40,6 @@ public class ResourcesHandlerTests
     {
         _mockVocabRepo.Setup(v => v.GetPropertyByIdAsync(1)).ReturnsAsync((Property?)null);
         var cmd = new AddValuesCommand(1, new List<CreateResourceValueDto> { new(1, "v", null, null, "text", "en") });
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => new AddValuesHandler(_mockUoW.Object).Handle(cmd, CancellationToken.None));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => new AddValuesHandler(_mockUoW.Object, TestLocalizer.Localizer()).Handle(cmd, CancellationToken.None));
     }
 }

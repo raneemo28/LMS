@@ -12,6 +12,7 @@ using FluentAssertions;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LMS.Tests.TestHelpers;
 
 namespace LMS.Tests.UnitTests.Handlers;
 
@@ -58,7 +59,7 @@ public class MediasHandlerTests
 
         var cmd = new DeleteMediaCommand(1, "admin", true);
 
-        var result = await new DeleteMediaCommandHandler(_mockUoW.Object, _mockStorage.Object)
+        var result = await new DeleteMediaCommandHandler(_mockUoW.Object, _mockStorage.Object, TestLocalizer.Localizer())
             .Handle(cmd, CancellationToken.None);
 
         result.Should().BeTrue();
